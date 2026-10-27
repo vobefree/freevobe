@@ -190,11 +190,14 @@ jobs:
         run: |
           set -euo pipefail
           ls -l artifacts
-          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
-            gh release upload "$GITHUB_REF_NAME" artifacts/* --clobber
+          # --repo behövs: jobbet checkar inte ut repot, och gh letar annars efter ett lokalt
+          # git-origin i arbetskatalogen.
+          repo="$GITHUB_REPOSITORY"
+          if gh release view "$GITHUB_REF_NAME" --repo "$repo" >/dev/null 2>&1; then
+            gh release upload "$GITHUB_REF_NAME" artifacts/* --repo "$repo" --clobber
           else
-            gh release create "$GITHUB_REF_NAME" artifacts/* \
+            gh release create "$GITHUB_REF_NAME" artifacts/* --repo "$repo" \
               --title "Freevobe $GITHUB_REF_NAME" \
               --generate-notes
           fi
-          gh release view "$GITHUB_REF_NAME" --json assets --jq '.assets[].name'
+          gh release view "$GITHUB_REF_NAME" --repo "$repo" --json assets --jq '.assets[].name'
