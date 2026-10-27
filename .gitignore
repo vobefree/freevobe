@@ -1,34 +1,48 @@
+# Det här repot innehåller bara Freevobe-delarna. Övriga appar som ligger i samma mapp på disken –
+# rotprojektet Inklockning samt Temply och Xfinder – publiceras inte härifrån utan ligger kvar lokalt.
+/*
+!/.github/
+!/.gitignore
+!/README.md
+!/freevobe/
+!/freevobe-mobile/
+!/vibeforge/
+
+# Byggartefakter och lokalt tillstånd som annars smugit med (gäller alla delar)
 node_modules/
 .next/
 out/
-*.log
-*.tsbuildinfo
-next-env.d.ts
-
-# lokal databas
-data.db
-data.db-*
-*.sqlite
-
-# hemligheter – sätt dessa i Vercel:s dashboard vid deploy
-.env
-.env.local
-.env*.local
-
-# byggartefakter som skapas per projekt
+build/
+dist/
 coverage/
 playwright-report/
 test-results/
 blob-report/
+*.log
+*.pid
+*.tsbuildinfo
+next-env.d.ts
+.DS_Store
+
+# Wranglers lokala miniflare-state
+.wrangler/
+
+# Mobilappen
 freevobe-mobile/.expo/
 freevobe-mobile/dist-ios/
 freevobe-mobile/dist-android/
 
-# lokal körande dev-server
-*.pid
-
-# Freebuff-verktygets eget tillstånd
-.freebuff/
-
-# Wranglers lokala state (miniflare, cachar, sqlite)
-.wrangler/
+# Lokala databaser och hemligheter – committa aldrig
+.env
+.env.local
+.env*.local
+*.db
+*.db-*
+*.sqlite
+*.sqlite3
+*.key
+*.pem
+*.p8
+*.p12
+*.jks
+*.mobileprovision
