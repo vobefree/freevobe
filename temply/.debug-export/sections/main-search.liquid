@@ -1,0 +1,29 @@
+<section class="section">
+  <div class="container">
+    <div class="page-head"><h1>Sök</h1></div>
+    <form action="{{ routes.search_url }}" method="get" class="search-form" role="search">
+      <input type="search" name="q" value="{{ search.terms | escape }}" placeholder="Sök produkter…" aria-label="Sök">
+      <button class="btn" type="submit">Sök</button>
+    </form>
+    {%- if search.performed -%}
+      {%- if search.results.size > 0 -%}
+        <div class="product-grid">
+          {%- for item in search.results -%}
+            {%- if item.object_type == 'product' -%}
+              {% render 'product-card', product: item, show_price: true, show_rating: false %}
+            {%- endif -%}
+          {%- endfor -%}
+        </div>
+      {%- else -%}
+        <p class="empty">Inga träffar för “{{ search.terms | escape }}”.</p>
+      {%- endif -%}
+    {%- endif -%}
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "Search",
+  "settings": []
+}
+{% endschema %}

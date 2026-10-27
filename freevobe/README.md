@@ -1,0 +1,117 @@
+# Freevobe – landing page
+
+Marketing site for **Freevobe**, the local-first AI coding agent that vobes with Ollama.
+Static, fast and dependency-light: no stock images, no tracking, no ad code (yet).
+
+> **Vobe** *(verb)* – to build with Ollama through natural-language chat, locally and without
+> token limits.
+
+## Stack
+
+| Del            | Val                                                                       |
+| -------------- | ------------------------------------------------------------------------- |
+| Ramverk        | Next.js 15 (App Router, React 19, TypeScript)                             |
+| Styling        | Tailwind CSS v4 (`@theme`-tokens, mörkt tema som standard + ljust läge)    |
+| Komponenter    | shadcn/ui-mönster (Radix + `cva` + `cn`) i `src/components/ui`            |
+| Animationer    | Framer Motion (subtila fade-ins, `prefers-reduced-motion` respekteras)    |
+| Ikoner         | Lucide                                                                    |
+
+## Kom igång
+
+```bash
+npm install
+npm run dev        # http://localhost:4300
+npm run build      # produktionsbygge
+npm run typecheck  # tsc --noEmit
+```
+
+## Struktur
+
+```
+src/
+  app/
+    layout.tsx          typsnitt, SEO-metadata, JSON-LD (SoftwareApplication), tema-bootstrap
+    page.tsx            sektionerna i ordning
+    globals.css         designtokens (mörkt/ljust), rutnät, glow, kodpaneler
+    robots.ts           /robots.txt
+    sitemap.ts          /sitemap.xml
+    opengraph-image.tsx delningsbild som genereras vid bygget
+    icon.svg            favicon
+  components/
+    site/               navbar (sticky + mobilmeny) och footer
+    sections/           hero, social proof, problem→lösning, features, how it works,
+                        skills, privacy, FAQ, avslutande CTA
+    ui/                 button, card, badge, accordion (shadcn-stil)
+    motion/reveal.tsx   scroll-animationer
+    ads/ad-slot.tsx     AdSense-plats, avstängd tills vidare
+    app-mockup.tsx      produktmockup byggd i HTML/CSS (chat, diff, terminal, tester)
+  lib/
+    site.ts             all text, länkar, nav och produktfakta på ett ställe
+    tokens.ts           delade ytklasser
+    utils.ts            cn()
+```
+
+All copy lives in [`src/lib/site.ts`](src/lib/site.ts) – ändra produktnamn, nedladdningslänk eller
+FAQ där i stället för att leta i komponenterna.
+
+## Teman
+
+Mörkt läge är standard (`#050505`–`#0a0a0a`, lila `#7C3AED`/`#8B5CF6` som accent och teal för
+“lokalt/privat”). Ljust läge aktiveras genom klassen `light` på `<html>` och byts med knappen i
+navbaren; valet sparas i `localStorage` och sätts före första målningen så att sidan inte blinkar.
+Kod- och terminalpaneler är alltid mörka (som i en riktig editor) via `.vf-dark-surface`, så att
+diff- och terminalfärger behåller kontrasten i båda lägena.
+
+## Annonser (AdSense)
+
+Sidan är förberedd men innehåller **ingen** annonskod. `AdSlot` renderar ingenting förrän:
+
+1. `NEXT_PUBLIC_ADSENSE_CLIENT` och `NEXT_PUBLIC_ADSENSE_SLOT` är satta (se `.env.example`), och
+2. `@/components/ads/ad-slot.tsx` har fått script-taggen `<Script src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=…" strategy="afterInteractive" />`
+   tillagd i `layout.tsx` (eller via `next/script` i `page.tsx`) och själva `<ins class="adsbygoogle">`-blocket.
+
+Platsen har reserverad höjd, så att CLS förblir noll när annonsen slås på.
+
+## Deploy
+
+Sidan byggs som en **statisk export** (`output: 'export'` i `next.config.ts`), så den kan hostas på
+vilken statisk värd som helst. Inget serverruntime behövs.
+
+```bash
+NEXT_PUBLIC_SITE_URL=https://din-adress.example npm run export   # -> out/
+npm run deploy:prepare                                          # out/ -> deploy/public/
+```
+
+`NEXT_PUBLIC_SITE_URL` styr canonical, `og:image`, `sitemap.xml` och `robots.txt`. Utan den
+används `https://freevobe.dev`.
+
+`deploy/` innehåller det som ska publiceras:
+
+| Fil                  | Roll                                                                    |
+| -------------------- | ----------------------------------------------------------------------- |
+| `manifest.json`      | publiceringsmanifest: worker-modul, compatibility date, assets-mapp     |
+| `worker.js`          | serverar `ASSETS` och svarar med den riktiga 404-sidan                  |
+| `public/`            | genererad export (HTML, `_next/`, `_headers`, og-bild, robots, sitemap) |
+| `wrangler.toml`      | endast för lokal verifiering: `npx wrangler dev --config deploy/wrangler.toml` |
+
+Cachening och content-type för den extensionslösa delningsbilden styrs deklarativt i
+[`public/_headers`](public/_headers) – den hamnar automatiskt i exporten.
+
+### Nedladdningslänkar
+
+Alla nedladdningslänkar kommer från [`src/config/release.ts`](src/config/release.ts) – ingen annan fil
+hårdkodar dem:
+
+```bash
+NEXT_PUBLIC_RELEASE_REPO=agare/repo NEXT_PUBLIC_RELEASE_TAG=v1.2.3 npm run export
+```
+
+`RELEASE_REPO` (standard: `freevobe/freevobe`) styr repo, släppsida och API-anropet som hämtar senaste
+versionen. `RELEASE_TAG` används bara för att bygga de förväntade filnamnen när GitHub-API:t inte kan
+svara. `ASSET_FILE_NAMES` måste matcha filerna som CI laddar upp.
+
+Sidan fungerar i tre lägen utan konfiguration: hittar API:t en release visas versionsnumret och rätt
+installationsfil per plattform, svarar GitHub 404 (inga releaser ännu) visas **View releases** i stället
+för en död fillänk, och om API:t inte kan nås visas "Latest release" utan versionsnummer.
+
+Övriga redaktionella länkar: `site.discord`, `site.x` och `site.url` i `src/lib/site.ts`.

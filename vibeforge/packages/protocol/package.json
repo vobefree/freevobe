@@ -1,0 +1,14 @@
+{
+  "name": "@vibeforge/protocol",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Delade typer och kontrakt mellan VibeForge-agenten, servern och UI:t.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  }
+}

@@ -1,0 +1,9 @@
+{%- if settings.integration_chat_enabled -%}
+  {%- if settings.integration_chat_provider == "tidio" and settings.integration_chat_account != blank -%}
+    <script src="https://code.tidio.co/{{ settings.integration_chat_account }}.js" async></script>
+  {%- elsif settings.integration_chat_provider == "gorgias" -%}
+    {%- comment -%} Gorgias aktiveras via appens egen app embed när appen är installerad. {%- endcomment -%}
+  {%- elsif settings.integration_chat_provider == "intercom" -%}
+    {%- comment -%} Intercom aktiveras via appens egen app embed när appen är installerad. {%- endcomment -%}
+  {%- endif -%}
+{%- endif -%}

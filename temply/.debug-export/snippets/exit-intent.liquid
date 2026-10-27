@@ -1,0 +1,21 @@
+{%- if settings.exit_intent -%}
+  <div class="popup" data-exit-popup hidden>
+    <div class="popup__box" role="dialog" aria-modal="true" aria-label="{{ settings.popup_title | default: 'Innan du går' }}">
+      <button class="popup__close" type="button" data-popup-close aria-label="Close">×</button>
+      <h3>{{ settings.popup_title | default: 'Innan du går' }}</h3>
+      <p>{{ settings.popup_text | default: 'Få 10 % på ditt första köp.' }}</p>
+      {%- form 'customer', class: 'popup__form' -%}
+        <input type="hidden" name="contact[tags]" value="newsletter,exit-intent">
+        <label class="visually-hidden" for="PopupEmail">Email</label>
+        <input id="PopupEmail" type="email" name="contact[email]" placeholder="din@epost.se" required>
+        {%- if settings.gdpr_consent -%}
+          <label class="popup__consent">
+            <input type="checkbox" name="customer[accepts_marketing]" value="true" required>
+            <span>{{ settings.gdpr_text }}</span>
+          </label>
+        {%- endif -%}
+        <button class="btn btn--full" type="submit">{{ settings.popup_cta | default: 'Skicka' }}</button>
+      {%- endform -%}
+    </div>
+  </div>
+  {%- endif -%}

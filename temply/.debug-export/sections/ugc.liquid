@@ -1,0 +1,88 @@
+<section class="section" data-reveal>
+  <div class="container">
+    <div class="section-head section-head--center">
+      <h2>{{ section.settings.title }}</h2>
+      {%- if section.settings.subtitle != blank -%}<p>{{ section.settings.subtitle }}</p>{%- endif -%}
+    </div>
+    <div class="ugc-grid">
+      {%- for block in section.blocks -%}
+        {%- if block.type == 'photo' -%}
+          <figure class="ugc" {{ block.shopify_attributes }}>
+            {%- if block.settings.image != blank -%}
+              {{ block.settings.image | image_url: width: 800 | image_tag: loading: 'lazy', alt: block.settings.caption | escape }}
+            {%- endif -%}
+            <figcaption>
+              <p>{{ block.settings.caption }}</p>
+              <span>{{ block.settings.author }}</span>
+            </figcaption>
+          </figure>
+        {%- endif -%}
+      {%- endfor -%}
+    </div>
+    {%- for block in section.blocks -%}
+  {%- if block.type == '@app' -%}<div class="app-block" {{ block.shopify_attributes }}>{% render block %}</div>{%- endif -%}
+{%- endfor -%}
+    {%- if section.settings.handle != blank -%}<p class="ugc__source">{{ section.settings.handle }}</p>{%- endif -%}
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "UGC & social proof",
+  "settings": [
+    {
+      "type": "text",
+      "id": "title",
+      "label": "Heading",
+      "default": "Delat av våra kunder"
+    },
+    {
+      "type": "textarea",
+      "id": "subtitle",
+      "label": "Text",
+      "default": ""
+    },
+    {
+      "type": "text",
+      "id": "handle",
+      "label": "Hashtag/handle",
+      "default": "@varumärke"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "photo",
+      "name": "Photo",
+      "settings": [
+        {
+          "type": "image_picker",
+          "id": "image",
+          "label": "Image"
+        },
+        {
+          "type": "text",
+          "id": "caption",
+          "label": "Caption",
+          "default": ""
+        },
+        {
+          "type": "text",
+          "id": "author",
+          "label": "Author",
+          "default": ""
+        }
+      ]
+    },
+    {
+      "type": "@app",
+      "name": "App"
+    }
+  ],
+  "max_blocks": 12,
+  "presets": [
+    {
+      "name": "UGC"
+    }
+  ]
+}
+{% endschema %}

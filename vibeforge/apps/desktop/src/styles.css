@@ -1,0 +1,100 @@
+@import 'tailwindcss';
+
+/* VibeForge-tema. Mörkt som standard, egen palett (inte ett varumärkeslån). */
+@theme {
+  --color-anvil: #14161c;
+  --color-forge: #1b1f27;
+  --color-steel: #2a2f3a;
+  --color-iron: #3a4150;
+  --color-ember: #ff7a3d;
+  --color-ember-dim: #c9581f;
+  --color-spark: #ffd166;
+  --color-mint: #4ade80;
+  --color-sky: #6ab7ff;
+  --color-alert: #ff6b6b;
+  --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+/* Baslinje */
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family: var(--font-sans);
+  background: var(--color-anvil);
+  overscroll-behavior: none;
+}
+
+*:focus-visible {
+  outline: 2px solid var(--color-ember);
+  outline-offset: 1px;
+}
+
+/* Tunn mörk scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-anvil);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-iron);
+  border-radius: 6px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #4a5262;
+}
+
+/* Klasser som återanvänds i flera paneler */
+@utility vf-panel {
+  background: var(--color-forge);
+  border: 1px solid var(--color-steel);
+  border-radius: 0.5rem;
+}
+
+@utility vf-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  border-radius: 0.375rem;
+  border: 1px solid var(--color-steel);
+  background: var(--color-forge);
+  padding: 0.25rem 0.6rem;
+  font-size: 0.8125rem;
+  color: #e2e8f0;
+  transition: background 120ms ease;
+}
+@utility vf-button-primary {
+  background: var(--color-ember);
+  border-color: var(--color-ember);
+  color: #14161c;
+  font-weight: 600;
+}
+@utility vf-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  border-radius: 9999px;
+  border: 1px solid var(--color-steel);
+  padding: 0.05rem 0.5rem;
+  font-size: 0.6875rem;
+  color: #9aa4b2;
+}
+
+/* Markeringsfärg i editorn och i diffen */
+::selection {
+  background: color-mix(in srgb, var(--color-ember) 35%, transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}

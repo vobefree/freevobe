@@ -1,0 +1,9 @@
+{
+  "general": {
+    "search": "Search",
+    "cart": "Cart"
+  },
+  "accessibility": {
+    "skip_to_content": "Skip to content"
+  }
+}

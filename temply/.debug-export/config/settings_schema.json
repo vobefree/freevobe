@@ -1,0 +1,732 @@
+[
+  {
+    "name": "theme_info",
+    "theme_name": "Fri Butik",
+    "theme_version": "1.0.0",
+    "theme_author": "ThemeFold",
+    "theme_documentation_url": "https://temply.studio",
+    "theme_support_url": "https://temply.studio"
+  },
+  {
+    "name": "Colors",
+    "settings": [
+      {
+        "type": "color",
+        "id": "color_background",
+        "label": "Background",
+        "default": "#F7EEE4"
+      },
+      {
+        "type": "color",
+        "id": "color_surface",
+        "label": "Surface",
+        "default": "#FFF9F1"
+      },
+      {
+        "type": "color",
+        "id": "color_text",
+        "label": "Text",
+        "default": "#2B1D15"
+      },
+      {
+        "type": "color",
+        "id": "color_muted",
+        "label": "Muted text",
+        "default": "#7E6A5A"
+      },
+      {
+        "type": "color",
+        "id": "color_primary",
+        "label": "Primary",
+        "default": "#C2542D"
+      },
+      {
+        "type": "color",
+        "id": "color_on_primary",
+        "label": "Text on primary",
+        "default": "#FFFFFF"
+      },
+      {
+        "type": "color",
+        "id": "color_accent",
+        "label": "Accent",
+        "default": "#E9B44C"
+      },
+      {
+        "type": "color",
+        "id": "color_border",
+        "label": "Border",
+        "default": "#E6D5C3"
+      }
+    ]
+  },
+  {
+    "name": "Typography",
+    "settings": [
+      {
+        "type": "select",
+        "id": "heading_font",
+        "label": "Heading font",
+        "default": "fraunces",
+        "options": [
+          {
+            "value": "inter",
+            "label": "Inter"
+          },
+          {
+            "value": "dm",
+            "label": "DM Sans"
+          },
+          {
+            "value": "manrope",
+            "label": "Manrope"
+          },
+          {
+            "value": "space",
+            "label": "Space Grotesk"
+          },
+          {
+            "value": "sora",
+            "label": "Sora"
+          },
+          {
+            "value": "archivo",
+            "label": "Archivo"
+          },
+          {
+            "value": "playfair",
+            "label": "Playfair Display"
+          },
+          {
+            "value": "fraunces",
+            "label": "Fraunces"
+          },
+          {
+            "value": "instrument",
+            "label": "Instrument Serif"
+          },
+          {
+            "value": "libre",
+            "label": "Libre Baskerville"
+          }
+        ]
+      },
+      {
+        "type": "select",
+        "id": "body_font",
+        "label": "Body font",
+        "default": "dm",
+        "options": [
+          {
+            "value": "inter",
+            "label": "Inter"
+          },
+          {
+            "value": "dm",
+            "label": "DM Sans"
+          },
+          {
+            "value": "manrope",
+            "label": "Manrope"
+          },
+          {
+            "value": "space",
+            "label": "Space Grotesk"
+          },
+          {
+            "value": "sora",
+            "label": "Sora"
+          },
+          {
+            "value": "archivo",
+            "label": "Archivo"
+          },
+          {
+            "value": "playfair",
+            "label": "Playfair Display"
+          },
+          {
+            "value": "fraunces",
+            "label": "Fraunces"
+          },
+          {
+            "value": "instrument",
+            "label": "Instrument Serif"
+          },
+          {
+            "value": "libre",
+            "label": "Libre Baskerville"
+          }
+        ]
+      },
+      {
+        "type": "range",
+        "id": "base_size",
+        "label": "Base font size",
+        "min": 14,
+        "max": 22,
+        "step": 1,
+        "unit": "px",
+        "default": 17
+      },
+      {
+        "type": "range",
+        "id": "heading_scale",
+        "label": "Heading scale",
+        "min": 1,
+        "max": 1.6,
+        "step": 0.01,
+        "default": 1.28
+      },
+      {
+        "type": "select",
+        "id": "heading_weight",
+        "label": "Heading weight",
+        "default": "500",
+        "options": [
+          {
+            "value": "400",
+            "label": "400"
+          },
+          {
+            "value": "500",
+            "label": "500"
+          },
+          {
+            "value": "600",
+            "label": "600"
+          },
+          {
+            "value": "700",
+            "label": "700"
+          },
+          {
+            "value": "800",
+            "label": "800"
+          }
+        ]
+      },
+      {
+        "type": "range",
+        "id": "heading_tracking",
+        "label": "Letter spacing",
+        "min": -0.06,
+        "max": 0.08,
+        "step": 0.005,
+        "unit": "em",
+        "default": -0.01
+      },
+      {
+        "type": "checkbox",
+        "id": "uppercase_headings",
+        "label": "Uppercase headings",
+        "default": false
+      }
+    ]
+  },
+  {
+    "name": "Shape",
+    "settings": [
+      {
+        "type": "range",
+        "id": "radius",
+        "label": "Corner radius",
+        "min": 0,
+        "max": 40,
+        "step": 1,
+        "unit": "px",
+        "default": 18
+      },
+      {
+        "type": "range",
+        "id": "button_radius",
+        "label": "Button radius",
+        "min": 0,
+        "max": 50,
+        "step": 1,
+        "unit": "px",
+        "default": 50
+      },
+      {
+        "type": "range",
+        "id": "border_width",
+        "label": "Border width",
+        "min": 0,
+        "max": 4,
+        "step": 1,
+        "unit": "px",
+        "default": 1
+      },
+      {
+        "type": "range",
+        "id": "shadow",
+        "label": "Shadow",
+        "min": 0,
+        "max": 40,
+        "step": 2,
+        "default": 10
+      }
+    ]
+  },
+  {
+    "name": "Layout",
+    "settings": [
+      {
+        "type": "range",
+        "id": "page_width",
+        "label": "Page width",
+        "min": 960,
+        "max": 1600,
+        "step": 20,
+        "unit": "px",
+        "default": 1180
+      },
+      {
+        "type": "range",
+        "id": "section_spacing",
+        "label": "Section spacing",
+        "min": 32,
+        "max": 160,
+        "step": 4,
+        "unit": "px",
+        "default": 88
+      },
+      {
+        "type": "range",
+        "id": "grid_gap",
+        "label": "Grid gap",
+        "min": 8,
+        "max": 48,
+        "step": 2,
+        "unit": "px",
+        "default": 24
+      },
+      {
+        "type": "checkbox",
+        "id": "animations",
+        "label": "Animations",
+        "default": true
+      }
+    ]
+  },
+  {
+    "name": "Branding",
+    "settings": [
+      {
+        "type": "image_picker",
+        "id": "favicon",
+        "label": "Favicon"
+      },
+      {
+        "type": "text",
+        "id": "default_title",
+        "label": "Standardtitel (SEO)",
+        "default": "Nord & Form"
+      },
+      {
+        "type": "textarea",
+        "id": "default_meta_description",
+        "label": "Standardbeskrivning (SEO)",
+        "default": ""
+      }
+    ]
+  },
+  {
+    "name": "Shopify-teman",
+    "settings": [
+      {
+        "type": "checkbox",
+        "id": "use_shopify_fonts",
+        "label": "Använd Shopifys typsnitt",
+        "default": false
+      },
+      {
+        "type": "font_picker",
+        "id": "heading_shopify_font",
+        "label": "Shopify-rubriktypsnitt",
+        "default": "assistant_n4"
+      },
+      {
+        "type": "font_picker",
+        "id": "body_shopify_font",
+        "label": "Shopify-brödtypsnitt",
+        "default": "assistant_n4"
+      },
+      {
+        "type": "range",
+        "id": "card_radius",
+        "label": "Kortradie",
+        "min": 0,
+        "max": 48,
+        "step": 1,
+        "unit": "px",
+        "default": 22
+      },
+      {
+        "type": "range",
+        "id": "image_radius",
+        "label": "Bildradie",
+        "min": 0,
+        "max": 64,
+        "step": 1,
+        "unit": "px",
+        "default": 34
+      },
+      {
+        "type": "range",
+        "id": "input_radius",
+        "label": "Inputradie",
+        "min": 0,
+        "max": 32,
+        "step": 1,
+        "unit": "px",
+        "default": 12
+      }
+    ]
+  },
+  {
+    "name": "Konvertering",
+    "settings": [
+      {
+        "type": "checkbox",
+        "id": "sticky_atc",
+        "label": "Sticky add-to-cart",
+        "default": true
+      },
+      {
+        "type": "checkbox",
+        "id": "dynamic_checkout",
+        "label": "Köp nu / dynamic checkout",
+        "default": true
+      },
+      {
+        "type": "checkbox",
+        "id": "free_shipping_bar",
+        "label": "Fri frakt-bar",
+        "default": true
+      },
+      {
+        "type": "range",
+        "id": "free_shipping_threshold",
+        "label": "Fri frakt över",
+        "min": 0,
+        "max": 3000,
+        "step": 50,
+        "default": 799
+      },
+      {
+        "type": "checkbox",
+        "id": "trust_badges",
+        "label": "Trygghetsmärken",
+        "default": true
+      },
+      {
+        "type": "textarea",
+        "id": "trust_text",
+        "label": "Trygghetstext",
+        "default": "Fri frakt · 30 dagars retur · Säker betalning"
+      },
+      {
+        "type": "checkbox",
+        "id": "recently_viewed",
+        "label": "Nyligen visade",
+        "default": true
+      },
+      {
+        "type": "checkbox",
+        "id": "complete_the_look",
+        "label": "Complete the look",
+        "default": false
+      },
+      {
+        "type": "checkbox",
+        "id": "size_guide",
+        "label": "Storleksguide",
+        "default": false
+      },
+      {
+        "type": "checkbox",
+        "id": "product_video",
+        "label": "Produktvideo",
+        "default": false
+      },
+      {
+        "type": "checkbox",
+        "id": "exit_intent",
+        "label": "Exit intent-popup",
+        "default": false
+      },
+      {
+        "type": "checkbox",
+        "id": "gdpr_consent",
+        "label": "GDPR-samtycke i popup",
+        "default": true
+      },
+      {
+        "type": "text",
+        "id": "gdpr_text",
+        "label": "GDPR-text",
+        "default": "Jag godkänner att ThemeFold-butiken sparar min e-post för nyhetsbrev."
+      },
+      {
+        "type": "text",
+        "id": "popup_title",
+        "label": "Popup-rubrik",
+        "default": "Innan du går"
+      },
+      {
+        "type": "text",
+        "id": "popup_text",
+        "label": "Popup-text",
+        "default": "Få 10 % på ditt första köp."
+      },
+      {
+        "type": "text",
+        "id": "popup_cta",
+        "label": "Popup-knapp",
+        "default": "Skicka"
+      },
+      {
+        "type": "select",
+        "id": "ab_test",
+        "label": "A/B-test",
+        "default": "off",
+        "options": [
+          {
+            "value": "off",
+            "label": "off"
+          },
+          {
+            "value": "hero",
+            "label": "hero"
+          },
+          {
+            "value": "cta",
+            "label": "cta"
+          },
+          {
+            "value": "layout",
+            "label": "layout"
+          },
+          {
+            "value": "colors",
+            "label": "colors"
+          }
+        ]
+      },
+      {
+        "type": "text",
+        "id": "ab_headline",
+        "label": "Variant B-rubrik",
+        "default": ""
+      },
+      {
+        "type": "text",
+        "id": "ab_cta",
+        "label": "Variant B-CTA",
+        "default": ""
+      }
+    ]
+  },
+  {
+    "name": "Appar & integrationer",
+    "settings": [
+      {
+        "type": "checkbox",
+        "id": "klaviyo",
+        "label": "Klaviyo",
+        "default": false
+      },
+      {
+        "type": "text",
+        "id": "klaviyo_company_id",
+        "label": "Klaviyo company id",
+        "default": ""
+      },
+      {
+        "type": "select",
+        "id": "reviews_app",
+        "label": "Recensioner",
+        "default": "none",
+        "options": [
+          {
+            "value": "none",
+            "label": "none"
+          },
+          {
+            "value": "shopify",
+            "label": "shopify"
+          },
+          {
+            "value": "judgeme",
+            "label": "judgeme"
+          },
+          {
+            "value": "loox",
+            "label": "loox"
+          }
+        ]
+      },
+      {
+        "type": "text",
+        "id": "reviews_id",
+        "label": "Recensions-app-id",
+        "default": ""
+      },
+      {
+        "type": "checkbox",
+        "id": "app_blocks",
+        "label": "App blocks & app embeds",
+        "default": true
+      },
+      {
+        "type": "checkbox",
+        "id": "search_filters",
+        "label": "Search & Discovery-filter",
+        "default": true
+      },
+      {
+        "type": "checkbox",
+        "id": "show_markets",
+        "label": "Shopify Markets (språk & valuta)",
+        "default": true
+      },
+      {
+        "type": "header",
+        "content": "Förberedda integrationsplatser"
+      },
+      {
+        "type": "checkbox",
+        "id": "integration_reviews_enabled",
+        "label": "Recensioner (app block)",
+        "default": false
+      },
+      {
+        "type": "text",
+        "id": "integration_reviews_providers",
+        "label": "Leverantörer (kommaseparerade)",
+        "default": ""
+      },
+      {
+        "type": "text",
+        "id": "integration_reviews_account",
+        "label": "Konto-/mät-ID",
+        "default": ""
+      },
+      {
+        "type": "checkbox",
+        "id": "integration_newsletter_enabled",
+        "label": "Nyhetsbrev (app embed)",
+        "default": false
+      },
+      {
+        "type": "text",
+        "id": "integration_newsletter_providers",
+        "label": "Leverantörer (kommaseparerade)",
+        "default": ""
+      },
+      {
+        "type": "text",
+        "id": "integration_newsletter_account",
+        "label": "Konto-/mät-ID",
+        "default": ""
+      },
+      {
+        "type": "checkbox",
+        "id": "integration_chat_enabled",
+        "label": "Chatt (app embed)",
+        "default": false
+      },
+      {
+        "type": "text",
+        "id": "integration_chat_provider",
+        "label": "Chattleverantör (tidio, gorgias, intercom)",
+        "default": ""
+      },
+      {
+        "type": "text",
+        "id": "integration_chat_account",
+        "label": "Chatt-ID (Tidio public key)",
+        "default": ""
+      },
+      {
+        "type": "checkbox",
+        "id": "integration_loyalty_enabled",
+        "label": "Lojalitet (app block)",
+        "default": false
+      },
+      {
+        "type": "text",
+        "id": "integration_loyalty_providers",
+        "label": "Leverantörer",
+        "default": ""
+      },
+      {
+        "type": "checkbox",
+        "id": "integration_analytics_enabled",
+        "label": "Analys & pixlar (app embed)",
+        "default": false
+      },
+      {
+        "type": "text",
+        "id": "integration_analytics_providers",
+        "label": "Leverantörer (kommaseparerade)",
+        "default": ""
+      },
+      {
+        "type": "text",
+        "id": "integration_analytics_account",
+        "label": "Konto-/mät-ID",
+        "default": ""
+      },
+      {
+        "type": "checkbox",
+        "id": "integration_consent_enabled",
+        "label": "Samtycke (app embed)",
+        "default": false
+      },
+      {
+        "type": "text",
+        "id": "integration_consent_providers",
+        "label": "Leverantörer (kommaseparerade)",
+        "default": ""
+      },
+      {
+        "type": "text",
+        "id": "integration_consent_account",
+        "label": "Konto-/mät-ID",
+        "default": ""
+      },
+      {
+        "type": "checkbox",
+        "id": "integration_payments_enabled",
+        "label": "Betalningar (app block)",
+        "default": false
+      },
+      {
+        "type": "text",
+        "id": "integration_payments_providers",
+        "label": "Leverantörer",
+        "default": ""
+      },
+      {
+        "type": "checkbox",
+        "id": "integration_ugc_enabled",
+        "label": "UGC (app block)",
+        "default": false
+      },
+      {
+        "type": "text",
+        "id": "integration_ugc_providers",
+        "label": "Leverantörer",
+        "default": ""
+      },
+      {
+        "type": "checkbox",
+        "id": "integration_campaign_enabled",
+        "label": "Kampanj (app block)",
+        "default": false
+      }
+    ]
+  }
+]

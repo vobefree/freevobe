@@ -1,0 +1,183 @@
+import { afterEach, describe, expect, it } from 'vitest';
+import { assetUrlForTag, DOWNLOAD_LINKS, RELEASE_REPO, RELEASE_TAG } from '@/config/release';
+import {
+  assetUrlFor,
+  detectPlatform,
+  normalizeRelease,
+  releaseBadge,
+  type Platform,
+  type Release,
+} from './release';
+
+const release: Release = {
+  tag: 'v0.2.0',
+  name: 'v0.2.0',
+  notes: '',
+  publishedAt: '2026-10-01T10:00:00Z',
+  htmlUrl: 'https://github.com/acme/freevobe/releases/tag/v0.2.0',
+  assets: [
+    { name: 'Freevobe_0.2.0_x64-setup.exe', url: 'https://example.test/win.exe', sizeBytes: 1, downloads: 2 },
+    { name: 'Freevobe_0.2.0_aarch64.dmg', url: 'https://example.test/arm.dmg', sizeBytes: 1, downloads: 3 },
+    { name: 'Freevobe_0.2.0_x64.dmg', url: 'https://example.test/intel.dmg', sizeBytes: 1, downloads: 4 },
+    { name: 'Freevobe_0.2.0_amd64.AppImage', url: 'https://example.test/linux.AppImage', sizeBytes: 1, downloads: 5 },
+  ],
+};
+
+describe('normalizeRelease', () => {
+  it('plockar ut tagg, anteckningar och tillgångar', () => {
+    const normalized = normalizeRelease({
+      tag_name: 'v0.1.0',
+      name: 'First light',
+      body: '## Added\n- everything',
+      published_at: '2026-09-01T00:00:00Z',
+      html_url: 'https://github.com/acme/freevobe/releases/tag/v0.1.0',
+      assets: [{ name: 'a.exe', browser_download_url: 'https://example.test/a.exe', size: 10, download_count: 1 }],
+    });
+
+    expect(normalized).not.toBeNull();
+    expect(normalized?.tag).toBe('v0.1.0');
+    expect(normalized?.name).toBe('First light');
+    expect(normalized?.notes).toContain('everything');
+    expect(normalized?.assets).toEqual([
+      { name: 'a.exe', url: 'https://example.test/a.exe', sizeBytes: 10, downloads: 1 },
+    ]);
+  });
+
+  it('faller tillbaka på taggen när namnet saknas och hoppar över trasiga tillgångar', () => {
+    const normalized = normalizeRelease({
+      tag_name: 'v9',
+      assets: [{ name: 'utan-url' }, null, 'skräp'],
+    });
+    expect(normalized?.name).toBe('v9');
+    expect(normalized?.assets).toEqual([]);
+    expect(normalized?.htmlUrl).toContain('/releases/tag/v9');
+  });
+
+  it('ger null när svaret inte innehåller en tagg', () => {
+    expect(normalizeRelease({})).toBeNull();
+    expect(normalizeRelease(null)).toBeNull();
+  });
+});
+
+describe('assetUrlFor', () => {
+  it('väljer rätt fil per plattform ur releasen', () => {
+    expect(assetUrlFor('windows', release)).toBe('https://example.test/win.exe');
+    expect(assetUrlFor('macAppleSilicon', release)).toBe('https://example.test/arm.dmg');
+    expect(assetUrlFor('macIntel', release)).toBe('https://example.test/intel.dmg');
+    expect(assetUrlFor('linux', release)).toBe('https://example.test/linux.AppImage');
+  });
+
+  it('väljer inte Intel-dmg:n till Apple Silicon (och tvärtom)', () => {
+    const onlyIntel: Release = { ...release, assets: release.assets.filter((a) => a.name.includes('x64.dmg')) };
+    expect(assetUrlFor('macIntel', onlyIntel)).toBe('https://example.test/intel.dmg');
+    expect(assetUrlFor('macAppleSilicon', onlyIntel)).toBe(onlyIntel.htmlUrl);
+  });
+
+  it('föredrar x86_64-AppImage när releasen även har arm64', () => {
+    const bothArches: Release = {
+      ...release,
+      assets: [
+        { name: 'Freevobe_0.2.0_arm64.AppImage', url: 'https://example.test/arm.AppImage', sizeBytes: 1, downloads: 9 },
+        { name: 'Freevobe_0.2.0_amd64.AppImage', url: 'https://example.test/x86.AppImage', sizeBytes: 1, downloads: 1 },
+      ],
+    };
+
+    expect(assetUrlFor('linux', bothArches)).toBe('https://example.test/x86.AppImage');
+    // Saknas x86_64 helt får arm64-filen duga i stället för att knappen pekar fel.
+    const armOnly: Release = { ...bothArches, assets: bothArches.assets.slice(0, 1) };
+    expect(assetUrlFor('linux', armOnly)).toBe('https://example.test/arm.AppImage');
+  });
+
+  it('använder den förväntade adressen när releasen är helt okänd', () => {
+    expect(assetUrlFor('windows', null)).toBe(DOWNLOAD_LINKS.windows);
+    // Känd release utan filer: releasens egen tagg används i stället för den konfigurerade.
+    expect(assetUrlFor('linux', { ...release, assets: [] })).toBe(assetUrlForTag('linux', release.tag));
+  });
+
+  it('använder en universal-dmg när releasen inte skiljer på arkitekturerna', () => {
+    const universal: Release = {
+      ...release,
+      assets: [
+        { name: 'Freevobe-0.3.0.dmg', url: 'https://example.test/universal.dmg', sizeBytes: 1, downloads: 0 },
+        { name: 'Freevobe-0.3.0.exe', url: 'https://example.test/win.exe', sizeBytes: 1, downloads: 0 },
+      ],
+    };
+    expect(assetUrlFor('macAppleSilicon', universal)).toBe('https://example.test/universal.dmg');
+    expect(assetUrlFor('macIntel', universal)).toBe('https://example.test/universal.dmg');
+    expect(assetUrlFor('windows', universal)).toBe('https://example.test/win.exe');
+  });
+
+  it('skickar till releasen i stället för en gissad fil när plattformen saknas i releasen', () => {
+    const onlyArm: Release = {
+      ...release,
+      assets: [{ name: 'Freevobe_aarch64.dmg', url: 'https://example.test/arm.dmg', sizeBytes: 1, downloads: 0 }],
+    };
+    expect(assetUrlFor('macAppleSilicon', onlyArm)).toBe('https://example.test/arm.dmg');
+    expect(assetUrlFor('macIntel', onlyArm)).toBe(onlyArm.htmlUrl);
+  });
+
+  it('använder releasens tagg i den förväntade adressen när releasen saknar tillgångar', () => {
+    const tagless: Release = { ...release, tag: 'v0.9.0', assets: [] };
+    expect(assetUrlFor('linux', tagless)).toBe(assetUrlForTag('linux', 'v0.9.0'));
+    expect(assetUrlFor('linux', tagless)).toContain('/download/v0.9.0/');
+    expect(assetUrlFor('linux', tagless)).not.toContain(RELEASE_TAG + '_amd64');
+  });
+
+  it('bygger adresser från den centrala konfigurationen', () => {
+    expect(DOWNLOAD_LINKS.windows).toContain(RELEASE_REPO);
+    expect(DOWNLOAD_LINKS.windows).toContain(RELEASE_TAG);
+    expect(DOWNLOAD_LINKS.latest.endsWith('/releases/latest')).toBe(true);
+  });
+});
+
+describe('releaseBadge', () => {
+  it('visar version och releaselänk när GitHub svarar', () => {
+    expect(releaseBadge({ status: 'ready', release })).toEqual({
+      label: 'Latest release v0.2.0',
+      href: release.htmlUrl,
+    });
+  });
+
+  it('visar "View releases" när repot inte har några releaser', () => {
+    expect(releaseBadge({ status: 'missing', release: null })).toEqual({
+      label: 'View releases',
+      href: DOWNLOAD_LINKS.all,
+    });
+  });
+
+  it('visar "Latest release" utan versionsnummer när API:t inte kan nås', () => {
+    expect(releaseBadge({ status: 'error', release: null })).toEqual({
+      label: 'Latest release',
+      href: DOWNLOAD_LINKS.latest,
+    });
+  });
+});
+
+describe('detectPlatform', () => {
+  const original = globalThis.navigator;
+
+  function stub(userAgent: string) {
+    Object.defineProperty(globalThis, 'navigator', {
+      value: { userAgent, platform: '' },
+      configurable: true,
+    });
+  }
+
+  afterEach(() => {
+    Object.defineProperty(globalThis, 'navigator', { value: original, configurable: true });
+  });
+
+  const cases: Array<[string, Platform]> = [
+    ['Mozilla/5.0 (Windows NT 10.0; Win64; x64)', 'windows'],
+    ['Mozilla/5.0 (X11; Linux x86_64)', 'linux'],
+    ['Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)', 'macAppleSilicon'],
+    ['Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X)', 'unknown'],
+    ['Mozilla/5.0 (Linux; Android 14; Pixel 8)', 'unknown'],
+    ['curl/8.0', 'unknown'],
+  ];
+
+  it.each(cases)('%s → %s', (userAgent, expected) => {
+    stub(userAgent);
+    expect(detectPlatform()).toBe(expected);
+  });
+});

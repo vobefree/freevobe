@@ -1,0 +1,50 @@
+{
+  "name": "vibeforge",
+  "version": "0.1.0",
+  "private": true,
+  "description": "VibeForge – lokal-first vibecoding desktop app med Ollama, agent-loop, skills, MCP och subagents.",
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=22.5.0"
+  },
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "concurrently -n server,desktop -c cyan,magenta \"npm:dev:server\" \"npm:dev:desktop\"",
+    "dev:server": "npm run dev --workspace @vibeforge/agent-server",
+    "dev:desktop": "npm run dev --workspace @vibeforge/desktop",
+    "dev:web": "npm run dev --workspace @vibeforge/web",
+    "build": "npm run build --workspaces --if-present",
+    "build:desktop": "npm run build --workspace @vibeforge/desktop",
+    "build:web": "npm run build --workspace @vibeforge/web",
+    "tauri": "npm run tauri --workspace @vibeforge/desktop --",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "doctor": "node packages/agent-core/bin/vibeforge-doctor.mjs",
+    "icons": "node scripts/generate-icons.mjs",
+    "sidecar:build": "node scripts/build-sidecar.mjs",
+    "verify": "npm run typecheck && npm run lint && npm run test"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.30.0",
+    "@playwright/test": "^1.50.0",
+    "@types/node": "^22.10.0",
+    "concurrently": "^9.1.0",
+    "eslint": "^9.30.0",
+    "eslint-config-prettier": "^10.1.0",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "prettier": "^3.4.0",
+    "typescript": "^5.9.0",
+    "typescript-eslint": "^8.30.0",
+    "vitest": "^3.2.0"
+  }
+}

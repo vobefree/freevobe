@@ -1,0 +1,141 @@
+<footer class="site-footer">
+  <div class="container footer__grid">
+    <div>
+      <p class="footer__brand">{{ section.settings.brand | default: shop.name | escape }}</p>
+      <p class="footer__about">{{ section.settings.text | escape }}</p>
+    </div>
+    {%- for block in section.blocks -%}
+      {%- if block.type == 'menu' or block.type == 'menu_2' or block.type == 'menu_3' -%}
+        <div class="footer__col" {{ block.shopify_attributes }}>
+          <h4>{{ block.settings.title | escape }}</h4>
+          {%- for link in block.settings.menu.links -%}
+            <a href="{{ link.url }}">{{ link.title | escape }}</a>
+          {%- endfor -%}
+        </div>
+      {%- endif -%}
+    {%- endfor -%}
+  </div>
+  <div class="container footer__integrations">
+    {% render 'integration-newsletter' %}
+    {%- for block in section.blocks -%}
+      {%- if block.type == '@app' -%}<div class="app-block" {{ block.shopify_attributes }}>{% render block %}</div>{%- endif -%}
+    {%- endfor -%}
+    {% render 'integration-payments' %}
+  </div>
+  <div class="container footer__bottom">
+    <p>&copy; {{ 'now' | date: '%Y' }} {{ shop.name }} &middot; Powered by Shopify</p>
+    <div class="footer__social"><span>{{ section.settings.social | escape }}</span></div>
+  </div>
+  <div class="container markets">
+    {% render 'markets' %}
+    {%- if settings.klaviyo and settings.klaviyo_company_id != blank -%}
+      <p class="markets__note">Nyhetsbrev via Klaviyo</p>
+    {%- endif -%}
+  </div>
+</footer>
+
+{% schema %}
+{
+  "name": "Footer",
+  "settings": [
+    {
+      "type": "text",
+      "id": "brand",
+      "label": "Brand name",
+      "default": "Fri Butik"
+    },
+    {
+      "type": "textarea",
+      "id": "text",
+      "label": "About text",
+      "default": "Handgjord keramik från Skåne. Små serier, stor omsorg."
+    },
+    {
+      "type": "text",
+      "id": "social",
+      "label": "Social links",
+      "default": "Instagram · Pinterest · Journal"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "menu",
+      "name": "Menu column",
+      "limit": 3,
+      "settings": [
+        {
+          "type": "text",
+          "id": "title",
+          "label": "Heading",
+          "default": "Handla"
+        },
+        {
+          "type": "link_list",
+          "id": "menu",
+          "label": "Menu",
+          "default": "footer"
+        }
+      ]
+    },
+    {
+      "type": "menu_2",
+      "name": "Menu column 2",
+      "limit": 3,
+      "settings": [
+        {
+          "type": "text",
+          "id": "title",
+          "label": "Heading",
+          "default": "Hjälp"
+        },
+        {
+          "type": "link_list",
+          "id": "menu",
+          "label": "Menu",
+          "default": "footer"
+        }
+      ]
+    },
+    {
+      "type": "menu_3",
+      "name": "Menu column 3",
+      "limit": 3,
+      "settings": [
+        {
+          "type": "text",
+          "id": "title",
+          "label": "Heading",
+          "default": "Om oss"
+        },
+        {
+          "type": "link_list",
+          "id": "menu",
+          "label": "Menu",
+          "default": "footer"
+        }
+      ]
+    },
+    {
+      "type": "@app",
+      "name": "App"
+    }
+  ],
+  "max_blocks": 8,
+  "presets": [
+    {
+      "name": "Footer",
+      "blocks": [
+        {
+          "type": "menu"
+        },
+        {
+          "type": "menu_2"
+        },
+        {
+          "type": "menu_3"
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

@@ -1,0 +1,12 @@
+{%- if settings.sticky_atc -%}
+  <div class="sticky-atc" data-sticky-atc hidden>
+    <div class="sticky-atc__info">
+      <b>{{ product.title }}</b>
+      <small>{{ product.selected_or_first_available_variant.price | money }}</small>
+    </div>
+    {%- form 'product', product, class: 'sticky-atc__form' -%}
+      <input type="hidden" name="id" value="{{ product.selected_or_first_available_variant.id }}">
+      <button class="btn" type="submit">{{ section.settings.button_label | default: 'Lägg i varukorg' }}</button>
+    {%- endform -%}
+  </div>
+{%- endif -%}

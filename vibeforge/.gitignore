@@ -1,0 +1,33 @@
+node_modules/
+dist/
+out/
+build/
+coverage/
+*.log
+*.tsbuildinfo
+.DS_Store
+
+# Lokal data (sessions, minne, index) – lämnar aldrig maskinen
+.vibeforge/*.db
+.vibeforge/*.db-*
+.vibeforge/workspace/
+.vibeforge/cache/
+!/.vibeforge/skills/
+!/.vibeforge/rules.md
+!/.vibeforge/preferences.json
+
+# Tauri / Rust
+apps/desktop/src-tauri/target/
+apps/desktop/src-tauri/gen/
+
+# Signeringsnycklar – committa ALDRIG
+*.key
+*.key.pub
+.env
+.env.local
+.env*.local
+
+# Playwright
+playwright-report/
+test-results/
+blob-report/

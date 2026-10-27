@@ -1,0 +1,7 @@
+{%- if settings.reviews_app != 'none' -%}
+  <div class="reviews" data-reviews-app="{{ settings.reviews_app }}"></div>
+{%- elsif product.metafields.reviews.rating.value != blank -%}
+  <div class="reviews reviews--native">
+    <p class="card__rating">{% render 'icon', name: 'star', size: 14, stroke: 2 %} {{ product.metafields.reviews.rating.value }} · {{ product.metafields.reviews.rating_count }} omdömen</p>
+  </div>
+{%- endif -%}

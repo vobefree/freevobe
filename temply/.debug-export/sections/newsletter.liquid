@@ -1,0 +1,49 @@
+<section class="section" data-reveal>
+  <div class="container">
+    <div class="newsletter">
+      <h2>{{ section.settings.title }}</h2>
+      <p>{{ section.settings.text }}</p>
+      {%- form 'customer' -%}
+        <input type="hidden" name="contact[tags]" value="newsletter">
+        <div class="newsletter__form">
+          <label class="visually-hidden" for="NewsletterEmail-{{ section.id }}">Email</label>
+          <input id="NewsletterEmail-{{ section.id }}" type="email" name="contact[email]" placeholder="din@epost.se" required>
+          <button class="btn" type="submit">{{ section.settings.cta_label | escape }}</button>
+        </div>
+        {%- if form.posted_successfully? -%}<p class="newsletter__note">Tack! Du är nu prenumerant.</p>{%- endif -%}
+        {%- if form.errors -%}<p class="newsletter__note">{{ form.errors | default_errors }}</p>{%- endif -%}
+      {%- endform -%}
+    </div>
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "Newsletter",
+  "settings": [
+    {
+      "type": "text",
+      "id": "title",
+      "label": "Heading",
+      "default": "Bli först att veta"
+    },
+    {
+      "type": "textarea",
+      "id": "text",
+      "label": "Text",
+      "default": ""
+    },
+    {
+      "type": "text",
+      "id": "cta_label",
+      "label": "Button label",
+      "default": "Prenumerera"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Newsletter"
+    }
+  ]
+}
+{% endschema %}

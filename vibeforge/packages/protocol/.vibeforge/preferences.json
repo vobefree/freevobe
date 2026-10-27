@@ -1,0 +1,10 @@
+{
+  "permissionMode": "ask",
+  "model": "",
+  "testCommand": "",
+  "contextBudgetChars": 24000,
+  "maxIterations": 12,
+  "browserAutomationEnabled": false,
+  "hooks": [],
+  "mcpServers": []
+}

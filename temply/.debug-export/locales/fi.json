@@ -1,0 +1,9 @@
+{
+  "general": {
+    "search": "Haku",
+    "cart": "Ostoskori"
+  },
+  "accessibility": {
+    "skip_to_content": "Siirry sisältöön"
+  }
+}

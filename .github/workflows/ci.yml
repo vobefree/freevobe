@@ -1,0 +1,114 @@
+# Varje projekt i workspacet har sin egen package.json och sitt eget lås, så varje jobb installerar
+# bara sitt eget. Kommandona är exakt de som körs lokalt – inget extra som bara finns i CI.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  freevobe-mobile:
+    name: freevobe-mobile (Expo)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: freevobe-mobile
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: freevobe-mobile/package-lock.json
+      - run: npm ci
+      - run: npm test
+      - run: npm run typecheck
+      - run: npm run lint
+
+  vibeforge:
+    name: vibeforge (desktop/server/webb)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: vibeforge
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: vibeforge/package-lock.json
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+      # Playwright-sviten (test:e2e) kräver nedladdade webbläsare och körs därför inte här.
+      - run: npm test
+
+  freevobe:
+    name: freevobe (webb)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: freevobe
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: freevobe/package-lock.json
+      - run: npm ci
+      - run: npm test
+      - run: npm run typecheck
+
+  xfinder:
+    name: xfinder (webb)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: xfinder
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: xfinder/package-lock.json
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm test
+
+  temply:
+    name: temply (webb)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: temply
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: temply/package-lock.json
+      - run: npm ci
+      - run: npm run typecheck
+
+  forshems-gastgiveri:
+    name: Inklockning (rotprojektet)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - run: npm ci
+      - run: npm run typecheck

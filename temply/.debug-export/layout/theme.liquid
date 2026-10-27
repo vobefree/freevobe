@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="{{ request.locale.iso_code }}">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="{{ settings.color_background }}">
+    <link rel="canonical" href="{{ canonical_url }}">
+    {%- if settings.favicon != blank -%}
+      <link rel="icon" type="image/png" href="{{ settings.favicon | image_url: width: 64 }}">
+    {%- endif -%}
+    <title>{{ page_title }}{% if current_page != 1 %} &ndash; {{ shop.name }}{% endif %}</title>
+    {%- if page_description -%}<meta name="description" content="{{ page_description | escape }}">{%- elsif settings.default_meta_description != blank -%}<meta name="description" content="{{ settings.default_meta_description | escape }}">{%- endif -%}
+    {%- if template.name == 'index' and settings.default_title != blank -%}<meta property="og:title" content="{{ settings.default_title | escape }}">{%- endif -%}
+    {%- case settings.heading_font -%}
+  {%- when 'inter' -%}{%- assign heading_stack = "'Inter', system-ui, sans-serif" -%}{%- assign heading_google = 'Inter:wght@300;400;500;600;700;800' -%}
+  {%- when 'dm' -%}{%- assign heading_stack = "'DM Sans', system-ui, sans-serif" -%}{%- assign heading_google = 'DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,700' -%}
+  {%- when 'manrope' -%}{%- assign heading_stack = "'Manrope', system-ui, sans-serif" -%}{%- assign heading_google = 'Manrope:wght@300;400;500;600;700;800' -%}
+  {%- when 'space' -%}{%- assign heading_stack = "'Space Grotesk', system-ui, sans-serif" -%}{%- assign heading_google = 'Space+Grotesk:wght@300;400;500;600;700' -%}
+  {%- when 'sora' -%}{%- assign heading_stack = "'Sora', system-ui, sans-serif" -%}{%- assign heading_google = 'Sora:wght@300;400;500;600;700;800' -%}
+  {%- when 'archivo' -%}{%- assign heading_stack = "'Archivo', system-ui, sans-serif" -%}{%- assign heading_google = 'Archivo:wght@300;400;500;600;700;800;900' -%}
+  {%- when 'playfair' -%}{%- assign heading_stack = "'Playfair Display', Georgia, serif" -%}{%- assign heading_google = 'Playfair+Display:wght@400;500;600;700' -%}
+  {%- when 'fraunces' -%}{%- assign heading_stack = "'Fraunces', Georgia, serif" -%}{%- assign heading_google = 'Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600;9..144,700' -%}
+  {%- when 'instrument' -%}{%- assign heading_stack = "'Instrument Serif', Georgia, serif" -%}{%- assign heading_google = 'Instrument+Serif:ital@0;1' -%}
+  {%- when 'libre' -%}{%- assign heading_stack = "'Libre Baskerville', Georgia, serif" -%}{%- assign heading_google = 'Libre+Baskerville:ital,wght@0,400;0,700;1,400' -%}
+  {%- else -%}{%- assign heading_stack = "'Manrope', system-ui, sans-serif" -%}{%- assign heading_google = 'Manrope:wght@300;400;500;600;700;800' -%}
+{%- endcase -%}
+{%- case settings.body_font -%}
+  {%- when 'inter' -%}{%- assign body_stack = "'Inter', system-ui, sans-serif" -%}{%- assign body_google = 'Inter:wght@300;400;500;600;700;800' -%}
+  {%- when 'dm' -%}{%- assign body_stack = "'DM Sans', system-ui, sans-serif" -%}{%- assign body_google = 'DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,700' -%}
+  {%- when 'manrope' -%}{%- assign body_stack = "'Manrope', system-ui, sans-serif" -%}{%- assign body_google = 'Manrope:wght@300;400;500;600;700;800' -%}
+  {%- when 'space' -%}{%- assign body_stack = "'Space Grotesk', system-ui, sans-serif" -%}{%- assign body_google = 'Space+Grotesk:wght@300;400;500;600;700' -%}
+  {%- when 'sora' -%}{%- assign body_stack = "'Sora', system-ui, sans-serif" -%}{%- assign body_google = 'Sora:wght@300;400;500;600;700;800' -%}
+  {%- when 'archivo' -%}{%- assign body_stack = "'Archivo', system-ui, sans-serif" -%}{%- assign body_google = 'Archivo:wght@300;400;500;600;700;800;900' -%}
+  {%- when 'playfair' -%}{%- assign body_stack = "'Playfair Display', Georgia, serif" -%}{%- assign body_google = 'Playfair+Display:wght@400;500;600;700' -%}
+  {%- when 'fraunces' -%}{%- assign body_stack = "'Fraunces', Georgia, serif" -%}{%- assign body_google = 'Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600;9..144,700' -%}
+  {%- when 'instrument' -%}{%- assign body_stack = "'Instrument Serif', Georgia, serif" -%}{%- assign body_google = 'Instrument+Serif:ital@0;1' -%}
+  {%- when 'libre' -%}{%- assign body_stack = "'Libre Baskerville', Georgia, serif" -%}{%- assign body_google = 'Libre+Baskerville:ital,wght@0,400;0,700;1,400' -%}
+  {%- else -%}{%- assign body_stack = "'Inter', system-ui, sans-serif" -%}{%- assign body_google = 'Inter:wght@300;400;500;600;700;800' -%}
+{%- endcase -%}
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family={{ heading_google }}&family={{ body_google }}&display=swap" rel="stylesheet">
+    <style>{%- if settings.use_shopify_fonts and settings.heading_shopify_font != blank -%}
+  {%- assign heading_family = settings.heading_shopify_font.family -%}
+  {%- assign heading_fallback = settings.heading_shopify_font.fallback_families | default: 'sans-serif' -%}
+{%- endif -%}
+{%- if settings.use_shopify_fonts and settings.body_shopify_font != blank -%}
+  {%- assign body_family = settings.body_shopify_font.family -%}
+  {%- assign body_fallback = settings.body_shopify_font.fallback_families | default: 'sans-serif' -%}
+{%- endif -%}
+:root{
+  --bg: {{ settings.color_background }};
+  --surface: {{ settings.color_surface }};
+  --text: {{ settings.color_text }};
+  --muted: {{ settings.color_muted }};
+  --primary: {{ settings.color_primary }};
+  --on-primary: {{ settings.color_on_primary }};
+  --accent: {{ settings.color_accent }};
+  --border: {{ settings.color_border }};
+  --radius: {{ settings.radius }}px;
+  --btn-radius: {{ settings.button_radius }}px;
+  --border-width: {{ settings.border_width }}px;
+  --shadow: {{ settings.shadow }}px;
+  --max: {{ settings.page_width }};
+  --grid-gap: {{ settings.grid_gap }};
+  --section-space: {{ settings.section_spacing }};
+  --base: {{ settings.base_size }}px;
+  --scale: {{ settings.heading_scale }};
+  --heading-weight: {{ settings.heading_weight }};
+  --tracking: {{ settings.heading_tracking }}em;
+  --font-heading: {% if heading_family %}'{{ heading_family }}', {{ heading_fallback }}{% else %}{{ heading_stack }}{% endif %};
+  --font-body: {% if body_family %}'{{ body_family }}', {{ body_fallback }}{% else %}{{ body_stack }}{% endif %};
+  --card-radius: {{ settings.card_radius }}px;
+  --image-radius: {{ settings.image_radius }}px;
+  --input-radius: {{ settings.input_radius }}px;
+}
+.adv-page-shell{position:relative}</style>
+    {%- if settings.integration_analytics_enabled -%}{% render 'integration-analytics' %}{%- endif -%}
+    {%- assign canva_og = "" -%}
+    {%- if canva_og != blank -%}<meta property="og:image" content="{{ canva_og }}">{%- endif -%}
+    {{ 'theme.css' | asset_url | stylesheet_tag }}
+    {{ content_for_header }}
+  </head>
+  <body
+    class="template-{{ template.name }}{% if settings.uppercase_headings %} uppercase-headings{% endif %}"
+    data-animate="{{ settings.animations }}"
+    data-ab="{{ settings.ab_test }}"
+    data-ab-headline="{{ settings.ab_headline | escape }}"
+    data-ab-cta="{{ settings.ab_cta | escape }}"
+    data-reviews-app="{{ settings.reviews_app }}">
+    <a class="skip-link" href="#MainContent">{{ 'accessibility.skip_to_content' | t }}</a>
+    {%- if settings.free_shipping_bar -%}{% render 'free-shipping-bar' %}{%- endif -%}
+    <div class="adv-page-shell">
+    <main id="MainContent" role="main">
+      {{ content_for_layout }}
+    </main>
+    {% section 'advanced-chrome' %}</div>
+    {% section 'footer' %}
+    
+    {% render 'exit-intent' %}
+    {%- if settings.app_blocks -%}{% render 'app-embed' %}{%- endif -%}
+    {%- if settings.integration_chat_enabled -%}{% render 'integration-chat' %}{%- endif -%}
+    {%- if settings.integration_consent_enabled -%}{% render 'integration-consent' %}{%- endif -%}
+    <script src="{{ 'theme.js' | asset_url }}" defer></script>
+  </body>
+</html>

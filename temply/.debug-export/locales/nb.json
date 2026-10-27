@@ -1,0 +1,9 @@
+{
+  "general": {
+    "search": "Søk",
+    "cart": "Handlekurv"
+  },
+  "accessibility": {
+    "skip_to_content": "Hopp til innhold"
+  }
+}

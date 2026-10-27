@@ -1,0 +1,86 @@
+<section class="section" data-reveal>
+  <div class="container">
+    <div class="section-head section-head--center">
+      <h2>{{ section.settings.title }}</h2>
+      {%- if section.settings.subtitle != blank -%}<p>{{ section.settings.subtitle }}</p>{%- endif -%}
+    </div>
+    <div class="bundle-grid">
+      {%- for block in section.blocks -%}
+        {%- if block.type == 'tier' -%}
+          <div class="bundle-tier" {{ block.shopify_attributes }}>
+            <b>{{ block.settings.quantity }}×</b>
+            <span>{{ block.settings.label }}</span>
+            <strong>−{{ block.settings.discount }}%</strong>
+          </div>
+        {%- endif -%}
+      {%- endfor -%}
+    </div>
+    {%- if section.settings.note != blank -%}<p class="trust__meta">{{ section.settings.note }}</p>{%- endif -%}
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "Volume discount",
+  "settings": [
+    {
+      "type": "text",
+      "id": "title",
+      "label": "Heading",
+      "default": "Köp fler, spara mer"
+    },
+    {
+      "type": "textarea",
+      "id": "subtitle",
+      "label": "Text",
+      "default": ""
+    },
+    {
+      "type": "text",
+      "id": "note",
+      "label": "Note",
+      "default": ""
+    }
+  ],
+  "blocks": [
+    {
+      "type": "tier",
+      "name": "Tier",
+      "settings": [
+        {
+          "type": "range",
+          "id": "quantity",
+          "label": "Quantity",
+          "min": 2,
+          "max": 10,
+          "step": 1,
+          "unit": "",
+          "default": 2
+        },
+        {
+          "type": "range",
+          "id": "discount",
+          "label": "Discount %",
+          "min": 5,
+          "max": 40,
+          "step": 1,
+          "unit": "%",
+          "default": 10
+        },
+        {
+          "type": "text",
+          "id": "label",
+          "label": "Label",
+          "default": "2 för 10 %"
+        }
+      ]
+    }
+  ],
+  "max_blocks": 5,
+  "presets": [
+    {
+      "name": "Volume discount"
+    }
+  ]
+}
+{% endschema %}

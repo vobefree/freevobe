@@ -1,0 +1,5 @@
+User-Agent: *
+Allow: /
+
+Host: https://site-6ba8fdc158e0497ca7d40cd487a0d811.freebuff.page
+Sitemap: https://site-6ba8fdc158e0497ca7d40cd487a0d811.freebuff.page/sitemap.xml

@@ -1,0 +1,23 @@
+import type { Locale, MoodId, SectionType } from "./types";
+
+export const MOOD_LABELS: Record<Locale, Record<MoodId, string>> = {
+  sv: { minimal: "Minimal", warm: "Varm", playful: "Lekfull", luxe: "Lyxig", nature: "Natur", neon: "Neon" },
+  nb: { minimal: "Minimal", warm: "Varm", playful: "Leken", luxe: "Luksuriøs", nature: "Natur", neon: "Neon" },
+  fi: { minimal: "Minimaalinen", warm: "Lämmin", playful: "Leikkisä", luxe: "Ylellinen", nature: "Luonto", neon: "Neon" },
+  da: { minimal: "Minimal", warm: "Varm", playful: "Legesyg", luxe: "Luksus", nature: "Natur", neon: "Neon" },
+  en: { minimal: "Minimal", warm: "Warm", playful: "Playful", luxe: "Luxe", nature: "Nature", neon: "Neon" },
+  fr: { minimal: "Minimal", warm: "Chaleureux", playful: "Ludique", luxe: "Luxe", nature: "Nature", neon: "Néon" },
+  de: { minimal: "Minimal", warm: "Warm", playful: "Verspielt", luxe: "Luxus", nature: "Natur", neon: "Neon" },
+  es: { minimal: "Minimal", warm: "Cálido", playful: "Divertido", luxe: "Lujo", nature: "Natural", neon: "Neón" },
+};
+
+export const SECTION_LABELS: Record<Locale, Record<SectionType, string>> = {
+  sv: { hero: "Hero", productGrid: "Produkter", features: "Fördelar", imageText: "Bild & text", testimonials: "Omdömen", marquee: "Rullande text", faq: "Frågor", newsletter: "Nyhetsbrev", ugc: "Kundbilder", trust: "Trygghet", bundle: "Mängdrabatt", sizeGuide: "Storleksguide", countdown: "Nedräkning", collection: "Kategorier", comparison: "Jämförelse", lookbook: "Lookbook", completeTheLook: "Complete the look", story: "Storytelling" },
+  nb: { hero: "Hero", productGrid: "Produkter", features: "Fordeler", imageText: "Bilde & tekst", testimonials: "Anmeldelser", marquee: "Rullende tekst", faq: "Spørsmål", newsletter: "Nyhetsbrev", ugc: "Kundebilder", trust: "Trygghet", bundle: "Mengderabatt", sizeGuide: "Størrelsesguide", countdown: "Nedtelling", collection: "Kategorier", comparison: "Sammenligning", lookbook: "Lookbook", completeTheLook: "Complete the look", story: "Historie" },
+  fi: { hero: "Hero", productGrid: "Tuotteet", features: "Edut", imageText: "Kuva & teksti", testimonials: "Arvostelut", marquee: "Vierivä teksti", faq: "Kysymykset", newsletter: "Uutiskirje", ugc: "Asiakaskuvat", trust: "Luottamus", bundle: "Määräalennus", sizeGuide: "Kokotaulukko", countdown: "Ajastin", collection: "Kategoriat", comparison: "Vertailu", lookbook: "Lookbook", completeTheLook: "Complete the look", story: "Tarina" },
+  da: { hero: "Hero", productGrid: "Produkter", features: "Fordele", imageText: "Billede & tekst", testimonials: "Anmeldelser", marquee: "Rullende tekst", faq: "Spørgsmål", newsletter: "Nyhedsbrev", ugc: "Kundebilleder", trust: "Tryghed", bundle: "Mængderabat", sizeGuide: "Størrelsesguide", countdown: "Nedtælling", collection: "Kategorier", comparison: "Sammenligning", lookbook: "Lookbook", completeTheLook: "Complete the look", story: "Historie" },
+  en: { hero: "Hero", productGrid: "Products", features: "Benefits", imageText: "Image & text", testimonials: "Reviews", marquee: "Marquee", faq: "FAQ", newsletter: "Newsletter", ugc: "Customer photos", trust: "Trust", bundle: "Volume discount", sizeGuide: "Size guide", countdown: "Countdown", collection: "Categories", comparison: "Comparison", lookbook: "Lookbook", completeTheLook: "Complete the look", story: "Storytelling" },
+  fr: { hero: "Hero", productGrid: "Produits", features: "Avantages", imageText: "Image & texte", testimonials: "Avis", marquee: "Texte défilant", faq: "FAQ", newsletter: "Newsletter", ugc: "Photos clients", trust: "Confiance", bundle: "Remise quantité", sizeGuide: "Guide des tailles", countdown: "Compte à rebours", collection: "Catégories", comparison: "Comparaison", lookbook: "Lookbook", completeTheLook: "Complete the look", story: "Récit" },
+  de: { hero: "Hero", productGrid: "Produkte", features: "Vorteile", imageText: "Bild & Text", testimonials: "Bewertungen", marquee: "Lauftext", faq: "FAQ", newsletter: "Newsletter", ugc: "Kundenfotos", trust: "Vertrauen", bundle: "Mengenrabatt", sizeGuide: "Größentabelle", countdown: "Countdown", collection: "Kategorien", comparison: "Vergleich", lookbook: "Lookbook", completeTheLook: "Complete the look", story: "Storytelling" },
+  es: { hero: "Hero", productGrid: "Productos", features: "Ventajas", imageText: "Imagen & texto", testimonials: "Reseñas", marquee: "Texto deslizante", faq: "FAQ", newsletter: "Boletín", ugc: "Fotos de clientes", trust: "Confianza", bundle: "Descuento por cantidad", sizeGuide: "Guía de tallas", countdown: "Cuenta atrás", collection: "Categorías", comparison: "Comparativa", lookbook: "Lookbook", completeTheLook: "Complete the look", story: "Historia" },
+};

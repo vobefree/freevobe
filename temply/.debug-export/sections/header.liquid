@@ -1,0 +1,91 @@
+{%- if section.settings.announcement != blank -%}
+  <div class="announcement">{{ section.settings.announcement | escape }}</div>
+{%- endif -%}
+<header class="site-header{% if section.settings.sticky %} site-header--sticky{% endif %}">
+  <div class="container header__inner header__inner--{{ section.settings.actions_position | default: 'right' }}">
+    <a class="header__logo" href="{{ routes.root_url }}">{{ section.settings.logo_text | default: shop.name | escape }}</a>
+    <nav class="header__nav" aria-label="Main menu">
+      {%- for link in section.settings.menu.links -%}
+        <a href="{{ link.url }}">{{ link.title | escape }}</a>
+      {%- endfor -%}
+    </nav>
+    <div class="header__actions header__actions--{{ section.settings.actions_position | default: 'right' }}">
+      {%- if section.settings.show_search -%}
+        <a class="header__action" href="{{ routes.search_url }}" aria-label="{{ 'general.search' | t | default: 'Search' }}">
+          {% render 'icon', name: 'search' %}
+        </a>
+      {%- endif -%}
+      {%- if section.settings.show_cart -%}
+        <a class="header__action" href="{{ routes.cart_url }}" aria-label="{{ 'general.cart' | t | default: 'Cart' }}">
+          {% render 'icon', name: 'cart' %}
+          <span class="header__cart-count">{{ cart.item_count }}</span>
+        </a>
+      {%- endif -%}
+    </div>
+  </div>
+</header>
+
+{% schema %}
+{
+  "name": "Header",
+  "class": "section-header",
+  "settings": [
+    {
+      "type": "text",
+      "id": "logo_text",
+      "label": "Logo text",
+      "default": "Fri Butik"
+    },
+    {
+      "type": "link_list",
+      "id": "menu",
+      "label": "Menu",
+      "default": "main-menu"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_search",
+      "label": "Show search",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "show_cart",
+      "label": "Show cart",
+      "default": true
+    },
+    {
+      "type": "select",
+      "id": "actions_position",
+      "label": "Search & cart position",
+      "default": "left",
+      "options": [
+        {
+          "value": "left",
+          "label": "Left"
+        },
+        {
+          "value": "center",
+          "label": "Center"
+        },
+        {
+          "value": "right",
+          "label": "Right"
+        }
+      ]
+    },
+    {
+      "type": "checkbox",
+      "id": "sticky",
+      "label": "Sticky header",
+      "default": false
+    },
+    {
+      "type": "text",
+      "id": "announcement",
+      "label": "Announcement bar",
+      "default": "Fri frakt över 799 kr · Leverans 1–3 dagar"
+    }
+  ]
+}
+{% endschema %}

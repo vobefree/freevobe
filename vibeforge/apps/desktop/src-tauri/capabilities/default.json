@@ -1,0 +1,15 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "Minsta möjliga behörigheter för huvudfönstret: agentkommandon, öppna länkar i systemwebbläsaren och uppdateringskontroll.",
+  "windows": ["main"],
+  "permissions": [
+    "core:default",
+    "core:window:allow-start-dragging",
+    "core:window:allow-set-title",
+    "core:webview:allow-internal-toggle-devtools",
+    "shell:allow-open",
+    "updater:default"
+  ],
+  "platforms": ["linux", "macOS", "windows"]
+}

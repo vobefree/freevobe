@@ -1,0 +1,15 @@
+/_next/static/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/opengraph-image
+  Content-Type: image/png
+  Cache-Control: public, max-age=3600
+
+/icon.svg
+  Cache-Control: public, max-age=86400
+
+/robots.txt
+  Cache-Control: public, max-age=3600
+
+/sitemap.xml
+  Cache-Control: public, max-age=3600

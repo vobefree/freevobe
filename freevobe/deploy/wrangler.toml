@@ -1,0 +1,10 @@
+# Endast för lokal verifiering i workerd: npx wrangler dev --config deploy/wrangler.toml
+# Samma worker.js och samma assets som manifest.json pekar på.
+name = "freevobe"
+main = "worker.js"
+compatibility_date = "2025-06-01"
+
+[assets]
+directory = "./public"
+binding = "ASSETS"
+not_found_handling = "none"

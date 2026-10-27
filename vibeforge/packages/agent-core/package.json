@@ -1,0 +1,21 @@
+{
+  "name": "@vibeforge/agent-core",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "VibeForge agent-kärna: Ollama-klient, agent-loop, verktyg, kontext, skills, MCP och policy. Inga runtime-beroenden.",
+  "exports": {
+    ".": "./src/index.ts",
+    "./testing": "./src/testing/index.ts"
+  },
+  "bin": {
+    "vibeforge-doctor": "./bin/vibeforge-doctor.mjs"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --dir src"
+  },
+  "dependencies": {
+    "@vibeforge/protocol": "*"
+  }
+}

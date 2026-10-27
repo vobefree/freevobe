@@ -1,0 +1,51 @@
+<div class="marquee marquee--{{ section.settings.style }}" style="--marquee-speed: {{ section.settings.speed }}s">
+  <div class="marquee__track">
+    <span>{{ section.settings.text | escape }}</span>
+    <span aria-hidden="true">{{ section.settings.text | escape }}</span>
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "Marquee",
+  "settings": [
+    {
+      "type": "textarea",
+      "id": "text",
+      "label": "Text",
+      "default": "Fri frakt över 799 kr · Snabb leverans · 30 dagars retur"
+    },
+    {
+      "type": "range",
+      "id": "speed",
+      "label": "Speed",
+      "min": 10,
+      "max": 80,
+      "step": 2,
+      "unit": "s",
+      "default": 28
+    },
+    {
+      "type": "select",
+      "id": "style",
+      "label": "Style",
+      "default": "solid",
+      "options": [
+        {
+          "value": "solid",
+          "label": "Solid"
+        },
+        {
+          "value": "outline",
+          "label": "Outline"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Marquee"
+    }
+  ]
+}
+{% endschema %}

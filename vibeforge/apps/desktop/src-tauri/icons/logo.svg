@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="VibeForge">
+  <rect x="2.2" y="2.2" width="59.6" height="59.6" rx="13" fill="#1b1f27" stroke="#2a2f3a" stroke-width="2.6"/>
+  <path d="M16.6 15.4 32 43.5 47.4 15.4" fill="none" stroke="#ff7a3d" stroke-width="9.6" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="18" y="50" width="28" height="4.2" rx="2.1" fill="#3a4150"/>
+  <path d="M48.6 38.4 51.4 41.2 48.6 44 45.8 41.2z" fill="#ffd166"/>
+</svg>

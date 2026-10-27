@@ -1,0 +1,81 @@
+name: Release
+
+# Bygger .exe, .dmg, .AppImage och .deb och lägger dem som artefakter.
+# Auto-uppdatering är medvetet AVSTÄNGD (plugins.updater.active = false i tauri.conf.json)
+# tills en release-server finns och signeringsnycklarna är på plats. Se README.
+#
+# För att aktivera signering: lägg in hemligheterna nedan och sätt
+# plugins.updater.active = true i apps/desktop/src-tauri/tauri.conf.json.
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Bygg (${{ matrix.label }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            label: Windows (.exe)
+            bundles: nsis
+          - os: macos-latest
+            label: macOS (.dmg)
+            bundles: dmg
+          - os: ubuntu-22.04
+            label: Linux (.AppImage/.deb)
+            bundles: appimage,deb
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.14.0
+          cache: npm
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: apps/desktop/src-tauri
+
+      - name: Linux-beroenden
+        if: matrix.os == 'ubuntu-22.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+
+      - name: Installera beroenden
+        run: npm ci
+
+      - name: Generera appikoner
+        run: npm run icons
+
+      - name: Typkontroll och tester
+        run: npm run typecheck && npm test
+
+      - name: Bygg paketet
+        uses: tauri-apps/tauri-action@v0
+        env:
+          # Signering – aktivera genom att lägga in hemligheterna i repot:
+          #   Windows: TAURI_SIGNING_PRIVATE_KEY, TAURI_SIGNING_PRIVATE_KEY_PASSWORD
+          #   macOS:   APPLE_CERTIFICATE, APPLE_CERTIFICATE_PASSWORD, APPLE_ID,
+          #            APPLE_PASSWORD, APPLE_TEAM_ID
+          #   Linux:   inget krav för AppImage/deb
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        with:
+          projectPath: apps/desktop
+          args: --bundles ${{ matrix.bundles }}
+          tagName: ${{ github.ref_name }}
+          releaseName: VibeForge ${{ github.ref_name }}
+          releaseDraft: true
+          prerelease: false

@@ -1,0 +1,35 @@
+<section class="section">
+  <div class="container">
+    <div class="page-head"><h1>Din varukorg</h1></div>
+    <form action="{{ routes.cart_url }}" method="post" class="cart">
+      {%- for item in cart.items -%}
+        <div class="cart__row">
+          {%- if item.image -%}<img src="{{ item.image | image_url: width: 200 }}" alt="{{ item.title | escape }}" loading="lazy">{%- endif -%}
+          <div>
+            <a href="{{ item.url }}"><strong>{{ item.product.title }}</strong></a>
+            <p>{{ item.variant.title }} · {{ item.original_price | money }}</p>
+            <input type="number" name="updates[]" value="{{ item.quantity }}" min="0" aria-label="Antal">
+          </div>
+          <p>{{ item.final_line_price | money }}</p>
+        </div>
+      {%- else -%}
+        <p class="empty">Din varukorg är tom. <a href="{{ routes.all_products_collection_url }}">Fortsätt handla</a></p>
+      {%- endfor -%}
+      {%- if cart.item_count > 0 -%}
+        <div class="cart__total"><span>Totalt</span><span>{{ cart.total_price | money }}</span></div>
+        <div class="cart__actions">
+          <button class="btn btn--secondary" type="submit" name="update">Uppdatera</button>
+          <button class="btn" type="submit" name="checkout">Till kassan</button>
+        </div>
+      {%- endif -%}
+    </form>
+    {% render 'integration-payments' %}
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "Cart",
+  "settings": []
+}
+{% endschema %}

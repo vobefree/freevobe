@@ -1,0 +1,69 @@
+<section class="section">
+  <div class="container">
+    <div class="page-head">
+      <h1>{{ collection.title }}</h1>
+      {%- if collection.description != blank -%}<p>{{ collection.description | strip_html | truncate: 180 }}</p>{%- endif -%}
+    </div>
+    {%- if settings.search_filters and collection.filters.size > 0 -%}
+      <div class="facets">
+        {%- for filter in collection.filters -%}
+          <details class="facets__group" open>
+            <summary>{{ filter.label }} <span class="facets__count">{{ filter.active_values.size }}</span></summary>
+            <div class="facets__body">
+              {%- case filter.type -%}
+                {%- when 'list' -%}
+                  <ul>
+                    {%- for value in filter.values -%}
+                      <li>
+                        <label>
+                          <input type="checkbox" name="{{ value.param_name }}" value="{{ value.value }}" {% if value.active %}checked{% endif %} {% if value.count == 0 and value.active == false %}disabled{% endif %} onchange="this.form.submit()">
+                          <span>{{ value.label }} ({{ value.count }})</span>
+                        </label>
+                      </li>
+                    {%- endfor -%}
+                  </ul>
+                {%- when 'price_range' -%}
+                  <div class="facets__price">
+                    <span>{{ filter.min_value.value | default: 0 | money }} – {{ filter.max_value.value | default: filter.range_max | money }}</span>
+                  </div>
+              {%- endcase -%}
+            </div>
+          </details>
+        {%- endfor -%}
+        <div class="facets__sort">
+          <label for="SortBy">{{ 'collections.sort' | t | default: 'Sortera' }}</label>
+          <select id="SortBy" name="sort_by" onchange="this.form.submit()">
+            {%- for option in collection.sort_options -%}
+              <option value="{{ option.value }}" {% if option.value == collection.sort_by %}selected{% endif %}>{{ option.name }}</option>
+            {%- endfor -%}
+          </select>
+        </div>
+      </div>
+    {%- endif -%}
+    {%- paginate collection.products by 24 -%}
+      <div class="product-grid">
+        {%- for product in collection.products -%}
+          {% render 'product-card', product: product, show_price: true, show_rating: false %}
+        {%- else -%}
+          <p class="empty">Inga produkter än.</p>
+        {%- endfor -%}
+      </div>
+      {%- if paginate.pages > 1 -%}
+        <div class="pagination">
+          {%- for part in paginate.parts -%}
+            {%- if part.is_link -%}<a href="{{ part.url }}">{{ part.title }}</a>
+            {%- elsif part.title == paginate.current_page -%}<span class="is-current">{{ part.title }}</span>
+            {%- else -%}<span>{{ part.title }}</span>{%- endif -%}
+          {%- endfor -%}
+        </div>
+      {%- endif -%}
+    {%- endpaginate -%}
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "Collection",
+  "settings": []
+}
+{% endschema %}

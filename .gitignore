@@ -1,0 +1,34 @@
+node_modules/
+.next/
+out/
+*.log
+*.tsbuildinfo
+next-env.d.ts
+
+# lokal databas
+data.db
+data.db-*
+*.sqlite
+
+# hemligheter – sätt dessa i Vercel:s dashboard vid deploy
+.env
+.env.local
+.env*.local
+
+# byggartefakter som skapas per projekt
+coverage/
+playwright-report/
+test-results/
+blob-report/
+freevobe-mobile/.expo/
+freevobe-mobile/dist-ios/
+freevobe-mobile/dist-android/
+
+# lokal körande dev-server
+*.pid
+
+# Freebuff-verktygets eget tillstånd
+.freebuff/
+
+# Wranglers lokala state (miniflare, cachar, sqlite)
+.wrangler/
