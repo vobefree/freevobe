@@ -65,8 +65,10 @@ jobs:
     # Authenticode-signering av installeraren. Hemligheterna är valfria: utan dem blir bygget
     # osignerat och SmartScreen varnar vid start, men releasen publiceras ändå. Se docs/releasing.md.
     env:
-      WINDOWS_CERTIFICATE: ${{ secrets.WINDOWS_CERTIFICATE }}
-      WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
+      # Hemligheterna ligger i jobbets miljö under VIBEFORGE_-namn och flyttas till sina riktiga
+      # namn av signeringssteget – bara när de har ett värde. Skälet står där.
+      VIBEFORGE_WINDOWS_CERTIFICATE: ${{ secrets.WINDOWS_CERTIFICATE }}
+      VIBEFORGE_WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -88,9 +90,12 @@ jobs:
         working-directory: vibeforge
         run: |
           $ErrorActionPreference = 'Stop'
-          $configPath = 'tauri-signing.conf.json'
+          # Konfigurationen skrivs utanför repot och pekas ut med en absolut sökväg: Tauri körs med
+          # workspace-katalogen (apps/desktop) som arbetskatalog och letar annars efter filen där.
+          $configPath = Join-Path $env:RUNNER_TEMP 'tauri-signing.conf.json'
+          "VIBEFORGE_TAURI_CONFIG=$configPath" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
 
-          if ([string]::IsNullOrWhiteSpace($env:WINDOWS_CERTIFICATE)) {
+          if ([string]::IsNullOrWhiteSpace($env:VIBEFORGE_WINDOWS_CERTIFICATE)) {
             '{}' | Set-Content -Path $configPath -Encoding utf8
             "VIBEFORGE_WINDOWS_SIGNED=false" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
             Write-Host "::warning::WINDOWS_CERTIFICATE saknas – installeraren blir osignerad och SmartScreen varnar vid start (se docs/releasing.md)."
@@ -100,8 +105,8 @@ jobs:
           # Certifikatet skickas in som base64 (radbrytningar tillåtna) och importeras i runnerkontots
           # arkiv – det är så Tauri hittar det, via tumavtrycket.
           $pfx = Join-Path $env:RUNNER_TEMP 'codesign.pfx'
-          [IO.File]::WriteAllBytes($pfx, [Convert]::FromBase64String(($env:WINDOWS_CERTIFICATE -replace '\s', '')))
-          $password = ConvertTo-SecureString -String $env:WINDOWS_CERTIFICATE_PASSWORD -Force -AsPlainText
+          [IO.File]::WriteAllBytes($pfx, [Convert]::FromBase64String(($env:VIBEFORGE_WINDOWS_CERTIFICATE -replace '\s', '')))
+          $password = ConvertTo-SecureString -String $env:VIBEFORGE_WINDOWS_CERTIFICATE_PASSWORD -Force -AsPlainText
           $cert = Import-PfxCertificate -FilePath $pfx -CertStoreLocation Cert:\CurrentUser\My -Password $password
           Remove-Item $pfx -Force
 
@@ -122,10 +127,11 @@ jobs:
           Write-Host "Importerade $($cert.Subject) ($($cert.Thumbprint))."
 
       - name: Bygg installeraren
+        shell: pwsh
         working-directory: vibeforge
         run: >-
           npm run tauri --workspace @vibeforge/desktop -- build
-          --bundles nsis --config tauri-signing.conf.json
+          --bundles nsis --config "$env:VIBEFORGE_TAURI_CONFIG"
       - name: Döp artefakten till nedladdningssidans filnamn
         shell: bash
         working-directory: vibeforge
@@ -169,17 +175,18 @@ jobs:
     needs: verify
     runs-on: macos-latest
     # Koden-signering och notarisering. Alla är valfria: utan dem blir appen osignerad och Gatekeeper
-    # varnar vid start, men releasen publiceras ändå. Se docs/releasing.md.
+    # varnar vid start, men releasen publiceras ändå. Se docs/releasing.md. Namnen har VIBEFORGE_-
+    # prefix och flyttas till sina riktiga namn av signeringssteget – bara när de har ett värde.
     env:
-      APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
-      APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
-      APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
-      APPLE_ID: ${{ secrets.APPLE_ID }}
-      APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
-      APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-      APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
-      APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
-      APPLE_API_KEY_P8_BASE64: ${{ secrets.APPLE_API_KEY_P8_BASE64 }}
+      VIBEFORGE_APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+      VIBEFORGE_APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+      VIBEFORGE_APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+      VIBEFORGE_APPLE_ID: ${{ secrets.APPLE_ID }}
+      VIBEFORGE_APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+      VIBEFORGE_APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+      VIBEFORGE_APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
+      VIBEFORGE_APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+      VIBEFORGE_APPLE_API_KEY_P8_BASE64: ${{ secrets.APPLE_API_KEY_P8_BASE64 }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -203,21 +210,39 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          # Tauri läser APPLE_*-variablerna själv under bygget, så de behöver sina riktiga namn – men
+          # bara när de har ett värde: en tom APPLE_CERTIFICATE eller APPLE_SIGNING_IDENTITY tolkas
+          # som "signera med ett tomt certifikat" och fäller bygget. Därför VIBEFORGE_-namnen i
+          # jobbets miljö och en flytt hit, enbart för de variabler som faktiskt är satta.
+          expose() {
+            local name="$1"
+            local value="${2:-}"
+            [ -n "$value" ] || return 0
+            printf '%s=%s\n' "$name" "$(printf '%s' "$value" | tr -d '\n')" >> "$GITHUB_ENV"
+          }
           # Notarisering med App Store Connect-nyckel kräver .p8-filen på disk. Den skickas in som
           # base64 och läggs i runnerkontots tempkatalog – aldrig i repot.
-          if [ -n "${APPLE_API_KEY_P8_BASE64:-}" ]; then
-            printf '%s' "$APPLE_API_KEY_P8_BASE64" | tr -d '\n' \
+          if [ -n "${VIBEFORGE_APPLE_API_KEY_P8_BASE64:-}" ]; then
+            printf '%s' "$VIBEFORGE_APPLE_API_KEY_P8_BASE64" | tr -d '\n' \
               | openssl base64 -d -A > "$RUNNER_TEMP/AuthKey.p8"
             chmod 600 "$RUNNER_TEMP/AuthKey.p8"
-            echo "APPLE_API_KEY_PATH=$RUNNER_TEMP/AuthKey.p8" >> "$GITHUB_ENV"
+            expose APPLE_API_KEY_PATH "$RUNNER_TEMP/AuthKey.p8"
           fi
-          if [ -n "${APPLE_CERTIFICATE:-}" ]; then
+          expose APPLE_CERTIFICATE "${VIBEFORGE_APPLE_CERTIFICATE:-}"
+          expose APPLE_CERTIFICATE_PASSWORD "${VIBEFORGE_APPLE_CERTIFICATE_PASSWORD:-}"
+          expose APPLE_SIGNING_IDENTITY "${VIBEFORGE_APPLE_SIGNING_IDENTITY:-}"
+          expose APPLE_ID "${VIBEFORGE_APPLE_ID:-}"
+          expose APPLE_PASSWORD "${VIBEFORGE_APPLE_PASSWORD:-}"
+          expose APPLE_TEAM_ID "${VIBEFORGE_APPLE_TEAM_ID:-}"
+          expose APPLE_API_KEY "${VIBEFORGE_APPLE_API_KEY:-}"
+          expose APPLE_API_ISSUER "${VIBEFORGE_APPLE_API_ISSUER:-}"
+          if [ -n "${VIBEFORGE_APPLE_CERTIFICATE:-}" ]; then
             echo "signed=true" >> "$GITHUB_OUTPUT"
           else
             echo "signed=false" >> "$GITHUB_OUTPUT"
             echo "::warning::APPLE_CERTIFICATE saknas – appen blir osignerad och Gatekeeper varnar vid start (se docs/releasing.md)."
           fi
-          if [ -n "${APPLE_ID:-}" ] || [ -n "${APPLE_API_KEY:-}" ]; then
+          if [ -n "${VIBEFORGE_APPLE_ID:-}" ] || [ -n "${VIBEFORGE_APPLE_API_KEY:-}" ]; then
             echo "notary=true" >> "$GITHUB_OUTPUT"
           else
             echo "notary=false" >> "$GITHUB_OUTPUT"
@@ -276,17 +301,17 @@ jobs:
     runs-on: macos-15-intel
     # En utgången runner får inte stoppa de andra filerna från att publiceras.
     continue-on-error: true
-    # Samma signeringshemligheter som macos-jobbet. Se docs/releasing.md.
+    # Samma signeringshemligheter som macos-jobbet (VIBEFORGE_-prefix, se kommentaren där).
     env:
-      APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
-      APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
-      APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
-      APPLE_ID: ${{ secrets.APPLE_ID }}
-      APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
-      APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-      APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
-      APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
-      APPLE_API_KEY_P8_BASE64: ${{ secrets.APPLE_API_KEY_P8_BASE64 }}
+      VIBEFORGE_APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+      VIBEFORGE_APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+      VIBEFORGE_APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+      VIBEFORGE_APPLE_ID: ${{ secrets.APPLE_ID }}
+      VIBEFORGE_APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+      VIBEFORGE_APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+      VIBEFORGE_APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
+      VIBEFORGE_APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+      VIBEFORGE_APPLE_API_KEY_P8_BASE64: ${{ secrets.APPLE_API_KEY_P8_BASE64 }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -310,21 +335,39 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          # Tauri läser APPLE_*-variablerna själv under bygget, så de behöver sina riktiga namn – men
+          # bara när de har ett värde: en tom APPLE_CERTIFICATE eller APPLE_SIGNING_IDENTITY tolkas
+          # som "signera med ett tomt certifikat" och fäller bygget. Därför VIBEFORGE_-namnen i
+          # jobbets miljö och en flytt hit, enbart för de variabler som faktiskt är satta.
+          expose() {
+            local name="$1"
+            local value="${2:-}"
+            [ -n "$value" ] || return 0
+            printf '%s=%s\n' "$name" "$(printf '%s' "$value" | tr -d '\n')" >> "$GITHUB_ENV"
+          }
           # Notarisering med App Store Connect-nyckel kräver .p8-filen på disk. Den skickas in som
           # base64 och läggs i runnerkontots tempkatalog – aldrig i repot.
-          if [ -n "${APPLE_API_KEY_P8_BASE64:-}" ]; then
-            printf '%s' "$APPLE_API_KEY_P8_BASE64" | tr -d '\n' \
+          if [ -n "${VIBEFORGE_APPLE_API_KEY_P8_BASE64:-}" ]; then
+            printf '%s' "$VIBEFORGE_APPLE_API_KEY_P8_BASE64" | tr -d '\n' \
               | openssl base64 -d -A > "$RUNNER_TEMP/AuthKey.p8"
             chmod 600 "$RUNNER_TEMP/AuthKey.p8"
-            echo "APPLE_API_KEY_PATH=$RUNNER_TEMP/AuthKey.p8" >> "$GITHUB_ENV"
+            expose APPLE_API_KEY_PATH "$RUNNER_TEMP/AuthKey.p8"
           fi
-          if [ -n "${APPLE_CERTIFICATE:-}" ]; then
+          expose APPLE_CERTIFICATE "${VIBEFORGE_APPLE_CERTIFICATE:-}"
+          expose APPLE_CERTIFICATE_PASSWORD "${VIBEFORGE_APPLE_CERTIFICATE_PASSWORD:-}"
+          expose APPLE_SIGNING_IDENTITY "${VIBEFORGE_APPLE_SIGNING_IDENTITY:-}"
+          expose APPLE_ID "${VIBEFORGE_APPLE_ID:-}"
+          expose APPLE_PASSWORD "${VIBEFORGE_APPLE_PASSWORD:-}"
+          expose APPLE_TEAM_ID "${VIBEFORGE_APPLE_TEAM_ID:-}"
+          expose APPLE_API_KEY "${VIBEFORGE_APPLE_API_KEY:-}"
+          expose APPLE_API_ISSUER "${VIBEFORGE_APPLE_API_ISSUER:-}"
+          if [ -n "${VIBEFORGE_APPLE_CERTIFICATE:-}" ]; then
             echo "signed=true" >> "$GITHUB_OUTPUT"
           else
             echo "signed=false" >> "$GITHUB_OUTPUT"
             echo "::warning::APPLE_CERTIFICATE saknas – appen blir osignerad och Gatekeeper varnar vid start (se docs/releasing.md)."
           fi
-          if [ -n "${APPLE_ID:-}" ] || [ -n "${APPLE_API_KEY:-}" ]; then
+          if [ -n "${VIBEFORGE_APPLE_ID:-}" ] || [ -n "${VIBEFORGE_APPLE_API_KEY:-}" ]; then
             echo "notary=true" >> "$GITHUB_OUTPUT"
           else
             echo "notary=false" >> "$GITHUB_OUTPUT"
@@ -423,10 +466,10 @@ jobs:
     # Signering av release-APK:n. Utan hemligheterna signeras APK:n med debugnyckeln – installerbar
     # vid sidan om butiken, men inte publicerbar. Se docs/releasing.md.
     env:
-      ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
-      ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-      ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
-      ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+      VIBEFORGE_ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+      VIBEFORGE_ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+      VIBEFORGE_ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+      VIBEFORGE_ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
     defaults:
       run:
         working-directory: freevobe-mobile
@@ -454,20 +497,20 @@ jobs:
           set -euo pipefail
           # Nyckellagret läses av plugins/with-android-release-signing.js via android/key.properties.
           # Båda filerna ligger under android/, som prebuild skapar och .gitignore utesluter.
-          if [ -z "${ANDROID_KEYSTORE_BASE64:-}" ]; then
+          if [ -z "${VIBEFORGE_ANDROID_KEYSTORE_BASE64:-}" ]; then
             echo "VIBEFORGE_ANDROID_SIGNED=false" >> "$GITHUB_ENV"
             echo "::warning::ANDROID_KEYSTORE_BASE64 saknas – APK:n signeras med debugnyckeln och kan inte publiceras i Play Store (se docs/releasing.md)."
             exit 0
           fi
-          printf '%s' "$ANDROID_KEYSTORE_BASE64" | tr -d '\n' | base64 -d > android/app/upload-key.jks
+          printf '%s' "$VIBEFORGE_ANDROID_KEYSTORE_BASE64" | tr -d '\n' | base64 -d > android/app/upload-key.jks
           cat > android/key.properties <<EOF
           storeFile=app/upload-key.jks
-          storePassword=$ANDROID_KEYSTORE_PASSWORD
-          keyAlias=$ANDROID_KEY_ALIAS
-          keyPassword=$ANDROID_KEY_PASSWORD
+          storePassword=$VIBEFORGE_ANDROID_KEYSTORE_PASSWORD
+          keyAlias=$VIBEFORGE_ANDROID_KEY_ALIAS
+          keyPassword=$VIBEFORGE_ANDROID_KEY_PASSWORD
           EOF
           echo "VIBEFORGE_ANDROID_SIGNED=true" >> "$GITHUB_ENV"
-          echo "Nyckellagret är på plats (alias $ANDROID_KEY_ALIAS)."
+          echo "Nyckellagret är på plats (alias $VIBEFORGE_ANDROID_KEY_ALIAS)."
       - name: Bygg APK
         working-directory: freevobe-mobile/android
         run: ./gradlew assembleRelease --no-daemon
