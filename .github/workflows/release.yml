@@ -245,4 +245,7 @@ jobs:
               --title "Freevobe $GITHUB_REF_NAME" \
               --generate-notes
           fi
+          # En release vars tagg har flyttats kan ha blivit ett utkast och tappat taggknytningen.
+          # Publicera den därför alltid om, så att nedladdningssidan hittar filerna.
+          gh release edit "$GITHUB_REF_NAME" --repo "$repo" --draft=false --latest
           gh release view "$GITHUB_REF_NAME" --repo "$repo" --json assets --jq '.assets[].name'

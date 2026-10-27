@@ -1,0 +1,36 @@
+# Hjälpworkflow: sätter en release från utkast till publicerad.
+#
+# Behövs när releasen blivit liggande som utkast – det händer om taggen har flyttats, eftersom
+# GitHub kopplar loss releasen från taggen och gör den oprivat tills den publiceras igen. En
+# opublicerad release syns inte för nedladdningssidan, även om filerna redan ligger där.
+#
+# Körs manuellt från Actions → Publicera release → Run workflow med taggen som inmatning.
+name: Publicera release
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Taggen vars release ska publiceras (t.ex. v0.1.0)
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    name: Publicera ${{ inputs.tag }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Sätt releasen till publicerad
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ inputs.tag }}
+        run: |
+          set -euo pipefail
+          repo="$GITHUB_REPOSITORY"
+          echo "Före: $(gh release view "$TAG" --repo "$repo" --json isDraft,isLatest,tagName)"
+          gh release edit "$TAG" --repo "$repo" --draft=false --latest
+          echo "Efter: $(gh release view "$TAG" --repo "$repo" --json isDraft,isLatest,tagName,assets)"
