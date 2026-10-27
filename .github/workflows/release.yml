@@ -174,9 +174,52 @@ jobs:
           path: vibeforge/dist-release/*
           if-no-files-found: error
 
+  android:
+    name: Android (.apk)
+    needs: verify
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: freevobe-mobile
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          # Mobilappen körs på samma Node-version som CI-jobbet för den.
+          node-version: 22
+          cache: npm
+          cache-dependency-path: freevobe-mobile/package-lock.json
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: android-actions/setup-android@v3
+      - run: npm ci
+      - name: Generera Android-projektet
+        run: npx expo prebuild --platform android --no-install
+      - name: Bygg APK
+        working-directory: freevobe-mobile/android
+        run: ./gradlew assembleRelease --no-daemon
+      - name: Döp artefakten
+        shell: bash
+        working-directory: freevobe-mobile
+        run: |
+          set -euo pipefail
+          mkdir -p dist-release
+          version=$(node -p "require('./app.json').expo.version")
+          # APK:ns egen version (app.json), inte releasetaggens version: det är den appen visar.
+          cp android/app/build/outputs/apk/release/app-release.apk \
+            "dist-release/Freevobe-Mobile_${version}.apk"
+          ls -l dist-release
+      - uses: actions/upload-artifact@v4
+        with:
+          name: android-app
+          path: freevobe-mobile/dist-release/*
+          if-no-files-found: error
+
   release:
     name: Publicera releasen
-    needs: [windows, macos, linux]
+    needs: [windows, macos, linux, android]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v4

@@ -45,10 +45,15 @@ Filerna döps om till exakt de namn nedladdningssidan letar efter:
 | Windows | `Freevobe_v0.1.0_x64-setup.exe` |
 | macOS (Apple Silicon) | `Freevobe_v0.1.0_aarch64.dmg` |
 | Linux | `Freevobe_v0.1.0_amd64.AppImage` |
+| Android (mobilappen) | `Freevobe-Mobile_1.0.0.apk` (appen egen version ur `app.json`) |
 
 Ändrar du namnen i workflowen måste `ASSET_FILE_NAMES` i `freevobe/src/config/release.ts` ändras
 ochå – annars hittas filerna bara via GitHub-API:t, inte via den förväntade adressen. macOS för
 Intel byggs inte än; den knappen skickar då vidare till släppsidan.
+
+Android-appen byggs i samma workflow med Gradle (`expo prebuild` + `assembleRelease`) och kräver
+inget EAS-konto. APK:n signeras med debugnyckeln, alltså installerbar vid sidan om butiken – för
+Play Store krävs EAS-profilen `production` och ett eget nyckellager.
 
 ```bash
 git tag v0.2.0
