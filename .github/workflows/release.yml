@@ -193,7 +193,9 @@ jobs:
         with:
           distribution: temurin
           java-version: 17
-      - uses: android-actions/setup-android@v3
+      # Ingen setup-android här: runnern har redan Android-SDK:t på plats (ANDROID_HOME), och
+      # actionen byter ut cmdline-tools mot en version vars licenser inte är accepterade – då
+      # fastnar bygget i Googles licensprompt i stället för att bygga.
       - run: npm ci
       - name: Generera Android-projektet
         run: npx expo prebuild --platform android --no-install
