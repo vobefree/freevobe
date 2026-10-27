@@ -1,0 +1,76 @@
+# Bygger Intel-varianten av macOS-installeraren och lägger den i en befintlig release.
+#
+# Varför ett eget jobb: GitHub-runnern `macos-latest` är Apple Silicon, och sidobinären (agenten)
+# paketeras med Node:s SEA på byggmaskinens arkitektur. En x64-dmg kräver därför en Intel-runner –
+# annars blir agent-binären arm64 och appen startar inte på en Intel-Mac.
+#
+# Release-workflowen bygger den här varianten automatiskt när en tagg pushas. Den här filen finns
+# för att kunna lägga till filen i en release som redan är publicerad, utan att bygga om allt.
+name: macOS Intel (.dmg)
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release-tagg att lägga filen i (t.ex. v0.1.0)'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: macos-intel-${{ inputs.tag }}
+  cancel-in-progress: false
+
+env:
+  # Samma version som sidecar-binären är verifierad med (Node:s SEA kräver >= 22.5).
+  NODE_VERSION: 24
+
+jobs:
+  macos-intel:
+    name: macOS (.dmg, Intel)
+    runs-on: macos-15-intel
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: vibeforge/package-lock.json
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-apple-darwin
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: vibeforge/apps/desktop/src-tauri
+      - run: npm ci
+        working-directory: vibeforge
+      - name: Bygg agenten och sidecar-binären
+        working-directory: vibeforge
+        run: npm run sidecar:build
+      - name: Bygg installeraren
+        working-directory: vibeforge
+        run: >-
+          npm run tauri --workspace @vibeforge/desktop -- build
+          --target x86_64-apple-darwin --bundles dmg
+      - name: Döp artefakten till nedladdningssidans filnamn
+        shell: bash
+        working-directory: vibeforge
+        run: |
+          set -euo pipefail
+          mkdir -p dist-release
+          cp apps/desktop/src-tauri/target/x86_64-apple-darwin/release/bundle/dmg/*.dmg \
+            "dist-release/Freevobe_${{ inputs.tag }}_x64.dmg"
+          ls -l dist-release
+      - name: Lägg filen i releasen
+        shell: bash
+        working-directory: vibeforge
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          gh release upload "${{ inputs.tag }}" dist-release/* \
+            --repo "$GITHUB_REPOSITORY" --clobber
+          gh release view "${{ inputs.tag }}" --repo "$GITHUB_REPOSITORY" \
+            --json assets --jq '.assets[].name'

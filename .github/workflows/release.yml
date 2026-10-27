@@ -132,6 +132,53 @@ jobs:
           path: vibeforge/dist-release/*
           if-no-files-found: error
 
+  # Intel-Macar: macos-latest är Apple Silicon, och sidobinären paketeras på byggmaskinens
+  # arkitektur. Därför en egen Intel-runner i stället för en universal-binär (som skulle kräva
+  # Rosetta för att ens kunna bygga agent-binären för x86_64).
+  macos_intel:
+    name: macOS (.dmg, Intel)
+    needs: verify
+    runs-on: macos-15-intel
+    # En utgången runner får inte stoppa de andra filerna från att publiceras.
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: vibeforge/package-lock.json
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-apple-darwin
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: vibeforge/apps/desktop/src-tauri
+      - run: npm ci
+        working-directory: vibeforge
+      - name: Bygg agenten och sidecar-binären
+        working-directory: vibeforge
+        run: npm run sidecar:build
+      - name: Bygg installeraren
+        working-directory: vibeforge
+        run: >-
+          npm run tauri --workspace @vibeforge/desktop -- build
+          --target x86_64-apple-darwin --bundles dmg
+      - name: Döp artefakten till nedladdningssidans filnamn
+        shell: bash
+        working-directory: vibeforge
+        run: |
+          set -euo pipefail
+          mkdir -p dist-release
+          cp apps/desktop/src-tauri/target/x86_64-apple-darwin/release/bundle/dmg/*.dmg \
+            "dist-release/Freevobe_${GITHUB_REF_NAME}_x64.dmg"
+          ls -l dist-release
+      - uses: actions/upload-artifact@v4
+        with:
+          name: macos-intel-installer
+          path: vibeforge/dist-release/*
+          if-no-files-found: error
+
   linux:
     name: Linux (.AppImage)
     needs: verify
@@ -221,7 +268,7 @@ jobs:
 
   release:
     name: Publicera releasen
-    needs: [windows, macos, linux, android]
+    needs: [windows, macos, macos_intel, linux, android]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v4

@@ -20,6 +20,7 @@ const release: Release = {
     { name: 'Freevobe_0.2.0_aarch64.dmg', url: 'https://example.test/arm.dmg', sizeBytes: 1, downloads: 3 },
     { name: 'Freevobe_0.2.0_x64.dmg', url: 'https://example.test/intel.dmg', sizeBytes: 1, downloads: 4 },
     { name: 'Freevobe_0.2.0_amd64.AppImage', url: 'https://example.test/linux.AppImage', sizeBytes: 1, downloads: 5 },
+    { name: 'Freevobe-Mobile_1.0.0.apk', url: 'https://example.test/mobile.apk', sizeBytes: 1, downloads: 6 },
   ],
 };
 
@@ -65,6 +66,18 @@ describe('assetUrlFor', () => {
     expect(assetUrlFor('macAppleSilicon', release)).toBe('https://example.test/arm.dmg');
     expect(assetUrlFor('macIntel', release)).toBe('https://example.test/intel.dmg');
     expect(assetUrlFor('linux', release)).toBe('https://example.test/linux.AppImage');
+    expect(assetUrlFor('android', release)).toBe('https://example.test/mobile.apk');
+  });
+
+  it('hittar APK:n även när appversionen skiljer sig från releasetaggen', () => {
+    // Filen döps efter mobilappens version, inte efter taggen – mönstret får inte låsa på taggen.
+    const otherVersion: Release = {
+      ...release,
+      assets: [
+        { name: 'Freevobe-Mobile_2.4.1.apk', url: 'https://example.test/newer.apk', sizeBytes: 1, downloads: 0 },
+      ],
+    };
+    expect(assetUrlFor('android', otherVersion)).toBe('https://example.test/newer.apk');
   });
 
   it('väljer inte Intel-dmg:n till Apple Silicon (och tvärtom)', () => {
@@ -127,6 +140,8 @@ describe('assetUrlFor', () => {
     expect(DOWNLOAD_LINKS.windows).toContain(RELEASE_REPO);
     expect(DOWNLOAD_LINKS.windows).toContain(RELEASE_TAG);
     expect(DOWNLOAD_LINKS.latest.endsWith('/releases/latest')).toBe(true);
+    expect(DOWNLOAD_LINKS.android).toContain(RELEASE_REPO);
+    expect(DOWNLOAD_LINKS.android.endsWith('.apk')).toBe(true);
   });
 });
 
@@ -171,8 +186,9 @@ describe('detectPlatform', () => {
     ['Mozilla/5.0 (Windows NT 10.0; Win64; x64)', 'windows'],
     ['Mozilla/5.0 (X11; Linux x86_64)', 'linux'],
     ['Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)', 'macAppleSilicon'],
+    // iPhone får inget bygge (kräver Apple-konto) – släppsidan får ta över.
     ['Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X)', 'unknown'],
-    ['Mozilla/5.0 (Linux; Android 14; Pixel 8)', 'unknown'],
+    ['Mozilla/5.0 (Linux; Android 14; Pixel 8)', 'android'],
     ['curl/8.0', 'unknown'],
   ];
 

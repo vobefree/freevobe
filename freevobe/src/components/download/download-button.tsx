@@ -55,7 +55,7 @@ export function DownloadButton({
       <a
         href={href}
         data-download-target={!published ? 'releases' : (resolved ?? 'latest')}
-        {...(published && /\.(exe|dmg|AppImage)$/i.test(href) ? {} : { rel: 'noreferrer' })}
+        {...(published && /\.(exe|dmg|AppImage|apk)$/i.test(href) ? {} : { rel: 'noreferrer' })}
       >
         {text}
       </a>

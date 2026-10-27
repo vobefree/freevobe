@@ -33,6 +33,13 @@ export const RELEASE_TAG = (process.env.NEXT_PUBLIC_RELEASE_TAG || TAG_FALLBACK)
 const base = `https://github.com/${RELEASE_REPO}/releases`;
 
 /**
+ * Mobilappens version. APK:n namnges efter appens egen version (freevobe-mobile/app.json), inte
+ * efter releasetaggen, eftersom appversionen är det Android visar i Inställningar. Håll de två i
+ * takt – annars hittas filen bara via GitHub-API:t, aldrig via den förväntade adressen.
+ */
+export const MOBILE_APP_VERSION = (process.env.NEXT_PUBLIC_MOBILE_VERSION || '1.0.0').trim();
+
+/**
  * Filnamnen som CI laddar upp till varje release. Ändrar du namnen i release-workflowen måste de
  * ändras här också – annars hittas filen bara via GitHub-API:t, inte via den förväntade adressen.
  */
@@ -41,6 +48,7 @@ export const ASSET_FILE_NAMES = {
   macAppleSilicon: (tag: string) => `Freevobe_${tag}_aarch64.dmg`,
   macIntel: (tag: string) => `Freevobe_${tag}_x64.dmg`,
   linux: (tag: string) => `Freevobe_${tag}_amd64.AppImage`,
+  android: () => `Freevobe-Mobile_${MOBILE_APP_VERSION}.apk`,
 } as const;
 
 /** Direktadress till en plattformsfil för en viss tagg. */
@@ -58,6 +66,7 @@ export const DOWNLOAD_LINKS = {
   macAppleSilicon: assetUrlForTag('macAppleSilicon'),
   macIntel: assetUrlForTag('macIntel'),
   linux: assetUrlForTag('linux'),
+  android: assetUrlForTag('android'),
 } as const;
 
 /** GitHub-sidan för repot (används av nav, footer och "Star on GitHub"). */
@@ -68,5 +77,5 @@ export const RELEASE_API_LATEST = `https://api.github.com/repos/${RELEASE_REPO}/
 
 export type DownloadKey = keyof Pick<
   typeof DOWNLOAD_LINKS,
-  'windows' | 'macAppleSilicon' | 'macIntel' | 'linux'
+  'windows' | 'macAppleSilicon' | 'macIntel' | 'linux' | 'android'
 >;

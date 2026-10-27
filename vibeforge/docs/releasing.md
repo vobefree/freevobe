@@ -44,12 +44,18 @@ Filerna döps om till exakt de namn nedladdningssidan letar efter:
 |---|---|
 | Windows | `Freevobe_v0.1.0_x64-setup.exe` |
 | macOS (Apple Silicon) | `Freevobe_v0.1.0_aarch64.dmg` |
+| macOS (Intel) | `Freevobe_v0.1.0_x64.dmg` |
 | Linux | `Freevobe_v0.1.0_amd64.AppImage` |
 | Android (mobilappen) | `Freevobe-Mobile_1.0.0.apk` (appen egen version ur `app.json`) |
 
 Ändrar du namnen i workflowen måste `ASSET_FILE_NAMES` i `freevobe/src/config/release.ts` ändras
-ochå – annars hittas filerna bara via GitHub-API:t, inte via den förväntade adressen. macOS för
-Intel byggs inte än; den knappen skickar då vidare till släppsidan.
+ochå – annars hittas filerna bara via GitHub-API:t, inte via den förväntade adressen.
+
+Intel-dmg:n kräver en Intel-runner (`macos-15-intel`): sidobinären paketeras med Node:s SEA på
+byggmaskinens arkitektur, så en arm64-runner kan inte producera en agent-binär som körs på Intel.
+Jobbet kör i samma workflow men med `continue-on-error`, så en indragen runner bara stryker den
+filen i stället för att stoppa resten av releasen. Redan publicerad release utan Intel-fil? Kör
+workflowen `macOS Intel (.dmg)` manuellt med taggen som indata – då byggs bara den filen.
 
 Android-appen byggs i samma workflow med Gradle (`expo prebuild` + `assembleRelease`) och kräver
 inget EAS-konto. APK:n signeras med debugnyckeln, alltså installerbar vid sidan om butiken – för

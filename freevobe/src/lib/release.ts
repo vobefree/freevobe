@@ -163,13 +163,20 @@ export function resetReleaseState() {
   inflight = null;
 }
 
-export type Platform = 'windows' | 'macAppleSilicon' | 'macIntel' | 'linux' | 'unknown';
+export type Platform =
+  | 'windows'
+  | 'macAppleSilicon'
+  | 'macIntel'
+  | 'linux'
+  | 'android'
+  | 'unknown';
 
 export const PLATFORM_LABELS: Record<Exclude<Platform, 'unknown'>, string> = {
   windows: 'Windows',
   macAppleSilicon: 'macOS (Apple Silicon)',
   macIntel: 'macOS (Intel)',
   linux: 'Linux',
+  android: 'Android',
 };
 
 export const PLATFORM_FILE_LABELS: Record<Exclude<Platform, 'unknown'>, string> = {
@@ -177,6 +184,7 @@ export const PLATFORM_FILE_LABELS: Record<Exclude<Platform, 'unknown'>, string> 
   macAppleSilicon: '.dmg',
   macIntel: '.dmg',
   linux: '.AppImage',
+  android: '.apk',
 };
 
 /**
@@ -188,8 +196,10 @@ export function detectPlatform(): Platform {
   if (typeof navigator === 'undefined') return 'unknown';
   const ua = `${navigator.userAgent} ${navigator.platform ?? ''}`;
 
-  // Mobil kan inte installera skrivbordsapparna – då får släppsidan ta över.
-  if (/Android|iPhone|iPad|iPod/i.test(ua)) return 'unknown';
+  // Android kan installera APK:n direkt. iPhone/iPad får inget bygge (kräver Apple-konto), så de
+  // skickas till släppsidan i stället för en död fil.
+  if (/Android/i.test(ua)) return 'android';
+  if (/iPhone|iPad|iPod/i.test(ua)) return 'unknown';
   if (/Windows|Win32|Win64/i.test(ua)) return 'windows';
   if (/Linux|X11|CrOS/i.test(ua)) return 'linux';
   if (/Macintosh|Mac OS X|MacIntel/i.test(ua)) return 'macAppleSilicon';
@@ -225,6 +235,7 @@ const ASSET_PATTERNS: Record<Exclude<Platform, 'unknown'>, RegExp[]> = {
   macAppleSilicon: [/(aarch64|arm64)[^/]*\.dmg$/i],
   macIntel: [/(x64|x86_64|intel|amd64)[^/]*\.dmg$/i],
   linux: [/(x86_64|amd64|x64)[^/]*\.AppImage$/i, /\.AppImage$/i],
+  android: [/\.apk$/i],
 };
 
 /** Första tillgång som matchar något av plattformens mönster, i preferensordning. */

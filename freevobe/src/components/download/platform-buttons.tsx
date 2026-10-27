@@ -1,6 +1,6 @@
 'use client';
 
-import { Apple, Download, ExternalLink, MonitorPlay, Terminal } from 'lucide-react';
+import { Apple, Download, ExternalLink, MonitorPlay, Smartphone, Terminal } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { DOWNLOAD_LINKS } from '@/config/release';
 import { assetUrlFor, type Platform } from '@/lib/release';
@@ -29,6 +29,12 @@ const TARGETS: Target[] = [
     ],
   },
   { platform: 'linux', label: 'Linux', file: '.AppImage', icon: <Terminal className="size-4" /> },
+  {
+    platform: 'android',
+    label: 'Android',
+    file: '.apk',
+    icon: <Smartphone className="size-4" />,
+  },
 ];
 
 export function PlatformButtons({

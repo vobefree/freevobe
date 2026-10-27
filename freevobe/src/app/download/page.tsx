@@ -12,7 +12,7 @@ import { site } from '@/lib/site';
 export const metadata: Metadata = {
   title: 'Download',
   description:
-    'Download Freevobe for Windows, macOS or Linux. Installers are published on GitHub Releases.',
+    'Download Freevobe for Windows, macOS or Linux, or the Android app for your phone. Installers are published on GitHub Releases.',
   alternates: { canonical: '/download/' },
 };
 
@@ -22,6 +22,10 @@ const REQUIREMENTS = [
   {
     label: 'Platforms',
     detail: 'Windows 10+, macOS 12+ (Apple Silicon or Intel), Linux (AppImage, x86-64)',
+  },
+  {
+    label: 'Phone',
+    detail: 'Android 8+ can install the APK directly. iOS needs a Mac and an Apple account.',
   },
 ] as const;
 
@@ -68,6 +72,34 @@ export default function DownloadPage() {
             Builds are signed by default where the platform allows it. Source is MIT licensed.
           </p>
         </Reveal>
+      </section>
+
+      <section className="vf-shell max-w-4xl pb-4">
+        <div className="vf-panel p-5">
+          <h2 className="text-sm font-semibold tracking-tight">The phone app</h2>
+          <p className="mt-2 text-[12.5px] leading-relaxed text-muted">
+            Freevobe Mobile mirrors the desktop app: QR-pair once over your local network and then
+            follow runs, diffs and approvals from the couch. Nothing leaves your Wi-Fi — the phone
+            talks to the Freevobe agent running on your own machine.
+          </p>
+          <ol className="mt-3 space-y-2 text-[12.5px] leading-relaxed text-muted">
+            <li>
+              <span className="font-medium text-fg">1.</span> Download the APK and open it. Android
+              asks you to allow installs from this source — the file is not from Google Play.
+            </li>
+            <li>
+              <span className="font-medium text-fg">2.</span> Open the desktop app and show the
+              pairing QR code. Point the phone at it.
+            </li>
+            <li>
+              <span className="font-medium text-fg">3.</span> Both devices need to be on the same
+              network. Pairing works offline.
+            </li>
+          </ol>
+          <p className="mt-3 text-[11.5px] text-muted">
+            iOS builds are not published yet — they need a Mac and an Apple Developer account.
+          </p>
+        </div>
       </section>
 
       <section className="vf-shell max-w-4xl pb-16">
