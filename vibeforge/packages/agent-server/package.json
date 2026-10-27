@@ -15,6 +15,7 @@
   "scripts": {
     "dev": "node --import ../../scripts/register-ts.mjs src/index.ts",
     "start": "node bin/vibeforge-agent.mjs",
+    "build": "node ../../scripts/build-agent.mjs",
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
   },

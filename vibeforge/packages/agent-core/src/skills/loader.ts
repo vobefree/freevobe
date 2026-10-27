@@ -9,7 +9,25 @@ export interface Skill extends SkillSummary {
   body: string;
 }
 
-const BUILTIN_DIR = fileURLToPath(new URL('../../builtin-skills', import.meta.url));
+/**
+ * Var de inbyggda skillsen ligger. I källkoden ligger de bredvid paketet. I den paketerade appen
+ * är agenten en SEA-binär, som inte kan bära med sig markdown-filerna – där pekar skalet ut dem
+ * med VIBEFORGE_BUILTIN_SKILLS mot appens resurskatalog i stället.
+ *
+ * `import.meta.url` finns inte i den bundlade CommonJS-koden, så sökvägen måste kunna misslyckas
+ * utan att modulen kraschar vid inläsning; hellre en tom skillslista än en agent som inte startar.
+ */
+function resolveBuiltinDir(): string {
+  const override = process.env.VIBEFORGE_BUILTIN_SKILLS?.trim();
+  if (override) return path.resolve(override);
+  try {
+    return fileURLToPath(new URL('../../builtin-skills', import.meta.url));
+  } catch {
+    return path.resolve(process.cwd(), 'builtin-skills');
+  }
+}
+
+const BUILTIN_DIR = resolveBuiltinDir();
 
 /**
  * Tolkar en skill-fil: YAML-frontmatter mellan `---` och markdown-texten efter.

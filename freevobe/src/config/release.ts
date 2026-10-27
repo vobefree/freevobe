@@ -9,7 +9,7 @@
  * GitHub-API:t inte kan svara; när API:t svarar hittas rätt fil bland release-tillgångarna.
  */
 
-const REPO_FALLBACK = 'freevobe/freevobe';
+const REPO_FALLBACK = 'vobefree/freevobe';
 const TAG_FALLBACK = 'v0.1.0';
 
 /**

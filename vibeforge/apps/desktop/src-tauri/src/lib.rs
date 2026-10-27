@@ -70,11 +70,62 @@ fn agent_url(port: u16) -> String {
     format!("http://127.0.0.1:{port}")
 }
 
-/// Letar upp agentens startpunkt: först en färdig binär, annars källkoden via `node`.
-fn resolve_agent_entry(app: &tauri::AppHandle) -> (Option<PathBuf>, Option<PathBuf>) {
+/// Namnet på sidobinären i paketet. Tauri paketerar `bundle.externalBin` bredvid appens egen
+/// binär och utan mål-trippel i namnet.
+fn sidecar_file_name() -> String {
+    const AGENT_BINARY: &str = "vibeforge-agent";
+    if cfg!(windows) {
+        format!("{AGENT_BINARY}.exe")
+    } else {
+        AGENT_BINARY.to_string()
+    }
+}
+
+/// Letar upp den paketerade agent-binären: bredvid appens egen binär (där Tauri lägger
+/// externalBin), i resurskatalogen, eller via VIBEFORGE_AGENT_BIN.
+fn find_agent_binary(app: &tauri::AppHandle) -> Option<PathBuf> {
+    if let Ok(explicit) = std::env::var("VIBEFORGE_AGENT_BIN") {
+        if !explicit.trim().is_empty() {
+            return Some(PathBuf::from(explicit));
+        }
+    }
+
+    let file_name = sidecar_file_name();
+    let mut candidates: Vec<PathBuf> = Vec::new();
+    if let Ok(current) = std::env::current_exe() {
+        if let Some(dir) = current.parent() {
+            candidates.push(dir.join(&file_name));
+        }
+    }
+    if let Ok(resource_dir) = app.path().resource_dir() {
+        candidates.push(resource_dir.join(&file_name));
+        candidates.push(resource_dir.join("binaries").join(&file_name));
+    }
+
+    candidates.into_iter().find(|candidate| candidate.exists())
+}
+
+/// De inbyggda skillsen paketeras som resurs; en SEA-binär kan inte bära med sig markdown-filerna.
+fn find_builtin_skills(app: &tauri::AppHandle) -> Option<PathBuf> {
+    if let Ok(explicit) = std::env::var("VIBEFORGE_BUILTIN_SKILLS") {
+        if !explicit.trim().is_empty() {
+            return Some(PathBuf::from(explicit));
+        }
+    }
+
+    let candidate = app.path().resource_dir().ok()?.join("builtin-skills");
+    if candidate.is_dir() {
+        Some(candidate)
+    } else {
+        None
+    }
+}
+
+/// Letar upp agentens startpunkt i källkoden: används i utvecklingsläge, när ingen binär finns.
+fn find_agent_entry(app: &tauri::AppHandle) -> Option<PathBuf> {
     if let Ok(explicit) = std::env::var("VIBEFORGE_AGENT_ENTRY") {
         if !explicit.trim().is_empty() {
-            return (None, Some(PathBuf::from(explicit)));
+            return Some(PathBuf::from(explicit));
         }
     }
 
@@ -103,19 +154,15 @@ fn resolve_agent_entry(app: &tauri::AppHandle) -> (Option<PathBuf>, Option<PathB
         );
     }
 
-    let entry = candidates.into_iter().find(|candidate| candidate.exists());
-    let binary = std::env::var("VIBEFORGE_AGENT_BIN").ok().map(PathBuf::from);
-    (binary, entry)
+    candidates.into_iter().find(|candidate| candidate.exists())
 }
 
 fn spawn_agent(app: &tauri::AppHandle) -> Result<(Child, String), String> {
     let port = agent_port();
     let url = agent_url(port);
-    let (binary, entry) = resolve_agent_entry(app);
-
-    let mut command = if let Some(binary) = binary {
+    let mut command = if let Some(binary) = find_agent_binary(app) {
         Command::new(binary)
-    } else if let Some(entry) = entry {
+    } else if let Some(entry) = find_agent_entry(app) {
         let mut command = Command::new("node");
         if entry.extension().map(|value| value == "ts").unwrap_or(false) {
             command.arg("--experimental-strip-types");
@@ -132,7 +179,14 @@ fn spawn_agent(app: &tauri::AppHandle) -> Result<(Child, String), String> {
     command
         .env("VIBEFORGE_PORT", port.to_string())
         .env("VIBEFORGE_HOST", "127.0.0.1")
-        .env("VIBEFORGE_HOME", vibeforge_home())
+        .env("VIBEFORGE_HOME", vibeforge_home());
+
+    // I ett paketerat bygge ligger de inbyggda skillsen i appens resurskatalog.
+    if let Some(skills) = find_builtin_skills(app) {
+        command.env("VIBEFORGE_BUILTIN_SKILLS", skills);
+    }
+
+    command
         .stdin(Stdio::null())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped());

@@ -20,18 +20,35 @@ sudo apt-get install libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev pat
 
 ## Bygg lokalt
 
+Agenten paketeras först – utan den startar den installerade appen ingen backend:
+
 ```bash
+npm run sidecar:build                          # agentbinär + inbyggda skills till paketet
 npm run tauri build -- --bundles nsis          # Windows .exe
 npm run tauri build -- --bundles dmg           # macOS .dmg
 npm run tauri build -- --bundles appimage,deb  # Linux
 ```
 
-Artefakterna hamnar i `apps/desktop/src-tauri/target/release/bundle/`.
+Artefakterna hamnar i `apps/desktop/src-tauri/target/release/bundle/` och får namn efter
+`productName` och `version` i `tauri.conf.json` (t.ex. `VibeForge_0.1.0_x64-setup.exe`).
 
 ## Bygg i CI
 
-`.github/workflows/release.yml` bygger alla tre plattformar när du pushar en tagg `v*` och lägger dem som ett utkast
-till release. Filen innehåller de hemligheter som behövs för signering (utkommenterade – lägg in dem när du har dem).
+`.github/workflows/release.yml` bygger Windows, macOS och Linux när du pushar en tagg `v*` och
+publicerar filerna i releasen för taggen. Taggen måste matcha `version` i `tauri.conf.json` – annars
+avbryter workflowen med ett förklarande fel. Signeringsstegen är fortfarande avstängda (se nedan).
+
+Filerna döps om till exakt de namn nedladdningssidan letar efter:
+
+| Plattform | Filnamn |
+|---|---|
+| Windows | `Freevobe_v0.1.0_x64-setup.exe` |
+| macOS (Apple Silicon) | `Freevobe_v0.1.0_aarch64.dmg` |
+| Linux | `Freevobe_v0.1.0_amd64.AppImage` |
+
+Ändrar du namnen i workflowen måste `ASSET_FILE_NAMES` i `freevobe/src/config/release.ts` ändras
+ochå – annars hittas filerna bara via GitHub-API:t, inte via den förväntade adressen. macOS för
+Intel byggs inte än; den knappen skickar då vidare till släppsidan.
 
 ```bash
 git tag v0.2.0
@@ -84,11 +101,23 @@ Testa alltid en uppdatering mellan två riktiga versioner innan den slås på f�
 Skrivbordsappen kan köra agenten från en fristående binär i stället för att kräva Node:
 
 ```bash
-npm run sidecar:build     # Node SEA → apps/desktop/src-tauri/binaries/vibeforge-agent[.exe]
+npm run build --workspace @vibeforge/agent-server   # bundlar agenten till en fil (esbuild)
+npm run sidecar:build                              # Node SEA → fristående binär
 ```
 
-Skalet letar i denna ordning: `VIBEFORGE_AGENT_BIN`, `VIBEFORGE_AGENT_ENTRY`, en binär i appens resurskatalog och
-slutligen `node` med källkoden (utvecklingsläge).
+Agenten importerar bara Node:s inbyggda moduler, vilket är vad som gör den möjlig att bädda in i en
+binär. `build-agent.mjs` vägrar bundla om ett npm-beroende dyker upp i agentkoden, så felet hamnar i
+bygget i stället för hos användaren.
+
+Resultatet blir `apps/desktop/src-tauri/binaries/vibeforge-agent-<mål-trippel>[.exe]`, som Tauri
+paketerar via `bundle.externalBin` och lägger bredvid appens egen binär. De inbyggda skillsen är
+markdown-filer som läses vid körning och kopieras därför till appens resurskatalog
+(`apps/desktop/src-tauri/builtin-skills/`, paketeras via `bundle.resources`); skalet pekar ut dem
+åt agenten med `VIBEFORGE_BUILTIN_SKILLS`.
+
+Skalet letar efter binären i denna ordning: `VIBEFORGE_AGENT_BIN`, bredvid appens binär, i
+resurskatalogen – och faller sedan tillbaka på `node` med källkoden (`VIBEFORGE_AGENT_ENTRY`,
+annars paketets `dist`), vilket är vad som används i utvecklingsläge.
 
 ## Versionshantering
 

@@ -1,0 +1,200 @@
+# Bygger installerarna för Windows, macOS och Linux när en tagg `v*` pushas och lägger dem i en
+# release. Samma kommandon som docs/releasing.md beskriver – inget som bara finns i CI.
+#
+# Releaseappen blir publik (inte ett utkast), eftersom nedladdningssidan läser den senaste
+# publicerade releasen via GitHub-API:t. Arbetet är idempotent: körs taggen om laddas filerna upp
+# till samma release i stället för att releasen skapas på nytt.
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+  # Gör det möjligt att testa bygget utan att pusha en tagg. Filerna hamnar då som artefakter.
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  # Samma version som sidecar-binären är verifierad med lokalt (Node:s SEA kräver >= 22.5).
+  NODE_VERSION: 24
+
+jobs:
+  verify:
+    name: Kontrollera taggen
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: vibeforge/package-lock.json
+      - name: Versionen i tauri.conf.json måste matcha taggen
+        working-directory: vibeforge
+        run: |
+          set -euo pipefail
+          version=$(node -p "require('./apps/desktop/src-tauri/tauri.conf.json').version")
+          tag="${GITHUB_REF_NAME#v}"
+          if [ "$version" != "$tag" ]; then
+            echo "Taggen $GITHUB_REF_NAME matchar inte appens version $version (src-tauri/tauri.conf.json)." >&2
+            echo "Höj versionen i package.json, apps/desktop/package.json och src-tauri/tauri.conf.json först." >&2
+            exit 1
+          fi
+          echo "Version $version stämmer med taggen $GITHUB_REF_NAME."
+      - run: npm ci
+        working-directory: vibeforge
+      - name: Typecheck, lint och tester
+        working-directory: vibeforge
+        run: npm run verify
+
+  windows:
+    name: Windows (.exe)
+    needs: verify
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: vibeforge/package-lock.json
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: vibeforge/apps/desktop/src-tauri
+      - run: npm ci
+        working-directory: vibeforge
+      - name: Bygg agenten och sidecar-binären
+        working-directory: vibeforge
+        run: npm run sidecar:build
+      - name: Bygg installeraren
+        working-directory: vibeforge
+        run: npm run tauri --workspace @vibeforge/desktop -- build --bundles nsis
+      - name: Döp artefakten till nedladdningssidans filnamn
+        shell: bash
+        working-directory: vibeforge
+        run: |
+          set -euo pipefail
+          mkdir -p dist-release
+          cp apps/desktop/src-tauri/target/release/bundle/nsis/*-setup.exe \
+            "dist-release/Freevobe_${GITHUB_REF_NAME}_x64-setup.exe"
+          ls -l dist-release
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-installer
+          path: vibeforge/dist-release/*
+          if-no-files-found: error
+
+  macos:
+    name: macOS (.dmg, Apple Silicon)
+    needs: verify
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: vibeforge/package-lock.json
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-darwin
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: vibeforge/apps/desktop/src-tauri
+      - run: npm ci
+        working-directory: vibeforge
+      - name: Bygg agenten och sidecar-binären
+        working-directory: vibeforge
+        run: npm run sidecar:build
+      - name: Bygg installeraren
+        working-directory: vibeforge
+        run: >-
+          npm run tauri --workspace @vibeforge/desktop -- build
+          --target aarch64-apple-darwin --bundles dmg
+      - name: Döp artefakten till nedladdningssidans filnamn
+        shell: bash
+        working-directory: vibeforge
+        run: |
+          set -euo pipefail
+          mkdir -p dist-release
+          cp apps/desktop/src-tauri/target/aarch64-apple-darwin/release/bundle/dmg/*.dmg \
+            "dist-release/Freevobe_${GITHUB_REF_NAME}_aarch64.dmg"
+          ls -l dist-release
+      - uses: actions/upload-artifact@v4
+        with:
+          name: macos-installer
+          path: vibeforge/dist-release/*
+          if-no-files-found: error
+
+  linux:
+    name: Linux (.AppImage)
+    needs: verify
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Systemberoenden för Tauri
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: vibeforge/package-lock.json
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: vibeforge/apps/desktop/src-tauri
+      - run: npm ci
+        working-directory: vibeforge
+      - name: Bygg agenten och sidecar-binären
+        working-directory: vibeforge
+        run: npm run sidecar:build
+      - name: Bygg installeraren
+        working-directory: vibeforge
+        run: npm run tauri --workspace @vibeforge/desktop -- build --bundles appimage
+      - name: Döp artefakten till nedladdningssidans filnamn
+        shell: bash
+        working-directory: vibeforge
+        run: |
+          set -euo pipefail
+          mkdir -p dist-release
+          cp apps/desktop/src-tauri/target/release/bundle/appimage/*.AppImage \
+            "dist-release/Freevobe_${GITHUB_REF_NAME}_amd64.AppImage"
+          ls -l dist-release
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux-installer
+          path: vibeforge/dist-release/*
+          if-no-files-found: error
+
+  release:
+    name: Publicera releasen
+    needs: [windows, macos, linux]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+      - name: Ladda upp filerna till releasen för taggen
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          ls -l artifacts
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            gh release upload "$GITHUB_REF_NAME" artifacts/* --clobber
+          else
+            gh release create "$GITHUB_REF_NAME" artifacts/* \
+              --title "Freevobe $GITHUB_REF_NAME" \
+              --generate-notes
+          fi
+          gh release view "$GITHUB_REF_NAME" --json assets --jq '.assets[].name'

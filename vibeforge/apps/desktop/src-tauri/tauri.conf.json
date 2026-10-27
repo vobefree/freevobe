@@ -53,7 +53,8 @@
     "longDescription": "VibeForge är en lokal-first AI-coding agent för skrivbordet. Anslut Ollama, välj modell och bygg mjukvara i naturligt språk – koden lämnar aldrig datorn om du inte själv aktiverar en molntjänst.",
     "copyright": "© 2026 VibeForge",
     "publisher": "VibeForge",
-    "resources": [],
+    "resources": ["builtin-skills/*"],
+    "externalBin": ["binaries/vibeforge-agent"],
     "windows": {
       "nsis": {
         "installMode": "perMachine",
