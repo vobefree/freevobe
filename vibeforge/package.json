@@ -31,7 +31,7 @@
     "format:check": "prettier --check .",
     "doctor": "node packages/agent-core/bin/vibeforge-doctor.mjs",
     "icons": "node scripts/generate-icons.mjs",
-    "sidecar:build": "node scripts/build-sidecar.mjs",
+    "sidecar:build": "npm run build --workspace @vibeforge/agent-server && node scripts/build-sidecar.mjs",
     "verify": "npm run typecheck && npm run lint && npm run test"
   },
   "devDependencies": {
