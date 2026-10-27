@@ -38,6 +38,12 @@ jobs:
         working-directory: vibeforge
         run: |
           set -euo pipefail
+          # Vid en manuell körning finns ingen tagg att jämföra mot; då räcker det att bygget går
+          # igenom och filerna hamnar som artefakter.
+          if [ "${GITHUB_EVENT_NAME}" != "push" ]; then
+            echo "Manuell körning – hoppar över taggkontrollen och publicerar inget."
+            exit 0
+          fi
           version=$(node -p "require('./apps/desktop/src-tauri/tauri.conf.json').version")
           tag="${GITHUB_REF_NAME#v}"
           if [ "$version" != "$tag" ]; then
@@ -56,6 +62,11 @@ jobs:
     name: Windows (.exe)
     needs: verify
     runs-on: windows-latest
+    # Authenticode-signering av installeraren. Hemligheterna är valfria: utan dem blir bygget
+    # osignerat och SmartScreen varnar vid start, men releasen publiceras ändå. Se docs/releasing.md.
+    env:
+      WINDOWS_CERTIFICATE: ${{ secrets.WINDOWS_CERTIFICATE }}
+      WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -72,9 +83,49 @@ jobs:
       - name: Bygg agenten och sidecar-binären
         working-directory: vibeforge
         run: npm run sidecar:build
+      - name: Förbered signering av installeraren
+        shell: pwsh
+        working-directory: vibeforge
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $configPath = 'tauri-signing.conf.json'
+
+          if ([string]::IsNullOrWhiteSpace($env:WINDOWS_CERTIFICATE)) {
+            '{}' | Set-Content -Path $configPath -Encoding utf8
+            "VIBEFORGE_WINDOWS_SIGNED=false" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+            Write-Host "::warning::WINDOWS_CERTIFICATE saknas – installeraren blir osignerad och SmartScreen varnar vid start (se docs/releasing.md)."
+            exit 0
+          }
+
+          # Certifikatet skickas in som base64 (radbrytningar tillåtna) och importeras i runnerkontots
+          # arkiv – det är så Tauri hittar det, via tumavtrycket.
+          $pfx = Join-Path $env:RUNNER_TEMP 'codesign.pfx'
+          [IO.File]::WriteAllBytes($pfx, [Convert]::FromBase64String(($env:WINDOWS_CERTIFICATE -replace '\s', '')))
+          $password = ConvertTo-SecureString -String $env:WINDOWS_CERTIFICATE_PASSWORD -Force -AsPlainText
+          $cert = Import-PfxCertificate -FilePath $pfx -CertStoreLocation Cert:\CurrentUser\My -Password $password
+          Remove-Item $pfx -Force
+
+          # Skrivs som en delvis config som Tauri djupmergar in (RFC 7396), så bundle.windows.nsis i
+          # tauri.conf.json behålls. Tidsstämpeln krävs för att signaturen ska gälla även efter det att
+          # certifikatet gått ut; DigiCert fungerar för de flesta utfärdare – byt vid behov.
+          @{
+            bundle = @{
+              windows = @{
+                certificateThumbprint = $cert.Thumbprint
+                digestAlgorithm = 'sha256'
+                timestampUrl = 'http://timestamp.digicert.com'
+              }
+            }
+          } | ConvertTo-Json -Depth 4 | Set-Content -Path $configPath -Encoding utf8
+
+          "VIBEFORGE_WINDOWS_SIGNED=true" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          Write-Host "Importerade $($cert.Subject) ($($cert.Thumbprint))."
+
       - name: Bygg installeraren
         working-directory: vibeforge
-        run: npm run tauri --workspace @vibeforge/desktop -- build --bundles nsis
+        run: >-
+          npm run tauri --workspace @vibeforge/desktop -- build
+          --bundles nsis --config tauri-signing.conf.json
       - name: Döp artefakten till nedladdningssidans filnamn
         shell: bash
         working-directory: vibeforge
@@ -84,6 +135,29 @@ jobs:
           cp apps/desktop/src-tauri/target/release/bundle/nsis/*-setup.exe \
             "dist-release/Freevobe_${GITHUB_REF_NAME}_x64-setup.exe"
           ls -l dist-release
+      - name: Verifiera signaturen
+        shell: pwsh
+        working-directory: vibeforge
+        run: |
+          $ErrorActionPreference = 'Stop'
+
+          $files = @(Get-ChildItem 'dist-release/*-setup.exe' | ForEach-Object { $_.FullName })
+          $mainExe = 'apps/desktop/src-tauri/target/release/vibeforge-desktop.exe'
+          if (Test-Path $mainExe) { $files += (Resolve-Path $mainExe).Path }
+          if ($files.Count -eq 0) { throw 'Hittade inga byggda filer att verifiera.' }
+
+          if ($env:VIBEFORGE_WINDOWS_SIGNED -ne 'true') {
+            Write-Host '::warning::Installeraren är osignerad (inget certifikat konfigurerat).'
+            exit 0
+          }
+
+          foreach ($file in $files) {
+            $signature = Get-AuthenticodeSignature $file
+            if ($signature.Status -ne 'Valid') {
+              throw "Signaturen för $file är inte giltig: $($signature.Status) – $($signature.StatusMessage)"
+            }
+            Write-Host "$(Split-Path -Leaf $file): giltig signatur av $($signature.SignerCertificate.Subject)"
+          }
       - uses: actions/upload-artifact@v4
         with:
           name: windows-installer
@@ -94,6 +168,18 @@ jobs:
     name: macOS (.dmg, Apple Silicon)
     needs: verify
     runs-on: macos-latest
+    # Koden-signering och notarisering. Alla är valfria: utan dem blir appen osignerad och Gatekeeper
+    # varnar vid start, men releasen publiceras ändå. Se docs/releasing.md.
+    env:
+      APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+      APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+      APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+      APPLE_ID: ${{ secrets.APPLE_ID }}
+      APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+      APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+      APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
+      APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+      APPLE_API_KEY_P8_BASE64: ${{ secrets.APPLE_API_KEY_P8_BASE64 }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -112,6 +198,32 @@ jobs:
       - name: Bygg agenten och sidecar-binären
         working-directory: vibeforge
         run: npm run sidecar:build
+      - name: Förbered signering
+        id: signing
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Notarisering med App Store Connect-nyckel kräver .p8-filen på disk. Den skickas in som
+          # base64 och läggs i runnerkontots tempkatalog – aldrig i repot.
+          if [ -n "${APPLE_API_KEY_P8_BASE64:-}" ]; then
+            printf '%s' "$APPLE_API_KEY_P8_BASE64" | tr -d '\n' \
+              | openssl base64 -d -A > "$RUNNER_TEMP/AuthKey.p8"
+            chmod 600 "$RUNNER_TEMP/AuthKey.p8"
+            echo "APPLE_API_KEY_PATH=$RUNNER_TEMP/AuthKey.p8" >> "$GITHUB_ENV"
+          fi
+          if [ -n "${APPLE_CERTIFICATE:-}" ]; then
+            echo "signed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "signed=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::APPLE_CERTIFICATE saknas – appen blir osignerad och Gatekeeper varnar vid start (se docs/releasing.md)."
+          fi
+          if [ -n "${APPLE_ID:-}" ] || [ -n "${APPLE_API_KEY:-}" ]; then
+            echo "notary=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "notary=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::Inga notariseringsuppgifter (APPLE_ID eller APPLE_API_KEY) – dmg:n lämnas onotariserad."
+          fi
+
       - name: Bygg installeraren
         working-directory: vibeforge
         run: >-
@@ -126,6 +238,29 @@ jobs:
           cp apps/desktop/src-tauri/target/aarch64-apple-darwin/release/bundle/dmg/*.dmg \
             "dist-release/Freevobe_${GITHUB_REF_NAME}_aarch64.dmg"
           ls -l dist-release
+      - name: Notarisera och häfta fast biljetten på dmg:n
+        if: steps.signing.outputs.signed == 'true' && steps.signing.outputs.notary == 'true'
+        shell: bash
+        working-directory: vibeforge
+        run: |
+          set -euo pipefail
+          dmg=$(ls dist-release/*.dmg)
+          # Tauri notariserar och häftar appen, men inte dmg-filen (tauri-apps/tauri#7533). Utan
+          # biljett på själva filen varnar Gatekeeper den som laddar ner den.
+          if [ -n "${APPLE_API_KEY_PATH:-}" ]; then
+            auth=(--key "$APPLE_API_KEY_PATH" --key-id "$APPLE_API_KEY" --issuer "$APPLE_API_ISSUER")
+          else
+            auth=(--apple-id "$APPLE_ID" --password "$APPLE_PASSWORD" --team-id "$APPLE_TEAM_ID")
+          fi
+          result=$(xcrun notarytool submit "$dmg" "${auth[@]}" --wait --output-format json)
+          printf '%s\n' "$result"
+          if ! printf '%s' "$result" | grep -Eq '"status" *: *"Accepted"'; then
+            echo "::error::Notariseringen av $dmg godkändes inte."
+            exit 1
+          fi
+          xcrun stapler staple "$dmg"
+          xcrun stapler validate "$dmg"
+          echo "Biljetten är fast häftad på $dmg."
       - uses: actions/upload-artifact@v4
         with:
           name: macos-installer
@@ -141,6 +276,17 @@ jobs:
     runs-on: macos-15-intel
     # En utgången runner får inte stoppa de andra filerna från att publiceras.
     continue-on-error: true
+    # Samma signeringshemligheter som macos-jobbet. Se docs/releasing.md.
+    env:
+      APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+      APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+      APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+      APPLE_ID: ${{ secrets.APPLE_ID }}
+      APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+      APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+      APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
+      APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+      APPLE_API_KEY_P8_BASE64: ${{ secrets.APPLE_API_KEY_P8_BASE64 }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -159,6 +305,32 @@ jobs:
       - name: Bygg agenten och sidecar-binären
         working-directory: vibeforge
         run: npm run sidecar:build
+      - name: Förbered signering
+        id: signing
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Notarisering med App Store Connect-nyckel kräver .p8-filen på disk. Den skickas in som
+          # base64 och läggs i runnerkontots tempkatalog – aldrig i repot.
+          if [ -n "${APPLE_API_KEY_P8_BASE64:-}" ]; then
+            printf '%s' "$APPLE_API_KEY_P8_BASE64" | tr -d '\n' \
+              | openssl base64 -d -A > "$RUNNER_TEMP/AuthKey.p8"
+            chmod 600 "$RUNNER_TEMP/AuthKey.p8"
+            echo "APPLE_API_KEY_PATH=$RUNNER_TEMP/AuthKey.p8" >> "$GITHUB_ENV"
+          fi
+          if [ -n "${APPLE_CERTIFICATE:-}" ]; then
+            echo "signed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "signed=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::APPLE_CERTIFICATE saknas – appen blir osignerad och Gatekeeper varnar vid start (se docs/releasing.md)."
+          fi
+          if [ -n "${APPLE_ID:-}" ] || [ -n "${APPLE_API_KEY:-}" ]; then
+            echo "notary=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "notary=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::Inga notariseringsuppgifter (APPLE_ID eller APPLE_API_KEY) – dmg:n lämnas onotariserad."
+          fi
+
       - name: Bygg installeraren
         working-directory: vibeforge
         run: >-
@@ -173,6 +345,29 @@ jobs:
           cp apps/desktop/src-tauri/target/x86_64-apple-darwin/release/bundle/dmg/*.dmg \
             "dist-release/Freevobe_${GITHUB_REF_NAME}_x64.dmg"
           ls -l dist-release
+      - name: Notarisera och häfta fast biljetten på dmg:n
+        if: steps.signing.outputs.signed == 'true' && steps.signing.outputs.notary == 'true'
+        shell: bash
+        working-directory: vibeforge
+        run: |
+          set -euo pipefail
+          dmg=$(ls dist-release/*.dmg)
+          # Tauri notariserar och häftar appen, men inte dmg-filen (tauri-apps/tauri#7533). Utan
+          # biljett på själva filen varnar Gatekeeper den som laddar ner den.
+          if [ -n "${APPLE_API_KEY_PATH:-}" ]; then
+            auth=(--key "$APPLE_API_KEY_PATH" --key-id "$APPLE_API_KEY" --issuer "$APPLE_API_ISSUER")
+          else
+            auth=(--apple-id "$APPLE_ID" --password "$APPLE_PASSWORD" --team-id "$APPLE_TEAM_ID")
+          fi
+          result=$(xcrun notarytool submit "$dmg" "${auth[@]}" --wait --output-format json)
+          printf '%s\n' "$result"
+          if ! printf '%s' "$result" | grep -Eq '"status" *: *"Accepted"'; then
+            echo "::error::Notariseringen av $dmg godkändes inte."
+            exit 1
+          fi
+          xcrun stapler staple "$dmg"
+          xcrun stapler validate "$dmg"
+          echo "Biljetten är fast häftad på $dmg."
       - uses: actions/upload-artifact@v4
         with:
           name: macos-intel-installer
@@ -225,6 +420,13 @@ jobs:
     name: Android (.apk)
     needs: verify
     runs-on: ubuntu-latest
+    # Signering av release-APK:n. Utan hemligheterna signeras APK:n med debugnyckeln – installerbar
+    # vid sidan om butiken, men inte publicerbar. Se docs/releasing.md.
+    env:
+      ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+      ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+      ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+      ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
     defaults:
       run:
         working-directory: freevobe-mobile
@@ -246,6 +448,26 @@ jobs:
       - run: npm ci
       - name: Generera Android-projektet
         run: npx expo prebuild --platform android --no-install
+      - name: Skriv nyckellagret och key.properties
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Nyckellagret läses av plugins/with-android-release-signing.js via android/key.properties.
+          # Båda filerna ligger under android/, som prebuild skapar och .gitignore utesluter.
+          if [ -z "${ANDROID_KEYSTORE_BASE64:-}" ]; then
+            echo "VIBEFORGE_ANDROID_SIGNED=false" >> "$GITHUB_ENV"
+            echo "::warning::ANDROID_KEYSTORE_BASE64 saknas – APK:n signeras med debugnyckeln och kan inte publiceras i Play Store (se docs/releasing.md)."
+            exit 0
+          fi
+          printf '%s' "$ANDROID_KEYSTORE_BASE64" | tr -d '\n' | base64 -d > android/app/upload-key.jks
+          cat > android/key.properties <<EOF
+          storeFile=app/upload-key.jks
+          storePassword=$ANDROID_KEYSTORE_PASSWORD
+          keyAlias=$ANDROID_KEY_ALIAS
+          keyPassword=$ANDROID_KEY_PASSWORD
+          EOF
+          echo "VIBEFORGE_ANDROID_SIGNED=true" >> "$GITHUB_ENV"
+          echo "Nyckellagret är på plats (alias $ANDROID_KEY_ALIAS)."
       - name: Bygg APK
         working-directory: freevobe-mobile/android
         run: ./gradlew assembleRelease --no-daemon
@@ -260,6 +482,37 @@ jobs:
           cp android/app/build/outputs/apk/release/app-release.apk \
             "dist-release/Freevobe-Mobile_${version}.apk"
           ls -l dist-release
+      - name: Verifiera signeringen
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -z "${ANDROID_HOME:-}" ]; then
+            echo "::error::ANDROID_HOME är inte satt – kan inte hitta apksigner."
+            exit 1
+          fi
+          apksigner=$(find "$ANDROID_HOME/build-tools" -maxdepth 2 -name apksigner | sort -V | tail -1)
+          if [ -z "$apksigner" ]; then
+            echo "::error::Hittade ingen apksigner i $ANDROID_HOME/build-tools."
+            exit 1
+          fi
+          certs=$("$apksigner" verify --print-certs android/app/build/outputs/apk/release/app-release.apk)
+          printf '%s\n' "$certs"
+          if [ "${VIBEFORGE_ANDROID_SIGNED:-false}" = "true" ]; then
+            # Det här är kontrollen som faktiskt avgör om signeringen tog: att APK:n inte längre bär
+            # debugnyckelns identitet.
+            if printf '%s' "$certs" | grep -qi 'CN=Android Debug'; then
+              echo "::error::APK:n är signerad med debugnyckeln trots att ett nyckellager skickades in."
+              exit 1
+            fi
+            echo "APK:n är signerad med release-nyckeln."
+          else
+            if printf '%s' "$certs" | grep -qi 'CN=Android Debug'; then
+              echo "::warning::APK:n är debug-signerad (förväntat utan nyckellagerhemlighet)."
+            else
+              echo "::error::APK:n är inte debug-signerad men inget nyckellager skickades in – kontrollera bygget."
+              exit 1
+            fi
+          fi
       - uses: actions/upload-artifact@v4
         with:
           name: android-app
@@ -269,6 +522,9 @@ jobs:
   release:
     name: Publicera releasen
     needs: [windows, macos, macos_intel, linux, android]
+    # En manuell körning används för att testa bygget och ska bara lämna artefakter – den får inte
+    # skapa eller skriva om en release (en körning från en gren har inget taggnamn att publicera på).
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v4

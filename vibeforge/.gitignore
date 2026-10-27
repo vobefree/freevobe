@@ -17,6 +17,10 @@ dist-release/
 !/.vibeforge/rules.md
 !/.vibeforge/preferences.json
 
+# Signeringskonfiguration som CI (release.yml) skriver från hemligheter – innehåller tumavtrycket
+# för Windows-certifikatet och ska inte versionshanteras.
+apps/desktop/src-tauri/tauri-signing.conf.json
+
 # Tauri / Rust
 apps/desktop/src-tauri/target/
 apps/desktop/src-tauri/gen/

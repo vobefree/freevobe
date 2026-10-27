@@ -180,7 +180,7 @@ npm run test:e2e    # end-to-end in a browser and over HTTP
 
 ## Known limitations and TODO
 
-- [ ] **Code signing**: Windows Authenticode and Apple notarization. Without it the OS warns on install.
+- [ ] **Code signing**: the release workflow signs, notarizes and verifies the files once the certificates are configured as secrets (`WINDOWS_CERTIFICATE`, `APPLE_*`, `ANDROID_KEYSTORE_BASE64`). Without them the OS warns on install. See [Release](docs/releasing.md#signering).
 - [ ] **Auto-update**: set `plugins.updater.active = true`, add a `pubkey` and a real `endpoints` URL.
 - [ ] **Telemetry**: deliberately off (`telemetry: false`) and not toggleable from the UI.
 - [ ] **Pro features**: shared skills across projects, team memory and remote agents behind a paid licence.

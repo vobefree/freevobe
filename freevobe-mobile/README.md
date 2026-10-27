@@ -171,6 +171,29 @@ Projektet är ännu inte kopplat till ett EAS-projekt (`extra.eas.projectId` sak
 första bygget frågar om du vill skapa ett. `eas-cli` är inte en lokal beroende – kör det med `npx
 eas-cli@latest`.
 
+## Bygga APK i CI (och signering)
+
+`.github/workflows/release.yml` bygger APK:n med `npx expo prebuild` + `gradlew assembleRelease` och
+lägger den i releasen. Release-varianten signeras av
+`plugins/with-android-release-signing.js` – en config-plugin, eftersom `expo prebuild` skapar
+`android/` från grunden och alltid pekar release-varianten på debugnyckeln.
+
+Pluginen läser `android/key.properties` (samma filnamn som React Native dokumenterar):
+
+```properties
+storeFile=app/upload-key.jks
+storePassword=…
+keyAlias=…
+keyPassword=…
+```
+
+I CI skrivs filen och nyckellagret från hemligheterna `ANDROID_KEYSTORE_BASE64`,
+`ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS` och `ANDROID_KEY_PASSWORD`, och `apksigner`
+kontrollerar efter bygget att APK:n inte är debug-signerad. Vill du bygga en signerad APK lokalt:
+skapa nyckellagret med `keytool`, lägg `key.properties` i `android/` och kör sedan
+`cd android && ./gradlew assembleRelease`. Saknas `key.properties` används debugnyckeln, så att
+lokala byggen fungerar utan hemligheter. Se [Release](../vibeforge/docs/releasing.md#android-nyckellager).
+
 ## Felsökning
 
 - **"Kunde inte nå datorn på …"** – Freevobe Desktop kör inte, telefonen är inte på samma nätverk,

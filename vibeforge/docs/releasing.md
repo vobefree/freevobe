@@ -1,7 +1,7 @@
 # Release
 
-Målet är installerare för Windows, macOS och Linux, med signering och automatisk uppdatering **avstängd tills du
-konfigurerat den**.
+Målet är installerare för Windows, macOS och Linux. Signeringen slås på med hemligheter (se
+[Signering](#signering)) och automatisk uppdatering **är avstängd tills du konfigurerat den**.
 
 ## Förberedelser
 
@@ -36,7 +36,8 @@ Artefakterna hamnar i `apps/desktop/src-tauri/target/release/bundle/` och får n
 
 `.github/workflows/release.yml` bygger Windows, macOS och Linux när du pushar en tagg `v*` och
 publicerar filerna i releasen för taggen. Taggen måste matcha `version` i `tauri.conf.json` – annars
-avbryter workflowen med ett förklarande fel. Signeringsstegen är fortfarande avstängda (se nedan).
+avbryter workflowen med ett förklarande fel. Signeringen ligger i workflowen och är avstängd så
+länge hemligheterna inte finns (se [Signering](#signering)).
 
 Filerna döps om till exakt de namn nedladdningssidan letar efter:
 
@@ -58,8 +59,8 @@ filen i stället för att stoppa resten av releasen. Redan publicerad release ut
 workflowen `macOS Intel (.dmg)` manuellt med taggen som indata – då byggs bara den filen.
 
 Android-appen byggs i samma workflow med Gradle (`expo prebuild` + `assembleRelease`) och kräver
-inget EAS-konto. APK:n signeras med debugnyckeln, alltså installerbar vid sidan om butiken – för
-Play Store krävs EAS-profilen `production` och ett eget nyckellager.
+inget EAS-konto. Signeringen sköts av ett eget nyckellager via en config-plugin – se
+[Android](#android-nyckellager).
 
 ```bash
 git tag v0.2.0
@@ -68,19 +69,118 @@ git push origin v0.2.0
 
 ## Signering
 
-### Windows
+Signeringen ligger i `.github/workflows/release.yml` och `macos-intel.yml` och slås på med
+hemligheter – inga kodändringar behövs. Är hemligheterna inte satta går bygget igenom ändå, men
+filen blir osignerad och operativsystemet varnar vid installation; workflowen skriver då en varning i
+körningen. Hemligheterna sätts under **Settings → Secrets and variables → Actions**.
 
-1. Skaffa ett Authenticode-certifikat (EV eller OV).
-2. Lägg certifikatet och lösenordet som hemligheter och peka ut dem i workflowen.
-3. Sätt `bundle.windows.certificateThumbprint` i `tauri.conf.json` om du använder certifikatarkivet.
+| Hemlighet | Platform | Innehåll |
+|---|---|---|
+| `WINDOWS_CERTIFICATE` | Windows | Authenticode-certifikatet som `.pfx`, base64-kodat |
+| `WINDOWS_CERTIFICATE_PASSWORD` | Windows | Lösenordet för `.pfx`-filen |
+| `APPLE_CERTIFICATE` | macOS | _Developer ID Application_-certifikatet som `.p12`, base64-kodat |
+| `APPLE_CERTIFICATE_PASSWORD` | macOS | Lösenordet för `.p12`-filen |
+| `APPLE_SIGNING_IDENTITY` | macOS | Certifikatets namn, t.ex. `Developer ID Application: Ditt AB (TEAMID)` |
+| `APPLE_ID`, `APPLE_PASSWORD`, `APPLE_TEAM_ID` | macOS | Apple-ID, app-specifikt lösenord och team-ID för notariseringen |
+| `APPLE_API_KEY`, `APPLE_API_ISSUER`, `APPLE_API_KEY_P8_BASE64` | macOS | App Store Connect-nyckel (nyckel-ID, issuer-ID, `.p8` base64) i stället för Apple-ID |
+| `ANDROID_KEYSTORE_BASE64` | Android | Nyckellagret (`.jks`) base64-kodat |
+| `ANDROID_KEYSTORE_PASSWORD` | Android | Lösenordet för nyckellagret |
+| `ANDROID_KEY_ALIAS` | Android | Aliaset för nyckeln i lagret |
+| `ANDROID_KEY_PASSWORD` | Android | Lösenordet för nyckeln |
 
-Utan signering visas en SmartScreen-varning vid installation. Det är ett känt och dokumenterat läge i 0.1.0.
+Koda filerna så här:
 
-### macOS
+```bash
+base64 -w0 certifikat.pfx             # WINDOWS_CERTIFICATE (macOS/Linux; base64 -i på macOS)
+base64 -w0 developer-id.p12           # APPLE_CERTIFICATE
+base64 -w0 upload-key.jks             # ANDROID_KEYSTORE_BASE64
+base64 -w0 AuthKey_XXXXXXXXXX.p8      # APPLE_API_KEY_P8_BASE64
+```
 
-1. Apple Developer-konto och ett _Developer ID Application_-certifikat.
-2. Sätt `APPLE_CERTIFICATE`, `APPLE_CERTIFICATE_PASSWORD`, `APPLE_ID`, `APPLE_PASSWORD` och `APPLE_TEAM_ID`.
-3. Notarization krävs för att appen ska starta utan varning på andra maskiner.
+```powershell
+# Windows motsvarande
+[Convert]::ToBase64String([IO.File]::ReadAllBytes('certifikat.pfx'))
+```
+
+Antingen Apple-ID eller App Store Connect-nyckeln räcker för notariseringen. Nyckeln är att föredra i
+CI: den går inte ut som en app-specifik lösenkod gör.
+
+### Windows (Authenticode)
+
+1. Skaffa ett Authenticode-certifikat (OV eller EV) som en `.pfx`-fil med lösenord.
+2. Sätt `WINDOWS_CERTIFICATE` och `WINDOWS_CERTIFICATE_PASSWORD`.
+3. Bygget importerar certifikatet i runnerkontots certifikatarkiv och skickar tumavtrycket till Tauri
+   via en delvis konfiguration (`tauri-signing.conf.json`) som djupmergas in i `tauri.conf.json`.
+   Tauri signerar appen, sidobinären och installeraren. Tidsstämpeln hämtas från
+   `http://timestamp.digicert.com` – byt den i `release.yml` om din utfärdare kräver en annan.
+4. Efter bygget verifieras signaturen med `Get-AuthenticodeSignature`. Är den inte giltig avbryts
+   releasen i stället för att en osignerad fil publiceras.
+
+Ett EV-certifikat på fysisk dosa, eller certifikat som inte får exporteras som `.pfx`, kan inte
+importeras så här. Använd då i stället `bundle.windows.signCommand` tillsammans med utfärdarens
+verktyg (t.ex. Azure Trusted Signing) eller en signeringstjänst.
+
+```powershell
+# Kontrollera en nedladdad fil
+Get-AuthenticodeSignature .\Freevobe_v0.1.0_x64-setup.exe | Format-List Status, SignerCertificate
+```
+
+### macOS (Developer ID och notarisering)
+
+1. Apple Developer-konto, ett _Developer ID Application_-certifikat och antingen en app-specifik
+   lösenkod eller en App Store Connect-nyckel med rollen _Developer_.
+2. Sätt `APPLE_CERTIFICATE`, `APPLE_CERTIFICATE_PASSWORD`, `APPLE_SIGNING_IDENTITY` och därtill
+   antingen `APPLE_ID` + `APPLE_PASSWORD` + `APPLE_TEAM_ID` eller `APPLE_API_KEY` +
+   `APPLE_API_ISSUER` + `APPLE_API_KEY_P8_BASE64`. Utan certifikatet blir appen osignerad; då
+   hoppas också notariseringen över, eftersom en osignerad app inte kan notariseras.
+3. Tauri koden-signerar appen (hårdnat körläge är på som standard) och häftar fast biljetten på den.
+   Dmg-filen notariseras och häftas separat i workflowen, eftersom Tauri inte gör det
+   ([tauri-apps/tauri#7533](https://github.com/tauri-apps/tauri/issues/7533)) – utan biljett på
+   själva filen varnar Gatekeeper den som laddar ner den.
+4. Svaret från `notarytool` måste vara `Accepted`, och `stapler validate` måste gå igenom, annars
+   avbryts releasen.
+
+```bash
+# Kontrollera en nedladdad fil
+spctl --assess --type install -vv Freevobe_v0.1.0_aarch64.dmg   # accepted, source=Notarized Developer ID
+xcrun stapler validate Freevobe_v0.1.0_aarch64.dmg
+```
+
+### Android (nyckellager)
+
+Release-APK:n signeras av Gradle. Konfigurationen kommer från
+`plugins/with-android-release-signing.js`, en Expo-config-plugin, eftersom `expo prebuild` skapar
+`android/` från grunden och annars låter release-varianten använda debugnyckeln.
+
+1. Skapa nyckellagret en gång och spara det – nyckeln kan inte bytas utan att installerade appar
+   slutar kunna uppdateras:
+
+   ```bash
+   keytool -genkeypair -v -storetype PKCS12 -keystore upload-key.jks \
+     -alias freevobe -keyalg RSA -keysize 4096 -validity 10000
+   ```
+
+2. Sätt `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS` och
+   `ANDROID_KEY_PASSWORD`.
+3. Bygget lägger nyckellagret i `android/app/upload-key.jks` och skriver `android/key.properties` –
+   båda ligger under `android/` och skapas bara på byggmaskinen. Efter bygget kontrollerar
+   `apksigner` att APK:n **inte** bär debugnyckelns identitet; är den det avbryts releasen.
+
+Utan hemligheterna byggs APK:n med debugnyckeln. Den går att installera vid sidan om butiken, men kan
+inte laddas upp till Play Store, och en sådan installation kan inte uppdateras till en butikssignerad
+version. För Play Store behövs dessutom ett `.aab` (`./gradlew bundleRelease`) i stället för APK:n.
+
+```bash
+# Kontrollera en nedladdad fil
+$ANDROID_HOME/build-tools/<version>/apksigner verify --print-certs Freevobe-Mobile_1.0.0.apk
+```
+
+### Så vet du att signeringen tog
+
+Workflowen verifierar varje fil själv och avbryter releasen om signaturen inte är giltig: Windows
+(installeraren och appens binär), macOS (`notarytool` + `stapler validate`) och Android
+(`apksigner`). En varning om att en hemlighet saknas i körningen betyder att filen publicerades
+osignerad.
 
 ## Automatisk uppdatering
 

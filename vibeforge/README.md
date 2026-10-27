@@ -230,7 +230,7 @@ signeringsnycklar finns. Se [Release](docs/releasing.md).
 
 ## Begränsningar och TODO
 
-- [ ] **Signering**: Windows Authenticode och Apple notarization. Utan det varnar operativsystemet vid installation.
+- [ ] **Signering**: workflowen signerar, notariserar och verifierar filerna när certifikaten finns som hemligheter (`WINDOWS_CERTIFICATE`, `APPLE_*`, `ANDROID_KEYSTORE_BASE64`). Utan dem varnar operativsystemet vid installation. Se [Release](docs/releasing.md#signering).
 - [ ] **Auto-uppdate**: sätt `plugins.updater.active = true`, lägg in `pubkey` och en riktig `endpoints`-URL.
 - [ ] **Release-server**: GitHub Releases används som standard; egen server om du vill ha kanaler (beta/stable).
 - [ ] **Telemetri**: medvetet avstängt (`telemetry: false`) och kan inte slås på från gränssnittet.

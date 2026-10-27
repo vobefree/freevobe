@@ -44,3 +44,9 @@ example
 # generated native folders
 /ios
 /android
+
+# Nyckellagret och key.properties skrivs av CI in i android/ (som redan ignoreras ovan) och läses av
+# plugins/with-android-release-signing.js. Raderna finns med för att det ska synas att de aldrig
+# ska checkas in, även om /android någon gång skulle börja versionshanteras.
+/android/key.properties
+/android/app/*.jks

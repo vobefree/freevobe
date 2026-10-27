@@ -30,8 +30,9 @@ Statusen gäller version 0.1.0 (2026-10-27).
 
 ### Signering och distribution
 
-- [ ] **Windows Authenticode**: köp ett certifikat och sätt `TAURI_SIGNING_PRIVATE_KEY` för uppdateringsartefakter.
-- [ ] **Apple notarization**: `APPLE_CERTIFICATE`, `APPLE_ID`, `APPLE_PASSWORD`, `APPLE_TEAM_ID` som hemligheter.
+- [ ] **Windows Authenticode**: köp ett certifikat och lägg det som `WINDOWS_CERTIFICATE` + `WINDOWS_CERTIFICATE_PASSWORD`. Workflowen importerar det, signerar och verifierar signaturen. (`TAURI_SIGNING_PRIVATE_KEY` behövs bara för själva uppdateringsartefakterna.)
+- [ ] **Apple notarization**: lägg in `APPLE_CERTIFICATE`, `APPLE_CERTIFICATE_PASSWORD`, `APPLE_SIGNING_IDENTITY` och antingen `APPLE_ID` + `APPLE_PASSWORD` + `APPLE_TEAM_ID` eller en App Store Connect-nyckel (`APPLE_API_KEY`, `APPLE_API_ISSUER`, `APPLE_API_KEY_P8_BASE64`).
+- [ ] **Android-signering**: skapa ett nyckellager och lägg in `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS` och `ANDROID_KEY_PASSWORD` – annars signeras APK:n med debugnyckeln.
 - [ ] **Linux**: publicera `.deb` till ett eget APT-repo om du vill ha `apt install vibeforge`.
 - [ ] **Verifiera Rust-skalet**: `apps/desktop/src-tauri` är skrivet men aldrig kompilerat i den här miljön (ingen
       Rust-toolchain fanns). Kör `npm run tauri build` och åtgärda eventuella versionsproblem i `Cargo.toml`.
