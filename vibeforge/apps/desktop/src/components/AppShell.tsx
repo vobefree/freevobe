@@ -15,7 +15,7 @@ function Logo() {
         <path d="M13 21h7l-3-6h-7z" fill="var(--color-spark)" opacity="0.9" />
       </svg>
       <span className="text-sm font-semibold tracking-tight text-slate-100">
-        Vibe<span className="text-ember">Forge</span>
+        Free<span className="text-ember">vobe</span>
       </span>
     </span>
   );

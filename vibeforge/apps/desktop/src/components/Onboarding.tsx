@@ -60,7 +60,7 @@ export function Onboarding() {
           </svg>
           <div>
             <h1 className="text-lg font-semibold">
-              Vibe<span className="text-ember">Forge</span>
+              Free<span className="text-ember">vobe</span>
             </h1>
             <p className="text-xs text-slate-500">
               Lokal-first vibecoding med Ollama – koden stannar på din dator.
@@ -81,9 +81,7 @@ export function Onboarding() {
           <section className="space-y-3 text-sm text-slate-300">
             <h2 className="text-base font-semibold text-slate-100">Så fungerar det</h2>
             <ul className="space-y-1.5 text-[13px] text-slate-400">
-              <li>
-                • VibeForge kör en lokal agent som läser och skriver kod i dina projektmappar.
-              </li>
+              <li>• Freevobe kör en lokal agent som läser och skriver kod i dina projektmappar.</li>
               <li>
                 • Modellen körs via Ollama på din dator. Ingen kod skickas någonstans om du inte
                 själv aktiverar en molntjänst.
@@ -119,8 +117,13 @@ export function Onboarding() {
           <section className="space-y-3">
             <h2 className="text-base font-semibold text-slate-100">Anslut Ollama</h2>
             <p className="text-[13px] text-slate-400">
-              VibeForge letar automatiskt efter http://localhost:11434. Starta Ollama och tryck på
+              Freevobe letar automatiskt efter http://localhost:11434. Starta Ollama och tryck på
               Kontrollera igen om listan är tom.
+            </p>
+            <p className="text-[11.5px] text-slate-500">
+              Du kan hoppa över det här steget och titta runt i appen direkt. Projekt, editor,
+              skills och inställningar fungerar utan modell – bara chatten väntar på Ollama, och du
+              kan ansluta när du vill.
             </p>
             {ollama?.available ? (
               <>
@@ -168,7 +171,7 @@ export function Onboarding() {
                   </Button>
                   <a
                     className="vf-button border-alert/50"
-                    href={ollama?.helpUrl ?? 'https://vibeforge.dev/docs/ollama'}
+                    href={ollama?.helpUrl ?? 'https://freevobe.dev/docs/ollama'}
                     target="_blank"
                     rel="noreferrer noopener"
                   >
@@ -184,7 +187,7 @@ export function Onboarding() {
           <section className="space-y-3">
             <h2 className="text-base font-semibold text-slate-100">Välj projekt</h2>
             <p className="text-[13px] text-slate-400">
-              Ange sökvägen till mappen du vill arbeta i. VibeForge indexerar koden lokalt för att
+              Ange sökvägen till mappen du vill arbeta i. Freevobe indexerar koden lokalt för att
               kunna hitta rätt filer.
             </p>
             <Field label="Projektmapp">
@@ -209,7 +212,7 @@ export function Onboarding() {
               Annonsplats i chatten (valfritt)
             </h2>
             <p className="text-[13px] text-slate-400">
-              VibeForge finansieras delvis av en sponsorplats i chatten. Den är avstängd tills du
+              Freevobe finansieras delvis av en sponsorplats i chatten. Den är avstängd tills du
               säger ja och kan slås av när som helst i inställningarna.
             </p>
             <ul className="space-y-1 rounded border border-steel p-3 text-[11.5px] text-slate-500">
@@ -257,6 +260,11 @@ export function Onboarding() {
             Steg {step + 1} av {STEPS.length} · {STEPS[step]}
           </span>
           <div className="ml-auto flex gap-2">
+            {step === 1 && !ollama?.available ? (
+              <Button onClick={() => setStep(step + 1)} testId="onboarding-skip-ollama">
+                Hoppa över
+              </Button>
+            ) : null}
             {step < STEPS.length - 1 ? (
               <Button
                 variant="primary"
@@ -268,7 +276,7 @@ export function Onboarding() {
               </Button>
             ) : (
               <Button variant="primary" onClick={() => void finish()} testId="onboarding-finish">
-                Starta VibeForge
+                Starta Freevobe
               </Button>
             )}
           </div>
