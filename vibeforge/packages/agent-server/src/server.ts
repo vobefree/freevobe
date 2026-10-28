@@ -65,6 +65,18 @@ function isAllowedOrigin(origin: string): boolean {
   }
 }
 
+/** Token skickas i det nya namnet; det gamla läses fortfarande för äldre klienters skull. */
+const TOKEN_HEADERS = ['x-freevobe-token', 'x-vibeforge-token'] as const;
+const ALLOWED_HEADERS = ['content-type', ...TOKEN_HEADERS].join(', ');
+
+function presentedToken(headers: http.IncomingHttpHeaders): string | undefined {
+  for (const name of TOKEN_HEADERS) {
+    const value = headers[name];
+    if (typeof value === 'string') return value;
+  }
+  return undefined;
+}
+
 /**
  * Freevobe-agenten som lokal HTTP-server. Lyssnar bara på 127.0.0.1, kräver en token i
  * headern och avvisar anrop från andra origins – så att en godtycklig sida i webbläsaren inte
@@ -117,7 +129,7 @@ export async function startAgentServer(options: AgentServerOptions): Promise<Age
         'cache-control': 'no-store',
         'content-length': Buffer.byteLength(body),
         'access-control-allow-origin': allowedOrigin,
-        'access-control-allow-headers': 'content-type, x-vibeforge-token',
+        'access-control-allow-headers': ALLOWED_HEADERS,
         vary: 'origin',
       });
       response.end(body);
@@ -145,7 +157,7 @@ export async function startAgentServer(options: AgentServerOptions): Promise<Age
     if (method === 'OPTIONS') {
       response.writeHead(204, {
         'access-control-allow-origin': allowedOrigin,
-        'access-control-allow-headers': 'content-type, x-vibeforge-token',
+        'access-control-allow-headers': ALLOWED_HEADERS,
         'access-control-allow-methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
       });
       response.end();
@@ -189,8 +201,9 @@ export async function startAgentServer(options: AgentServerOptions): Promise<Age
       return;
     }
 
-    // 3. Token krävs för allt annat.
-    if (request.headers['x-vibeforge-token'] !== token) {
+    // 3. Token krävs för allt annat. Nya namnet är x-freevobe-token; det gamla accepteras
+    // fortfarande eftersom äldre klienter och dokumentation använder det.
+    if (presentedToken(request.headers) !== token) {
       send(401, {
         ok: false,
         error: { code: 'unauthorized', message: 'Ogiltig eller saknad token.' },

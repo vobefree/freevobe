@@ -259,7 +259,8 @@ fn status_snapshot(state: &Mutex<AgentProcess>) -> AgentStatus {
         pid: guard.pid,
         token_present: read_token().is_some(),
         home: vibeforge_home().display().to_string(),
-        note: "Agenten lyssnar bara på 127.0.0.1 och kräver token i x-vibeforge-token.".to_string(),
+        note: "Agenten lyssnar bara på 127.0.0.1 och kräver token i x-freevobe-token."
+            .to_string(),
     }
 }
 

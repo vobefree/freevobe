@@ -101,7 +101,7 @@ Fälten `enabled`, `requireApproval` och `warnings` visas i MCP-dialogen och i M
 npx -y @modelcontextprotocol/server-filesystem .
 
 # Se vad Freevobe hittade (projectId hämtas från /api/projects)
-curl -s -H "x-vibeforge-token: $(cat ~/.vibeforge/token)" \
+curl -s -H "x-freevobe-token: $(cat ~/.vibeforge/token)" \
   "http://127.0.0.1:4319/api/projects/<projectId>/mcp"
 ```
 

@@ -10,7 +10,7 @@ Freevobe är tre lager ovanpå varandra, alla på din maskin.
 │  uppgifter,        ───────────────────────    ─────────────────────────────────         │
 │  subagents         chatt med annonsplats                                                 │
 └────────────────────────────────────┬────────────────────────────────────────────────────┘
-                                     │ HTTP + SSE på 127.0.0.1 (token i x-vibeforge-token)
+                                     │ HTTP + SSE på 127.0.0.1 (token i x-freevobe-token)
 ┌────────────────────────────────────┴─────── packages/agent-server ─────────────────────┐
 │  server.ts     routing, token, origin-skydd, CORS, SSE                                  │
 │  sessionHub.ts körningar, godkännanden, händelseström, persistens                        │
@@ -58,7 +58,7 @@ Databasen använder Node:s inbyggda `node:sqlite`, så inga native moduler behö
 ## Skal och säkerhet i transporten
 
 - Servern lyssnar bara på `127.0.0.1`.
-- Varje anrop utom `/api/health` och (i utvecklingsläge) `/api/dev-token` kräver token i `x-vibeforge-token`.
+- Varje anrop utom `/api/health` och (i utvecklingsläge) `/api/dev-token` kräver token i `x-freevobe-token`. Det äldre namnet `x-vibeforge-token` accepteras också, så att äldre klienter fortsätter fungera.
 - Ändrande metoder från en origin som inte är loopback eller Tauri avvisas med 403.
 - Alla svar får CORS-huvuden för loopback-origins, annars kan webbläsargränssnittet inte läsa dem.
 - Skrivbordsappen startar agenten som en egen process, pollar `/api/health` och injicerar sedan

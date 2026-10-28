@@ -30,6 +30,14 @@ export class AgentRequestError extends Error {
   }
 }
 
+/**
+ * Token skickas under båda namnen: det nya läses av dagens server, och det gamla gör att appen
+ * också fungerar mot en äldre agent. Samma mönster används i mobilappen.
+ */
+function tokenHeaders(token: string): Record<string, string> {
+  return { 'x-freevobe-token': token, 'x-vibeforge-token': token };
+}
+
 /** Var agenten kör. I Tauri injiceras adressen; i webbläsarläge används env eller standardport. */
 export function resolveAgentBaseUrl(): string {
   const bootstrap = window.__VIBEFORGE_BOOTSTRAP__;
@@ -90,7 +98,7 @@ export class AgentClient {
   }
 
   private headers(extra: Record<string, string> = {}): Record<string, string> {
-    return { 'content-type': 'application/json', 'x-vibeforge-token': this.token, ...extra };
+    return { 'content-type': 'application/json', ...tokenHeaders(this.token), ...extra };
   }
 
   async request<T>(path: string, options: { method?: string; body?: unknown } = {}): Promise<T> {
@@ -145,7 +153,7 @@ export class AgentClient {
     void (async () => {
       try {
         const response = await fetch(`${this.baseUrl}/api/runs/${runId}/events`, {
-          headers: { 'x-vibeforge-token': this.token, accept: 'text/event-stream' },
+          headers: { ...tokenHeaders(this.token), accept: 'text/event-stream' },
           signal: controller.signal,
         });
         if (!response.body) throw new Error('Ingen händelseström från agenten.');

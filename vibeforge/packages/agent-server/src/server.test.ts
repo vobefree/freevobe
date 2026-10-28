@@ -161,6 +161,22 @@ describe('autentisering och skydd', () => {
     expect(authorized.status).toBe(200);
   });
 
+  it('accepterar token i både det nya och det gamla huvudnamnet', async () => {
+    const modern = await fetch(`${server.url}/api/projects`, {
+      headers: { 'x-freevobe-token': TOKEN },
+    });
+    expect(modern.status).toBe(200);
+
+    // Äldre klienter skickar fortfarande x-vibeforge-token, och det ska fortsätta fungera.
+    const legacy = await api('/api/projects');
+    expect(legacy.status).toBe(200);
+
+    const wrong = await fetch(`${server.url}/api/projects`, {
+      headers: { 'x-freevobe-token': 'fel-token' },
+    });
+    expect(wrong.status).toBe(401);
+  });
+
   it('avvisar anrop från en annan origin', async () => {
     const blocked = await api('/api/projects', {
       method: 'POST',
