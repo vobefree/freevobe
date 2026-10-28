@@ -255,6 +255,23 @@ const DMG = /\.dmg$/i;
 const ARCH_HINT = /(aarch64|arm64|x64|x86_64|intel|amd64)/i;
 
 /**
+ * Releasens fil för en plattform: exakt träff först, annars en universal-dmg (utan arkitektur i
+ * namnet) som fungerar på både Apple Silicon och Intel.
+ */
+export function assetFor(
+  platform: Exclude<Platform, 'unknown'>,
+  release: Release | null,
+): Release['assets'][number] | undefined {
+  if (!release) return undefined;
+  const exact = findAsset(release.assets, platform);
+  if (exact) return exact;
+  if (platform === 'macAppleSilicon' || platform === 'macIntel') {
+    return release.assets.find((asset) => DMG.test(asset.name) && !ARCH_HINT.test(asset.name));
+  }
+  return undefined;
+}
+
+/**
  * Rätt installationsfil, i tur och ordning:
  *  1. den fil som faktiskt ligger i releasen,
  *  2. en universal-dmg när releasen inte skiljer på Mac-arkitekturerna,
@@ -264,22 +281,94 @@ const ARCH_HINT = /(aarch64|arm64|x64|x86_64|intel|amd64)/i;
  */
 export function assetUrlFor(platform: Exclude<Platform, 'unknown'>, release: Release | null): string {
   if (release) {
-    const exact = findAsset(release.assets, platform);
-    if (exact) return exact.url;
-
-    // Universal-dmg (utan arkitektur i namnet) fungerar på både Apple Silicon och Intel.
-    if (platform === 'macAppleSilicon' || platform === 'macIntel') {
-      const universal = release.assets.find(
-        (asset) => DMG.test(asset.name) && !ARCH_HINT.test(asset.name),
-      );
-      if (universal) return universal.url;
-    }
+    const asset = assetFor(platform, release);
+    if (asset) return asset.url;
 
     // Releasen finns och har filer, men ingen för den här plattformen: låt användaren välja själv.
     if (release.assets.length > 0) return release.htmlUrl;
     return assetUrlForTag(platform, release.tag);
   }
   return DOWNLOAD_LINKS[platform];
+}
+
+export type Checksum = { name: string; sha256: string };
+
+/**
+ * Markören som release-workflowen lägger runt kontrollsummesektionen i releaseanteckningarna. Utan
+ * markörerna skulle sektionen synas både i anteckningarna och i den egna panelen på
+ * nedladdningssidan.
+ */
+export const CHECKSUMS_START = '<!-- sha256sums:start -->';
+export const CHECKSUMS_END = '<!-- sha256sums:end -->';
+
+/** En rad ur `sha256sum`-utdata: 64 hextecken, blanksteg och filnamn. */
+const CHECKSUM_LINE = /^([a-f0-9]{64})[ \t]+\*?(.+?)[ \t]*$/i;
+
+/** Tar bort markdown-dekoration så att en lista eller kodrad också tolkas. */
+function stripDecoration(line: string): string {
+  return line
+    .replace(/^\s*(?:[-*+]|\d+\.)\s+/, '')
+    .replace(/^\s*`+/, '')
+    .replace(/`+\s*$/, '')
+    .trim();
+}
+
+/**
+ * Läser SHA-256-summan ur releaseanteckningarna. Workflowen skriver dem mellan två markörer; finns
+ * de inte letas raderna i hela texten, så en release som skrivits för hand också fungerar. Sista
+ * förekomsten vinner, så en omkörning med nya summor inte lämnar kvar gamla värden.
+ */
+export function parseChecksums(notes: string): Checksum[] {
+  if (!notes) return [];
+  const start = notes.indexOf(CHECKSUMS_START);
+  const from = start === -1 ? 0 : start + CHECKSUMS_START.length;
+  const end = start === -1 ? -1 : notes.indexOf(CHECKSUMS_END, from);
+  const region = start === -1 ? notes : notes.slice(from, end === -1 ? undefined : end);
+
+  const byName = new Map<string, Checksum>();
+  for (const line of region.split(/\r?\n/)) {
+    const match = CHECKSUM_LINE.exec(stripDecoration(line));
+    if (!match) continue;
+    const name = match[2];
+    if (!name) continue;
+    byName.set(name.toLowerCase(), { name, sha256: match[1].toLowerCase() });
+  }
+  return [...byName.values()].slice(0, 32);
+}
+
+/** Anteckningarna utan kontrollsummesektionen – den visas i stället i sin egen panel. */
+export function stripChecksums(notes: string): string {
+  const start = notes.indexOf(CHECKSUMS_START);
+  if (start === -1) return notes;
+  const end = notes.indexOf(CHECKSUMS_END, start);
+  const rest = end === -1 ? '' : notes.slice(end + CHECKSUMS_END.length);
+  return (notes.slice(0, start) + rest).trim();
+}
+
+/** Filnamnet i en nedladdningsadress, avkodat – GitHub kodar mellanrum och specialtecken. */
+function fileNameFromUrl(url: string): string {
+  const last = url.split(/[?#]/)[0].split('/').pop() ?? '';
+  try {
+    return decodeURIComponent(last);
+  } catch {
+    return last;
+  }
+}
+
+/**
+ * Kontrollsumman för den fil plattformens knapp laddar ner. Null när releasen saknar filen eller
+ * när summan inte är publicerad – panelen visar då ärligt att den inte finns i stället för att
+ * gissa.
+ */
+export function checksumFor(
+  platform: Exclude<Platform, 'unknown'>,
+  release: Release | null,
+  checksums: Checksum[],
+): Checksum | null {
+  const asset = assetFor(platform, release);
+  if (!asset) return null;
+  const name = fileNameFromUrl(asset.url).toLowerCase();
+  return checksums.find((checksum) => checksum.name.toLowerCase() === name) ?? null;
 }
 
 /**

@@ -59,6 +59,18 @@ export function assetUrlForTag(
   return `https://github.com/${RELEASE_REPO}/releases/download/${tag}/${ASSET_FILE_NAMES[platform](tag)}`;
 }
 
+/**
+ * Filen med SHA-256-summan för varje releasefil, i `sha256sum`-format. Release-workflowen skapar den
+ * och laddar upp den bredvid installationsfilerna, så den kan användas direkt:
+ * `sha256sum -c SHA256SUMS.txt`.
+ */
+export const CHECKSUMS_FILE_NAME = 'SHA256SUMS.txt';
+
+/** Direktadress till kontrollsummefilen för en viss tagg. */
+export function checksumsUrlForTag(tag: string = RELEASE_TAG): string {
+  return `https://github.com/${RELEASE_REPO}/releases/download/${tag}/${CHECKSUMS_FILE_NAME}`;
+}
+
 export const DOWNLOAD_LINKS = {
   latest: `${base}/latest`,
   all: base,

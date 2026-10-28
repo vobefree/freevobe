@@ -2,6 +2,7 @@
 
 import { CalendarDays, FileText, Loader2 } from 'lucide-react';
 import { parseMarkdown, tokenizeInline } from '@/lib/markdown';
+import { stripChecksums } from '@/lib/release';
 import { useRelease } from './use-release';
 
 /**
@@ -92,7 +93,8 @@ export function ReleaseNotes() {
   }
 
   const { release: latest } = release;
-  const blocks = parseMarkdown(latest.notes);
+  // Kontrollsummorna har en egen panel ovanför – här räcker ändringslistan.
+  const blocks = parseMarkdown(stripChecksums(latest.notes));
   const published = formatDate(latest.publishedAt);
 
   return (

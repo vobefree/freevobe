@@ -1,10 +1,15 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { assetUrlForTag, DOWNLOAD_LINKS, RELEASE_REPO, RELEASE_TAG } from '@/config/release';
 import {
+  CHECKSUMS_END,
+  CHECKSUMS_START,
   assetUrlFor,
+  checksumFor,
   detectPlatform,
   normalizeRelease,
+  parseChecksums,
   releaseBadge,
+  stripChecksums,
   type Platform,
   type Release,
 } from './release';
@@ -142,6 +147,138 @@ describe('assetUrlFor', () => {
     expect(DOWNLOAD_LINKS.latest.endsWith('/releases/latest')).toBe(true);
     expect(DOWNLOAD_LINKS.android).toContain(RELEASE_REPO);
     expect(DOWNLOAD_LINKS.android.endsWith('.apk')).toBe(true);
+  });
+});
+
+/** 64 hextecken, som en riktig SHA-256-summa men läsbar i testet. */
+const hash = (seed: string) => seed.repeat(64);
+
+/** Exakt formen workflowen skriver: summa, två mellanslag, filnamn. */
+const sumsText = [
+  `${hash('a')}  Freevobe-Mobile_1.0.0.apk`,
+  `${hash('b')}  Freevobe_v0.2.0_aarch64.dmg`,
+  `${hash('c')}  Freevobe_v0.2.0_amd64.AppImage`,
+  `${hash('d')}  Freevobe_v0.2.0_x64-setup.exe`,
+].join('\n');
+
+function notesWithChecksums(text = sumsText) {
+  return [
+    "## What's Changed",
+    '* Sign the installers in https://example.test/pull/12',
+    '',
+    CHECKSUMS_START,
+    '## SHA-256',
+    '',
+    'Checksums for every file in this release.',
+    '',
+    '```',
+    text,
+    '```',
+    '',
+    CHECKSUMS_END,
+  ].join('\n');
+}
+
+describe('parseChecksums', () => {
+  it('läser summorna ur sektionen release-workflowen skriver', () => {
+    expect(parseChecksums(notesWithChecksums())).toEqual([
+      { name: 'Freevobe-Mobile_1.0.0.apk', sha256: hash('a') },
+      { name: 'Freevobe_v0.2.0_aarch64.dmg', sha256: hash('b') },
+      { name: 'Freevobe_v0.2.0_amd64.AppImage', sha256: hash('c') },
+      { name: 'Freevobe_v0.2.0_x64-setup.exe', sha256: hash('d') },
+    ]);
+  });
+
+  it('hoppar över rader som inte är kontrollsummor', () => {
+    const notes = [
+      '* Sign the installers in https://example.test/pull/12',
+      '* `sha256sum -c SHA256SUMS.txt` on macOS and Linux',
+      `${'z'.repeat(64)}  inte-hex.apk`,
+      `${hash('e')}  Freevobe_v0.2.0_x64.dmg`,
+    ].join('\n');
+    expect(parseChecksums(notes)).toEqual([
+      { name: 'Freevobe_v0.2.0_x64.dmg', sha256: hash('e') },
+    ]);
+  });
+
+  it('tolkar listrader och backticks, och sista värdet vinner', () => {
+    const notes = [
+      `- \`${hash('1')}  Freevobe_v0.2.0_x64.dmg\``,
+      `- ${hash('2')}  Freevobe_v0.2.0_x64.dmg`,
+      `${hash('3')}  *Freevobe-Mobile_1.0.0.apk`,
+    ].join('\n');
+
+    expect(parseChecksums(notes)).toEqual([
+      { name: 'Freevobe_v0.2.0_x64.dmg', sha256: hash('2') },
+      { name: 'Freevobe-Mobile_1.0.0.apk', sha256: hash('3') },
+    ]);
+  });
+
+  it('ger tom lista när releasen inte har några summor', () => {
+    expect(parseChecksums('')).toEqual([]);
+    expect(parseChecksums('## What\'s Changed\n* nothing')).toEqual([]);
+  });
+});
+
+describe('stripChecksums', () => {
+  it('tar bort kontrollsummesektionen men behåller anteckningarna', () => {
+    const stripped = stripChecksums(notesWithChecksums());
+    expect(stripped).toContain("## What's Changed");
+    expect(stripped).not.toContain('SHA-256');
+    expect(stripped).not.toContain(hash('a'));
+    expect(stripped).not.toContain(CHECKSUMS_START);
+  });
+
+  it('lämnar anteckningarna orörda när markörerna saknas', () => {
+    expect(stripChecksums('## What\'s Changed\n* nothing')).toBe('## What\'s Changed\n* nothing');
+  });
+});
+
+describe('checksumFor', () => {
+  const withChecksums: Release = {
+    ...release,
+    notes: notesWithChecksums(),
+    assets: [
+      { name: 'Freevobe_v0.2.0_x64-setup.exe', url: 'https://example.test/Freevobe_v0.2.0_x64-setup.exe', sizeBytes: 1, downloads: 0 },
+      { name: 'Freevobe_v0.2.0_aarch64.dmg', url: 'https://example.test/Freevobe_v0.2.0_aarch64.dmg', sizeBytes: 1, downloads: 0 },
+      { name: 'Freevobe_v0.2.0_amd64.AppImage', url: 'https://example.test/Freevobe_v0.2.0_amd64.AppImage', sizeBytes: 1, downloads: 0 },
+      { name: 'Freevobe-Mobile_1.0.0.apk', url: 'https://example.test/Freevobe-Mobile_1.0.0.apk', sizeBytes: 1, downloads: 0 },
+    ],
+  };
+  const checksums = parseChecksums(withChecksums.notes);
+
+  it('kopplar plattformens fil till rätt summa', () => {
+    expect(checksumFor('windows', withChecksums, checksums)).toEqual({
+      name: 'Freevobe_v0.2.0_x64-setup.exe',
+      sha256: hash('d'),
+    });
+    expect(checksumFor('macAppleSilicon', withChecksums, checksums)?.sha256).toBe(hash('b'));
+    expect(checksumFor('linux', withChecksums, checksums)?.sha256).toBe(hash('c'));
+    expect(checksumFor('android', withChecksums, checksums)?.sha256).toBe(hash('a'));
+  });
+
+  it('avkodar filnamn som GitHub procentkodar i adressen', () => {
+    const encoded: Release = {
+      ...withChecksums,
+      assets: [
+        {
+          name: 'Freevobe Mobile_1.0.0.apk',
+          url: 'https://example.test/Freevobe%20Mobile_1.0.0.apk',
+          sizeBytes: 1,
+          downloads: 0,
+        },
+      ],
+    };
+    const sums = parseChecksums(`${hash('f')}  Freevobe Mobile_1.0.0.apk`);
+    expect(checksumFor('android', encoded, sums)?.sha256).toBe(hash('f'));
+  });
+
+  it('ger null när filen eller summan saknas', () => {
+    // Releasen saknar Intel-dmg:n.
+    expect(checksumFor('macIntel', withChecksums, checksums)).toBeNull();
+    // Releasen finns, men kontrollsummorna är inte publicerade ännu.
+    expect(checksumFor('windows', withChecksums, parseChecksums("## What's Changed"))).toBeNull();
+    expect(checksumFor('windows', null, checksums)).toBeNull();
   });
 });
 

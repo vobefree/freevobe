@@ -153,3 +153,16 @@ jobs:
             --repo "$GITHUB_REPOSITORY" --clobber
           gh release view "${{ inputs.tag }}" --repo "$GITHUB_REPOSITORY" \
             --json assets --jq '.assets[].name'
+      # Filen läggs i en release som redan är publicerad, så kontrollsumman för den måste in i
+      # releasefilen och i anteckningarna – annars saknar nedladdningssidan summan för Intel-Macen.
+      - name: Uppdatera kontrollsummorna
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          tag="${{ inputs.tag }}"
+          bash .github/scripts/release-checksums.sh add "$tag" \
+            vibeforge/dist-release/*.dmg vibeforge/dist-release/SHA256SUMS.txt
+          bash .github/scripts/release-checksums.sh body "$tag" \
+            vibeforge/dist-release/SHA256SUMS.txt

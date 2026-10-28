@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { ExternalLink } from 'lucide-react';
+import { Checksums } from '@/components/download/checksums';
 import { DownloadButton } from '@/components/download/download-button';
 import { PlatformButtons } from '@/components/download/platform-buttons';
 import { ReleaseBadge } from '@/components/download/release-badge';
@@ -100,6 +101,10 @@ export default function DownloadPage() {
             iOS builds are not published yet — they need a Mac and an Apple Developer account.
           </p>
         </div>
+      </section>
+
+      <section className="vf-shell max-w-4xl pb-12">
+        <Checksums />
       </section>
 
       <section className="vf-shell max-w-4xl pb-16">

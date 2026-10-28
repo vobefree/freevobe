@@ -30,7 +30,7 @@ npm run tauri build -- --bundles appimage,deb  # Linux
 ```
 
 Artefakterna hamnar i `apps/desktop/src-tauri/target/release/bundle/` och får namn efter
-`productName` och `version` i `tauri.conf.json` (t.ex. `VibeForge_0.1.0_x64-setup.exe`).
+`productName` och `version` i `tauri.conf.json` (t.ex. `Freevobe_0.1.0_x64-setup.exe`).
 
 ## Bygg i CI
 
@@ -41,13 +41,14 @@ länge hemligheterna inte finns (se [Signering](#signering)).
 
 Filerna döps om till exakt de namn nedladdningssidan letar efter:
 
-| Plattform | Filnamn |
-|---|---|
-| Windows | `Freevobe_v0.1.0_x64-setup.exe` |
-| macOS (Apple Silicon) | `Freevobe_v0.1.0_aarch64.dmg` |
-| macOS (Intel) | `Freevobe_v0.1.0_x64.dmg` |
-| Linux | `Freevobe_v0.1.0_amd64.AppImage` |
-| Android (mobilappen) | `Freevobe-Mobile_1.0.0.apk` (appen egen version ur `app.json`) |
+| Plattform             | Filnamn                                                                 |
+| --------------------- | ----------------------------------------------------------------------- |
+| Windows               | `Freevobe_v0.1.0_x64-setup.exe`                                         |
+| macOS (Apple Silicon) | `Freevobe_v0.1.0_aarch64.dmg`                                           |
+| macOS (Intel)         | `Freevobe_v0.1.0_x64.dmg`                                               |
+| Linux                 | `Freevobe_v0.1.0_amd64.AppImage`                                        |
+| Android (mobilappen)  | `Freevobe-Mobile_1.0.0.apk` (appen egen version ur `app.json`)          |
+| Alla filer            | `SHA256SUMS.txt` – kontrollsummor, se [Kontrollsummor](#kontrollsummor) |
 
 Ändrar du namnen i workflowen måste `ASSET_FILE_NAMES` i `freevobe/src/config/release.ts` ändras
 ochå – annars hittas filerna bara via GitHub-API:t, inte via den förväntade adressen.
@@ -74,19 +75,19 @@ hemligheter – inga kodändringar behövs. Är hemligheterna inte satta går by
 filen blir osignerad och operativsystemet varnar vid installation; workflowen skriver då en varning i
 körningen. Hemligheterna sätts under **Settings → Secrets and variables → Actions**.
 
-| Hemlighet | Platform | Innehåll |
-|---|---|---|
-| `WINDOWS_CERTIFICATE` | Windows | Authenticode-certifikatet som `.pfx`, base64-kodat |
-| `WINDOWS_CERTIFICATE_PASSWORD` | Windows | Lösenordet för `.pfx`-filen |
-| `APPLE_CERTIFICATE` | macOS | _Developer ID Application_-certifikatet som `.p12`, base64-kodat |
-| `APPLE_CERTIFICATE_PASSWORD` | macOS | Lösenordet för `.p12`-filen |
-| `APPLE_SIGNING_IDENTITY` | macOS | Certifikatets namn, t.ex. `Developer ID Application: Ditt AB (TEAMID)` |
-| `APPLE_ID`, `APPLE_PASSWORD`, `APPLE_TEAM_ID` | macOS | Apple-ID, app-specifikt lösenord och team-ID för notariseringen |
-| `APPLE_API_KEY`, `APPLE_API_ISSUER`, `APPLE_API_KEY_P8_BASE64` | macOS | App Store Connect-nyckel (nyckel-ID, issuer-ID, `.p8` base64) i stället för Apple-ID |
-| `ANDROID_KEYSTORE_BASE64` | Android | Nyckellagret (`.jks`) base64-kodat |
-| `ANDROID_KEYSTORE_PASSWORD` | Android | Lösenordet för nyckellagret |
-| `ANDROID_KEY_ALIAS` | Android | Aliaset för nyckeln i lagret |
-| `ANDROID_KEY_PASSWORD` | Android | Lösenordet för nyckeln |
+| Hemlighet                                                      | Platform | Innehåll                                                                             |
+| -------------------------------------------------------------- | -------- | ------------------------------------------------------------------------------------ |
+| `WINDOWS_CERTIFICATE`                                          | Windows  | Authenticode-certifikatet som `.pfx`, base64-kodat                                   |
+| `WINDOWS_CERTIFICATE_PASSWORD`                                 | Windows  | Lösenordet för `.pfx`-filen                                                          |
+| `APPLE_CERTIFICATE`                                            | macOS    | _Developer ID Application_-certifikatet som `.p12`, base64-kodat                     |
+| `APPLE_CERTIFICATE_PASSWORD`                                   | macOS    | Lösenordet för `.p12`-filen                                                          |
+| `APPLE_SIGNING_IDENTITY`                                       | macOS    | Certifikatets namn, t.ex. `Developer ID Application: Ditt AB (TEAMID)`               |
+| `APPLE_ID`, `APPLE_PASSWORD`, `APPLE_TEAM_ID`                  | macOS    | Apple-ID, app-specifikt lösenord och team-ID för notariseringen                      |
+| `APPLE_API_KEY`, `APPLE_API_ISSUER`, `APPLE_API_KEY_P8_BASE64` | macOS    | App Store Connect-nyckel (nyckel-ID, issuer-ID, `.p8` base64) i stället för Apple-ID |
+| `ANDROID_KEYSTORE_BASE64`                                      | Android  | Nyckellagret (`.jks`) base64-kodat                                                   |
+| `ANDROID_KEYSTORE_PASSWORD`                                    | Android  | Lösenordet för nyckellagret                                                          |
+| `ANDROID_KEY_ALIAS`                                            | Android  | Aliaset för nyckeln i lagret                                                         |
+| `ANDROID_KEY_PASSWORD`                                         | Android  | Lösenordet för nyckeln                                                               |
 
 Koda filerna så här:
 
@@ -182,6 +183,47 @@ Workflowen verifierar varje fil själv och avbryter releasen om signaturen inte 
 (`apksigner`). En varning om att en hemlighet saknas i körningen betyder att filen publicerades
 osignerad.
 
+## Kontrollsummor
+
+Varje release får en SHA-256-summa för varje fil, så att den som laddar ner kan kontrollera att
+filen är exakt den som CI byggde – signaturen säger vem som publicerade filen, summan säger att den
+inte ändrats på vägen.
+
+`.github/scripts/release-checksums.sh` gör tre saker, och `release`-jobbet anropar det:
+
+1. **`compute`** summerar alla filer i artefaktkatalogen **efter** att dmg:erna häftats och APK:n
+   signerats, och skriver `SHA256SUMS.txt` i `sha256sum`-format.
+2. Filen laddas upp tillsammans med installationsfilerna.
+3. **`body`** skriver in summorna i releaseanteckningarna mellan markörerna
+   `<!-- sha256sums:start -->` och `<!-- sha256sums:end -->`. En omkörning av samma tagg ersätter
+   sektionen i stället för att lägga till en till.
+
+Summorna står i anteckningarna därför att GitHub-API:et svarar med CORS men själva
+filnedladdningen inte gör det: nedladdningssidan kan läsa releasens text men inte hämta
+`SHA256SUMS.txt` i webbläsaren. Den egna filen finns för kommandoraden.
+
+Lägger du till en fil i en release som redan är publicerad (t.ex. Intel-dmg:n via workflowen
+`macOS Intel (.dmg)`) uppdaterar **`add`** både `SHA256SUMS.txt` och anteckningarna, så summan för
+den filen inte saknas.
+
+Publicerades releasen innan kontrollsummorna fanns går det att lägga till dem i efterhand: kör
+workflowen **Kontrollsummor** (`.github/workflows/release-checksums.yml`) med taggen som indata.
+Den laddar ner filerna, summerar dem och skriver in resultatet – ingen ombyggnad behövs.
+
+```bash
+# macOS och Linux
+sha256sum -c SHA256SUMS.txt            # shasum -a 256 -c SHA256SUMS.txt på macOS
+shasum -a 256 Freevobe_v0.1.0_aarch64.dmg
+```
+
+```powershell
+# Windows
+Get-FileHash .\Freevobe_v0.1.0_x64-setup.exe -Algorithm SHA256
+```
+
+Stämmer inte summan ska filen inte installeras. Nedladdningssidan visar samma värden under
+_Verify your download_, med en kopieringsknapp per fil.
+
 ## Automatisk uppdatering
 
 Koden är förberedd men avstängd:
@@ -190,7 +232,7 @@ Koden är förberedd men avstängd:
 "plugins": {
   "updater": {
     "active": false,
-    "endpoints": ["https://releases.vibeforge.dev/{{target}}/{{arch}}/{{current_version}}"],
+    "endpoints": ["https://releases.freevobe.dev/{{target}}/{{arch}}/{{current_version}}"],
     "pubkey": "…"
   }
 }

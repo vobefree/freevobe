@@ -1,0 +1,50 @@
+# Skriver SHA-256-summan för en release som redan är publicerad.
+#
+# Release-workflowen gör detta automatiskt när en tagg pushas. Den här filen finns för releaser som
+# publicerades innan kontrollsummorna fanns, och för att kunna rätta en summa utan att bygga om allt:
+# filerna laddas ner, summeras och skrivs in i releaseanteckningarna.
+name: Kontrollsummor
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release-tagg att skriva kontrollsummor för (t.ex. v0.1.0)'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: checksums-${{ inputs.tag }}
+  cancel-in-progress: false
+
+jobs:
+  checksums:
+    name: SHA-256 för ${{ inputs.tag }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Ladda ner releasefilerna
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          mkdir -p release-files
+          gh release download "${{ inputs.tag }}" \
+            --repo "$GITHUB_REPOSITORY" --dir release-files
+          ls -l release-files
+      - name: Beräkna och publicera summorna
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          tag="${{ inputs.tag }}"
+          # Samma skript som release-workflowen använder, så formatet blir identiskt.
+          bash .github/scripts/release-checksums.sh compute release-files
+          gh release upload "$tag" release-files/SHA256SUMS.txt \
+            --repo "$GITHUB_REPOSITORY" --clobber
+          bash .github/scripts/release-checksums.sh body "$tag" release-files/SHA256SUMS.txt
