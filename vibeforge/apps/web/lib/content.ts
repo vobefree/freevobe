@@ -15,13 +15,13 @@ export interface BlogPost {
 export const BLOG_POSTS: BlogPost[] = [
   {
     slug: 'varfor-lokal-first',
-    title: 'Varför VibeForge är lokal-first',
+    title: 'Varför Freevobe är lokal-first',
     date: '2026-10-20',
     summary:
-      'Koden är ofta det mest känsliga du äger. Vi byggde VibeForge så att den aldrig behöver lämna datorn.',
+      'Koden är ofta det mest känsliga du äger. Vi byggde Freevobe så att den aldrig behöver lämna datorn.',
     body: [
       'Molntjänster är bekväma, men de kräver att du skickar din kod, dina prompter och ibland dina kunders uppgifter till någon annans server. För många team är det inte ett alternativ.',
-      'VibeForge kör modellen via Ollama på din egen maskin. Agent-loopen, filverktygen, testkörningen och git-integrationen körs lokalt i en Node-process som bara lyssnar på 127.0.0.1 och kräver en token i varje anrop.',
+      'Freevobe kör modellen via Ollama på din egen maskin. Agent-loopen, filverktygen, testkörningen och git-integrationen körs lokalt i en Node-process som bara lyssnar på 127.0.0.1 och kräver en token i varje anrop.',
       'Ingen telemetri. Ingen inloggning. Ingen molnkonto. Det enda som lämnar datorn är det du själv uttryckligen aktiverar – till exempel ett webbläsaranrop som du godkänt.',
     ],
   },
@@ -168,7 +168,7 @@ export const DOC_SECTIONS: DocSection[] = [
     id: 'arkitektur',
     title: 'Arkitektur',
     paragraphs: [
-      'VibeForge består av tre delar: agent-core (agent-loop, verktyg, kontext, skills, minne, MCP), agent-server (HTTP/SSE på 127.0.0.1 med token) och skrivbordsappen (Tauri 2 + React).',
+      'Freevobe består av tre delar: agent-core (agent-loop, verktyg, kontext, skills, minne, MCP), agent-server (HTTP/SSE på 127.0.0.1 med token) och skrivbordsappen (Tauri 2 + React).',
       'Skrivbordsappen startar agenten som en sidecar, väntar tills /api/health svarar och injicerar sedan adress och token i webbvyn. Ingen trafik går utanför loopback.',
     ],
   },
@@ -197,43 +197,15 @@ export const DOC_SECTIONS: DocSection[] = [
   },
 ];
 
-export interface DownloadTarget {
-  platform: string;
-  format: string;
-  note: string;
-  available: boolean;
-}
-
-export const DOWNLOADS: DownloadTarget[] = [
-  {
-    platform: 'Windows',
-    format: '.exe (NSIS-installerare)',
-    note: 'Kräver Windows 10 eller senare och Ollama installerat.',
-    available: false,
-  },
-  {
-    platform: 'macOS',
-    format: '.dmg (Apple Silicon och Intel)',
-    note: 'Kräver macOS 11 eller senare. Binären är osignerad i den här versionen.',
-    available: false,
-  },
-  {
-    platform: 'Linux',
-    format: '.AppImage och .deb',
-    note: 'Byggs från källkoden tills release-servern är konfigurerad.',
-    available: false,
-  },
-];
-
 export const COMMUNITY_LINKS = [
   {
     label: 'GitHub Discussions',
-    href: 'https://github.com/vibeforge/vibeforge/discussions',
+    href: 'https://github.com/vobefree/freevobe/discussions',
     note: 'Frågor, idéer och felsökning.',
   },
   {
     label: 'GitHub Issues',
-    href: 'https://github.com/vibeforge/vibeforge/issues',
+    href: 'https://github.com/vobefree/freevobe/issues',
     note: 'Buggrapporter och funktionsförslag.',
   },
   {
