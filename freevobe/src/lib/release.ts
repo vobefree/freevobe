@@ -1,4 +1,8 @@
-import { assetUrlForTag, DOWNLOAD_LINKS, RELEASE_API_LATEST } from '@/config/release';
+import {
+  assetUrlForTag,
+  DOWNLOAD_LINKS,
+  RELEASE_API_LATEST,
+} from "@/config/release";
 
 export type ReleaseAsset = {
   name: string;
@@ -21,14 +25,17 @@ export type Release = {
  * `error` betyder att vi inte kunde fråga (nätverk, rate limit) och därför inte vet.
  */
 export type ReleaseState =
-  | { status: 'loading'; release: null }
-  | { status: 'ready'; release: Release }
-  | { status: 'missing'; release: null }
-  | { status: 'error'; release: null };
+  | { status: "loading"; release: null }
+  | { status: "ready"; release: Release }
+  | { status: "missing"; release: null }
+  | { status: "error"; release: null };
 
-export const INITIAL_RELEASE_STATE: ReleaseState = { status: 'loading', release: null };
+export const INITIAL_RELEASE_STATE: ReleaseState = {
+  status: "loading",
+  release: null,
+};
 
-const CACHE_KEY = 'freevobe:release:v1';
+const CACHE_KEY = "freevobe:release:v1";
 /** En timme: håller oss långt under GitHubs rate limit (60 anrop/timme oautentiserat). */
 const CACHE_TTL_MS = 60 * 60 * 1000;
 
@@ -55,12 +62,15 @@ export function getServerSnapshot(): ReleaseState {
 }
 
 function readCache(): { fetchedAt: number; release: Release } | null {
-  if (typeof window === 'undefined') return null;
+  if (typeof window === "undefined") return null;
   try {
     const raw = window.localStorage.getItem(CACHE_KEY);
     if (!raw) return null;
-    const parsed = JSON.parse(raw) as { fetchedAt?: unknown; release?: unknown };
-    if (typeof parsed.fetchedAt !== 'number' || !parsed.release) return null;
+    const parsed = JSON.parse(raw) as {
+      fetchedAt?: unknown;
+      release?: unknown;
+    };
+    if (typeof parsed.fetchedAt !== "number" || !parsed.release) return null;
     return parsed as { fetchedAt: number; release: Release };
   } catch {
     return null;
@@ -68,9 +78,12 @@ function readCache(): { fetchedAt: number; release: Release } | null {
 }
 
 function writeCache(release: Release) {
-  if (typeof window === 'undefined') return;
+  if (typeof window === "undefined") return;
   try {
-    window.localStorage.setItem(CACHE_KEY, JSON.stringify({ fetchedAt: Date.now(), release }));
+    window.localStorage.setItem(
+      CACHE_KEY,
+      JSON.stringify({ fetchedAt: Date.now(), release }),
+    );
   } catch {
     // Privat läge eller full kvot – då får vi fråga API:t igen nästa gång.
   }
@@ -78,24 +91,30 @@ function writeCache(release: Release) {
 
 /** Gör om GitHubs JSON till vår egen form. Exporterad för att kunna testas utan nätverk. */
 export function normalizeRelease(payload: unknown): Release | null {
-  if (!payload || typeof payload !== 'object') return null;
+  if (!payload || typeof payload !== "object") return null;
   const raw = payload as Record<string, unknown>;
-  const tag = typeof raw.tag_name === 'string' ? raw.tag_name : '';
+  const tag = typeof raw.tag_name === "string" ? raw.tag_name : "";
   if (!tag) return null;
 
   const assets = Array.isArray(raw.assets)
     ? raw.assets.flatMap((entry) => {
-        if (!entry || typeof entry !== 'object') return [];
+        if (!entry || typeof entry !== "object") return [];
         const asset = entry as Record<string, unknown>;
-        if (typeof asset.name !== 'string' || typeof asset.browser_download_url !== 'string') {
+        if (
+          typeof asset.name !== "string" ||
+          typeof asset.browser_download_url !== "string"
+        ) {
           return [];
         }
         return [
           {
             name: asset.name,
             url: asset.browser_download_url,
-            sizeBytes: typeof asset.size === 'number' ? asset.size : 0,
-            downloads: typeof asset.download_count === 'number' ? asset.download_count : 0,
+            sizeBytes: typeof asset.size === "number" ? asset.size : 0,
+            downloads:
+              typeof asset.download_count === "number"
+                ? asset.download_count
+                : 0,
           },
         ];
       })
@@ -103,11 +122,13 @@ export function normalizeRelease(payload: unknown): Release | null {
 
   return {
     tag,
-    name: typeof raw.name === 'string' && raw.name ? raw.name : tag,
-    notes: typeof raw.body === 'string' ? raw.body : '',
-    publishedAt: typeof raw.published_at === 'string' ? raw.published_at : '',
+    name: typeof raw.name === "string" && raw.name ? raw.name : tag,
+    notes: typeof raw.body === "string" ? raw.body : "",
+    publishedAt: typeof raw.published_at === "string" ? raw.published_at : "",
     htmlUrl:
-      typeof raw.html_url === 'string' ? raw.html_url : `${DOWNLOAD_LINKS.all}/tag/${tag}`,
+      typeof raw.html_url === "string"
+        ? raw.html_url
+        : `${DOWNLOAD_LINKS.all}/tag/${tag}`,
     assets,
   };
 }
@@ -115,27 +136,27 @@ export function normalizeRelease(payload: unknown): Release | null {
 async function fetchLatest(): Promise<void> {
   try {
     const response = await fetch(RELEASE_API_LATEST, {
-      headers: { accept: 'application/vnd.github+json' },
+      headers: { accept: "application/vnd.github+json" },
     });
 
     if (response.status === 404) {
-      setState({ status: 'missing', release: null });
+      setState({ status: "missing", release: null });
       return;
     }
     if (!response.ok) {
-      setState({ status: 'error', release: null });
+      setState({ status: "error", release: null });
       return;
     }
 
     const release = normalizeRelease(await response.json());
     if (!release) {
-      setState({ status: 'error', release: null });
+      setState({ status: "error", release: null });
       return;
     }
     writeCache(release);
-    setState({ status: 'ready', release });
+    setState({ status: "ready", release });
   } catch {
-    setState({ status: 'error', release: null });
+    setState({ status: "error", release: null });
   }
 }
 
@@ -144,11 +165,11 @@ async function fetchLatest(): Promise<void> {
  * sidan varken väntar på nätet eller hamnar i layoutskifte.
  */
 export function ensureRelease(): void {
-  if (typeof window === 'undefined' || inflight) return;
+  if (typeof window === "undefined" || inflight) return;
 
   const cached = readCache();
   if (cached) {
-    setState({ status: 'ready', release: cached.release });
+    setState({ status: "ready", release: cached.release });
     if (Date.now() - cached.fetchedAt < CACHE_TTL_MS) return;
   }
 
@@ -164,27 +185,25 @@ export function resetReleaseState() {
 }
 
 export type Platform =
-  | 'windows'
-  | 'macAppleSilicon'
-  | 'macIntel'
-  | 'linux'
-  | 'android'
-  | 'unknown';
+  "windows" | "macAppleSilicon" | "macIntel" | "linux" | "android" | "unknown";
 
-export const PLATFORM_LABELS: Record<Exclude<Platform, 'unknown'>, string> = {
-  windows: 'Windows',
-  macAppleSilicon: 'macOS (Apple Silicon)',
-  macIntel: 'macOS (Intel)',
-  linux: 'Linux',
-  android: 'Android',
+export const PLATFORM_LABELS: Record<Exclude<Platform, "unknown">, string> = {
+  windows: "Windows",
+  macAppleSilicon: "macOS (Apple Silicon)",
+  macIntel: "macOS (Intel)",
+  linux: "Linux",
+  android: "Android",
 };
 
-export const PLATFORM_FILE_LABELS: Record<Exclude<Platform, 'unknown'>, string> = {
-  windows: '.exe',
-  macAppleSilicon: '.dmg',
-  macIntel: '.dmg',
-  linux: '.AppImage',
-  android: '.apk',
+export const PLATFORM_FILE_LABELS: Record<
+  Exclude<Platform, "unknown">,
+  string
+> = {
+  windows: ".exe",
+  macAppleSilicon: ".dmg",
+  macIntel: ".dmg",
+  linux: ".AppImage",
+  android: ".apk",
 };
 
 /**
@@ -193,32 +212,42 @@ export const PLATFORM_FILE_LABELS: Record<Exclude<Platform, 'unknown'>, string> 
  * annars (den vanligaste Macen idag). Båda macOS-filerna finns alltid som egna knappar.
  */
 export function detectPlatform(): Platform {
-  if (typeof navigator === 'undefined') return 'unknown';
-  const ua = `${navigator.userAgent} ${navigator.platform ?? ''}`;
+  if (typeof navigator === "undefined") return "unknown";
+  const ua = `${navigator.userAgent} ${navigator.platform ?? ""}`;
 
   // Android kan installera APK:n direkt. iPhone/iPad får inget bygge (kräver Apple-konto), så de
   // skickas till släppsidan i stället för en död fil.
-  if (/Android/i.test(ua)) return 'android';
-  if (/iPhone|iPad|iPod/i.test(ua)) return 'unknown';
-  if (/Windows|Win32|Win64/i.test(ua)) return 'windows';
-  if (/Linux|X11|CrOS/i.test(ua)) return 'linux';
-  if (/Macintosh|Mac OS X|MacIntel/i.test(ua)) return 'macAppleSilicon';
-  return 'unknown';
+  if (/Android/i.test(ua)) return "android";
+  if (/iPhone|iPad|iPod/i.test(ua)) return "unknown";
+  if (/Windows|Win32|Win64/i.test(ua)) return "windows";
+  if (/Linux|X11|CrOS/i.test(ua)) return "linux";
+  if (/Macintosh|Mac OS X|MacIntel/i.test(ua)) return "macAppleSilicon";
+  return "unknown";
 }
 
 type NavigatorWithHints = Navigator & {
-  userAgentData?: { getHighEntropyValues?: (hints: string[]) => Promise<{ architecture?: string }> };
+  userAgentData?: {
+    getHighEntropyValues?: (
+      hints: string[],
+    ) => Promise<{ architecture?: string }>;
+  };
 };
 
 /** Förfinar macOS-valet med UA Client Hints när det går. */
-export async function refineMacArchitecture(platform: Platform): Promise<Platform> {
-  if (platform !== 'macAppleSilicon' && platform !== 'macIntel') return platform;
+export async function refineMacArchitecture(
+  platform: Platform,
+): Promise<Platform> {
+  if (platform !== "macAppleSilicon" && platform !== "macIntel")
+    return platform;
   const navigatorWithHints = navigator as NavigatorWithHints;
   try {
-    const hints = await navigatorWithHints.userAgentData?.getHighEntropyValues?.(['architecture']);
-    const architecture = hints?.architecture ?? '';
-    if (/x86/i.test(architecture)) return 'macIntel';
-    if (/arm/i.test(architecture)) return 'macAppleSilicon';
+    const hints =
+      await navigatorWithHints.userAgentData?.getHighEntropyValues?.([
+        "architecture",
+      ]);
+    const architecture = hints?.architecture ?? "";
+    if (/x86/i.test(architecture)) return "macIntel";
+    if (/arm/i.test(architecture)) return "macAppleSilicon";
   } catch {
     // Ingen UA-CH (t.ex. Firefox/Safari) – behåll standardvalet.
   }
@@ -230,7 +259,7 @@ export async function refineMacArchitecture(platform: Platform): Promise<Platfor
  * flera arkitekturer i samma release (t.ex. Linux x86_64 och arm64 AppImage) – då ska x86_64 väljas
  * först, eftersom det är det vanligaste.
  */
-const ASSET_PATTERNS: Record<Exclude<Platform, 'unknown'>, RegExp[]> = {
+const ASSET_PATTERNS: Record<Exclude<Platform, "unknown">, RegExp[]> = {
   windows: [/(_x64-setup\.exe|-setup\.exe|x64[^/]*\.exe)$/i, /\.exe$/i],
   macAppleSilicon: [/(aarch64|arm64)[^/]*\.dmg$/i],
   macIntel: [/(x64|x86_64|intel|amd64)[^/]*\.dmg$/i],
@@ -240,9 +269,9 @@ const ASSET_PATTERNS: Record<Exclude<Platform, 'unknown'>, RegExp[]> = {
 
 /** Första tillgång som matchar något av plattformens mönster, i preferensordning. */
 function findAsset(
-  assets: Release['assets'],
-  platform: Exclude<Platform, 'unknown'>,
-): Release['assets'][number] | undefined {
+  assets: Release["assets"],
+  platform: Exclude<Platform, "unknown">,
+): Release["assets"][number] | undefined {
   for (const pattern of ASSET_PATTERNS[platform]) {
     const match = assets.find((asset) => pattern.test(asset.name));
     if (match) return match;
@@ -259,14 +288,16 @@ const ARCH_HINT = /(aarch64|arm64|x64|x86_64|intel|amd64)/i;
  * namnet) som fungerar på både Apple Silicon och Intel.
  */
 export function assetFor(
-  platform: Exclude<Platform, 'unknown'>,
+  platform: Exclude<Platform, "unknown">,
   release: Release | null,
-): Release['assets'][number] | undefined {
+): Release["assets"][number] | undefined {
   if (!release) return undefined;
   const exact = findAsset(release.assets, platform);
   if (exact) return exact;
-  if (platform === 'macAppleSilicon' || platform === 'macIntel') {
-    return release.assets.find((asset) => DMG.test(asset.name) && !ARCH_HINT.test(asset.name));
+  if (platform === "macAppleSilicon" || platform === "macIntel") {
+    return release.assets.find(
+      (asset) => DMG.test(asset.name) && !ARCH_HINT.test(asset.name),
+    );
   }
   return undefined;
 }
@@ -279,7 +310,10 @@ export function assetFor(
  *  4. releasens sida – hellre än en gissad länk som 404:ar,
  *  5. den förväntade adressen från src/config/release.ts när releasen är okänd.
  */
-export function assetUrlFor(platform: Exclude<Platform, 'unknown'>, release: Release | null): string {
+export function assetUrlFor(
+  platform: Exclude<Platform, "unknown">,
+  release: Release | null,
+): string {
   if (release) {
     const asset = assetFor(platform, release);
     if (asset) return asset.url;
@@ -298,8 +332,8 @@ export type Checksum = { name: string; sha256: string };
  * markörerna skulle sektionen synas både i anteckningarna och i den egna panelen på
  * nedladdningssidan.
  */
-export const CHECKSUMS_START = '<!-- sha256sums:start -->';
-export const CHECKSUMS_END = '<!-- sha256sums:end -->';
+export const CHECKSUMS_START = "<!-- sha256sums:start -->";
+export const CHECKSUMS_END = "<!-- sha256sums:end -->";
 
 /** En rad ur `sha256sum`-utdata: 64 hextecken, blanksteg och filnamn. */
 const CHECKSUM_LINE = /^([a-f0-9]{64})[ \t]+\*?(.+?)[ \t]*$/i;
@@ -307,9 +341,9 @@ const CHECKSUM_LINE = /^([a-f0-9]{64})[ \t]+\*?(.+?)[ \t]*$/i;
 /** Tar bort markdown-dekoration så att en lista eller kodrad också tolkas. */
 function stripDecoration(line: string): string {
   return line
-    .replace(/^\s*(?:[-*+]|\d+\.)\s+/, '')
-    .replace(/^\s*`+/, '')
-    .replace(/`+\s*$/, '')
+    .replace(/^\s*(?:[-*+]|\d+\.)\s+/, "")
+    .replace(/^\s*`+/, "")
+    .replace(/`+\s*$/, "")
     .trim();
 }
 
@@ -323,7 +357,8 @@ export function parseChecksums(notes: string): Checksum[] {
   const start = notes.indexOf(CHECKSUMS_START);
   const from = start === -1 ? 0 : start + CHECKSUMS_START.length;
   const end = start === -1 ? -1 : notes.indexOf(CHECKSUMS_END, from);
-  const region = start === -1 ? notes : notes.slice(from, end === -1 ? undefined : end);
+  const region =
+    start === -1 ? notes : notes.slice(from, end === -1 ? undefined : end);
 
   const byName = new Map<string, Checksum>();
   for (const line of region.split(/\r?\n/)) {
@@ -341,13 +376,13 @@ export function stripChecksums(notes: string): string {
   const start = notes.indexOf(CHECKSUMS_START);
   if (start === -1) return notes;
   const end = notes.indexOf(CHECKSUMS_END, start);
-  const rest = end === -1 ? '' : notes.slice(end + CHECKSUMS_END.length);
+  const rest = end === -1 ? "" : notes.slice(end + CHECKSUMS_END.length);
   return (notes.slice(0, start) + rest).trim();
 }
 
 /** Filnamnet i en nedladdningsadress, avkodat – GitHub kodar mellanrum och specialtecken. */
 function fileNameFromUrl(url: string): string {
-  const last = url.split(/[?#]/)[0].split('/').pop() ?? '';
+  const last = url.split(/[?#]/)[0].split("/").pop() ?? "";
   try {
     return decodeURIComponent(last);
   } catch {
@@ -361,14 +396,91 @@ function fileNameFromUrl(url: string): string {
  * gissa.
  */
 export function checksumFor(
-  platform: Exclude<Platform, 'unknown'>,
+  platform: Exclude<Platform, "unknown">,
   release: Release | null,
   checksums: Checksum[],
 ): Checksum | null {
   const asset = assetFor(platform, release);
   if (!asset) return null;
   const name = fileNameFromUrl(asset.url).toLowerCase();
-  return checksums.find((checksum) => checksum.name.toLowerCase() === name) ?? null;
+  return (
+    checksums.find((checksum) => checksum.name.toLowerCase() === name) ?? null
+  );
+}
+
+export type ReleaseFile = Release["assets"][number] & {
+  /** Plattformen filen hör till, eller null när den inte matchar någon knapp (t.ex. SHA256SUMS.txt). */
+  platform: Exclude<Platform, "unknown"> | null;
+  /** SHA-256 ur releaseanteckningarna, när workflowen har publicerat den. */
+  sha256: string | null;
+};
+
+/** Knapparnas ordning – samma som på sidan i övrigt. */
+const PLATFORM_ORDER: Exclude<Platform, "unknown">[] = [
+  "windows",
+  "macAppleSilicon",
+  "macIntel",
+  "linux",
+  "android",
+];
+
+/** Plattformen ett filnamn hör till, enligt samma mönster som knapparna använder. */
+export function platformForFile(
+  name: string,
+): Exclude<Platform, "unknown"> | null {
+  for (const platform of PLATFORM_ORDER) {
+    if (ASSET_PATTERNS[platform].some((pattern) => pattern.test(name)))
+      return platform;
+  }
+  return null;
+}
+
+/**
+ * Varje fil i releasen, inte bara den som en plattformsknapp råkar peka ut: storlek, nedladdnings-
+ * adress och kontrollsumma om den är publicerad. Ordningen följer knapparna, därefter resten
+ * alfabetiskt, så att listan är förutsägbar mellan releaser.
+ */
+export function releaseFiles(release: Release | null): ReleaseFile[] {
+  if (!release) return [];
+
+  const sums = new Map(
+    parseChecksums(release.notes).map((checksum) => [
+      checksum.name.toLowerCase(),
+      checksum.sha256,
+    ]),
+  );
+
+  const files: ReleaseFile[] = release.assets.map((asset) => ({
+    ...asset,
+    platform: platformForFile(asset.name),
+    sha256:
+      sums.get(asset.name.toLowerCase()) ??
+      sums.get(fileNameFromUrl(asset.url).toLowerCase()) ??
+      null,
+  }));
+
+  const rank = (file: ReleaseFile) =>
+    file.platform === null
+      ? PLATFORM_ORDER.length
+      : PLATFORM_ORDER.indexOf(file.platform);
+
+  return files.sort(
+    (a, b) => rank(a) - rank(b) || a.name.localeCompare(b.name),
+  );
+}
+
+/** Filstorlek som "35.7 MB" – en tom eller okänd storlek visas som ett streck i stället för 0 B. */
+export function formatFileSize(bytes: number): string {
+  if (!Number.isFinite(bytes) || bytes <= 0) return "—";
+  const units = ["B", "KB", "MB", "GB"];
+  let value = bytes;
+  let unit = 0;
+  while (value >= 1024 && unit < units.length - 1) {
+    value /= 1024;
+    unit += 1;
+  }
+  const digits = unit === 0 || value >= 100 ? 0 : 1;
+  return `${value.toFixed(digits)} ${units[unit]}`;
 }
 
 /**
@@ -378,12 +490,18 @@ export function checksumFor(
  *  – `missing`: "View releases" mot släppsidan (repot finns inte eller har inga releaser),
  *  – `loading`/`error`: "Latest release" utan versionsnummer – GitHub svarade inte, så vi gissar inte.
  */
-export function releaseBadge(state: ReleaseState): { label: string; href: string } {
-  if (state.status === 'ready') {
-    return { label: `Latest release ${state.release.tag}`, href: state.release.htmlUrl };
+export function releaseBadge(state: ReleaseState): {
+  label: string;
+  href: string;
+} {
+  if (state.status === "ready") {
+    return {
+      label: `Latest release ${state.release.tag}`,
+      href: state.release.htmlUrl,
+    };
   }
-  if (state.status === 'missing') {
-    return { label: 'View releases', href: DOWNLOAD_LINKS.all };
+  if (state.status === "missing") {
+    return { label: "View releases", href: DOWNLOAD_LINKS.all };
   }
-  return { label: 'Latest release', href: DOWNLOAD_LINKS.latest };
+  return { label: "Latest release", href: DOWNLOAD_LINKS.latest };
 }

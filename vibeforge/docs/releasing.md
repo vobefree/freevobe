@@ -53,6 +53,28 @@ Filerna döps om till exakt de namn nedladdningssidan letar efter:
 Ändrar du namnen i workflowen måste `ASSET_FILE_NAMES` i `freevobe/src/config/release.ts` ändras
 ochå – annars hittas filerna bara via GitHub-API:t, inte via den förväntade adressen.
 
+## Namnet i operativsystemet
+
+Det är `tauri.conf.json` som avgör vad installationen heter, inte byggskriptet. Fälten nedan är de som
+syns för användaren, och `apps/desktop/src/brand.test.ts` faller om någon byter tillbaka till det
+gamla namnet.
+
+| Operativsystem | Vad användaren ser                                                                                         | Fält                            |
+| -------------- | ---------------------------------------------------------------------------------------------------------- | ------------------------------- |
+| Windows        | `Freevobe` i Start-menyn och i listan över installerade program, `Freevobe.exe` i `Program Files\Freevobe` | `productName`, `mainBinaryName` |
+| macOS          | `Freevobe.app` i Applications, i Dock och i avsluta-menyn                                                  | `productName`                   |
+| Linux          | `Freevobe` i appmenyn (AppImage och deb), `freevobe_0.1.0_amd64.deb`                                       | `productName`                   |
+| Alla           | paket-ID `dev.vibeforge.desktop` – medvetet kvar, se nedan                                                 | `identifier`                    |
+
+Paket-ID:t byttes aldrig vid namnbytet. Det styr Windows appdata, macOS bundle-ID och .deb-paketets
+installationspost; en ny identifierare hade blivit en andra installation bredvid v0.1.0 med dubbla
+Start-meny poster. Byt den först när appen får ett eget data-katalogbyte, och migrera då profilen.
+
+Fönstertiteln (`app.windows[].title`) och tray-ikonen (`trayIcon.tooltip`) sätts separat men ska stå
+på samma namn. Beskrivningen i installationsprogrammet kommer från `shortDescription` och
+`longDescription`; utfärdaren i Windows-kontrollen kommer från signeringscertifikatet, inte från
+`publisher` – en osignerad installerare visar "Unknown publisher" även om namnet är rätt.
+
 Intel-dmg:n kräver en Intel-runner (`macos-15-intel`): sidobinären paketeras med Node:s SEA på
 byggmaskinens arkitektur, så en arm64-runner kan inte producera en agent-binär som körs på Intel.
 Jobbet kör i samma workflow men med `continue-on-error`, så en indragen runner bara stryker den
