@@ -1,7 +1,7 @@
 import { EMBEDDING_DIMENSIONS } from '@vibeforge/protocol';
 
 /**
- * VibeForge använder en inbyggd, deterministisk embedding: token-hashning i ett fast
+ * Freevobe använder en inbyggd, deterministisk embedding: token-hashning i ett fast
  * vektorrum (samma idé som SimHash/hashing-trick). Den kräver ingen tjänst, ingen modell
  * och inget nätverk – vilket är hela poängen med lokal-first. Den är sämre än en riktig
  * embedding-modell på semantik, men bra på att hitta filer som delar ord och symboler.

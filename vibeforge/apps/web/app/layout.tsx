@@ -5,14 +5,14 @@ import './globals.css';
 
 export const metadata: Metadata = {
   title: {
-    default: 'VibeForge – lokal-first vibecoding med Ollama',
-    template: '%s · VibeForge',
+    default: 'Freevobe – lokal-first vibecoding med Ollama',
+    template: '%s · Freevobe',
   },
   description:
-    'VibeForge är en lokal-first AI-coding agent för skrivbordet. Anslut Ollama, välj modell och bygg mjukvara i naturligt språk – koden lämnar aldrig datorn.',
-  metadataBase: new URL('https://vibeforge.dev'),
+    'Freevobe är en lokal-first AI-coding agent för skrivbordet. Anslut Ollama, välj modell och bygg mjukvara i naturligt språk – koden lämnar aldrig datorn.',
+  metadataBase: new URL('https://freevobe.dev'),
   openGraph: {
-    title: 'VibeForge',
+    title: 'Freevobe',
     description:
       'Lokal-first vibecoding med Ollama. Planera, koda, testa och committa – utan att koden lämnar datorn.',
     type: 'website',

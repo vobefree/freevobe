@@ -66,7 +66,7 @@ function isAllowedOrigin(origin: string): boolean {
 }
 
 /**
- * VibeForge-agenten som lokal HTTP-server. Lyssnar bara på 127.0.0.1, kräver en token i
+ * Freevobe-agenten som lokal HTTP-server. Lyssnar bara på 127.0.0.1, kräver en token i
  * headern och avvisar anrop från andra origins – så att en godtycklig sida i webbläsaren inte
  * kan prata med agenten. Ingen telemetri, ingen extern trafik.
  */

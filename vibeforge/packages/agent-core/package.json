@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "VibeForge agent-kärna: Ollama-klient, agent-loop, verktyg, kontext, skills, MCP och policy. Inga runtime-beroenden.",
+  "description": "Freevobe agent-kärna: Ollama-klient, agent-loop, verktyg, kontext, skills, MCP och policy. Inga runtime-beroenden.",
   "exports": {
     ".": "./src/index.ts",
     "./testing": "./src/testing/index.ts"

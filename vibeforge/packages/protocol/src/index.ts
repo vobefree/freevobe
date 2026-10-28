@@ -20,7 +20,7 @@ export const DIFF_CONTEXT_LINES = 3;
 export const EMBEDDING_DIMENSIONS = 256;
 export const AD_INTERVAL_PROMPTS = 10;
 
-/** Mappar och filer VibeForge läser respektive skriver i ett projekt. */
+/** Mappar och filer Freevobe läser respektive skriver i ett projekt. */
 export const VIBEFORGE_DIR = '.vibeforge';
 export const VIBEFORGE_SKILLS_DIR = '.vibeforge/skills';
 export const VIBEFORGE_RULES_FILE = '.vibeforge/rules.md';

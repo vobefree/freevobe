@@ -2,7 +2,7 @@
   "name": "@vibeforge/web",
   "version": "0.1.0",
   "private": true,
-  "description": "VibeForge publika webbplats: startsida, nedladdning, dokumentation, skills-galleri, blogg, community, changelog och integritetspolicy.",
+  "description": "Freevobe publika webbplats: startsida, nedladdning, dokumentation, skills-galleri, blogg, community, changelog och integritetspolicy.",
   "scripts": {
     "dev": "next dev --port 4320",
     "build": "next build",

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * VibeForge Doctor som kommandoradsverktyg.
+ * Freevobe Doctor som kommandoradsverktyg.
  *
  *   npm run doctor                                   # kontrollerar aktuell mapp
  *   node packages/agent-core/bin/vibeforge-doctor.mjs --project "C:\\kod\\projekt"
@@ -71,7 +71,7 @@ const report = await runDoctor({
 if (options.json) {
   process.stdout.write(`${JSON.stringify(report, null, 2)}\n`);
 } else {
-  process.stdout.write(`\nVibeForge Doctor – ${projectPath}\n\n`);
+  process.stdout.write(`\nFreevobe Doctor – ${projectPath}\n\n`);
   for (const check of report.checks) {
     process.stdout.write(`${SYMBOL[check.status] ?? '?'} ${check.label}: ${check.detail}\n`);
     if (check.fix) process.stdout.write(`   åtgärd: ${check.fix}\n`);

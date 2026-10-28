@@ -32,7 +32,7 @@ function MessageBubble({ message }: { message: ChatMessage }) {
         <span
           className={`text-[11px] font-semibold tracking-wide uppercase ${isUser ? 'text-sky' : 'text-ember'}`}
         >
-          {isUser ? 'Du' : 'VibeForge'}
+          {isUser ? 'Du' : 'Freevobe'}
         </span>
         <span className="text-[10px] text-slate-600">{clockTime(message.createdAt)}</span>
         {message.model && !isUser ? <Chip>{message.model}</Chip> : null}
@@ -107,7 +107,7 @@ export function ChatView() {
           <div className="mx-auto mt-8 max-w-xl space-y-3 text-center">
             <h2 className="text-lg font-semibold text-slate-200">Vad ska vi smida idag?</h2>
             <p className="text-xs text-slate-500">
-              Beskriv uppgiften på vanlig svenska. VibeForge läser koden, föreslår ändringar som
+              Beskriv uppgiften på vanlig svenska. Freevobe läser koden, föreslår ändringar som
               diffar och kör tester – allt lokalt på din dator.
             </p>
             <div className="flex flex-wrap justify-center gap-2 pt-2">
@@ -148,7 +148,7 @@ export function ChatView() {
           <article className="mr-2 rounded-lg px-3.5 py-2.5">
             <header className="mb-1 flex items-center gap-2">
               <span className="text-[11px] font-semibold tracking-wide text-ember uppercase">
-                VibeForge
+                Freevobe
               </span>
               <span className="text-[10px] text-slate-500">
                 {PHASE_LABELS[phase as keyof typeof PHASE_LABELS] ?? phase}

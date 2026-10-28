@@ -73,7 +73,7 @@ export async function runDoctor(options: DoctorOptions = {}): Promise<DoctorRepo
         options.indexedFiles > 0 ? `${options.indexedFiles} filer indexerade` : 'inget index ännu',
       ...(options.indexedFiles > 0
         ? {}
-        : { fix: 'Öppna projektet i VibeForge – indexeringen startar automatiskt.' }),
+        : { fix: 'Öppna projektet i Freevobe – indexeringen startar automatiskt.' }),
     });
   }
 
@@ -98,7 +98,7 @@ function checkNode(): DoctorCheck {
     ...(ok
       ? {}
       : {
-          fix: `VibeForge kräver Node ${REQUIRED_NODE_MAJOR}.${REQUIRED_NODE_MINOR} eller senare (node:sqlite).`,
+          fix: `Freevobe kräver Node ${REQUIRED_NODE_MAJOR}.${REQUIRED_NODE_MINOR} eller senare (node:sqlite).`,
         }),
   };
 }
@@ -248,7 +248,7 @@ async function checkOllama(baseUrl?: string, model?: string): Promise<DoctorChec
         ...(found.supportsTools
           ? {}
           : {
-              fix: 'Modellen saknar verktygsstöd. VibeForge kan fortfarande arbeta, men agenten får svårare att ändra filer. Välj en modell som stödjer verktyg.',
+              fix: 'Modellen saknar verktygsstöd. Freevobe kan fortfarande arbeta, men agenten får svårare att ändra filer. Välj en modell som stödjer verktyg.',
             }),
       });
     }

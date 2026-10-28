@@ -141,12 +141,12 @@ describe('McpManager', () => {
 
     const approvals: string[] = [];
     const result = await registry.execute(
-      { id: 'c1', name: 'mcp__fake__echo', args: { text: 'från VibeForge' } },
+      { id: 'c1', name: 'mcp__fake__echo', args: { text: 'från Freevobe' } },
       fakeContext(true, approvals),
     );
 
     expect(result.ok).toBe(true);
-    expect(result.content).toBe('från VibeForge');
+    expect(result.content).toBe('från Freevobe');
     expect(approvals).toContain('mcp');
 
     await manager.disconnectAll();

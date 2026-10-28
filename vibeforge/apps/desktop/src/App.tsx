@@ -56,7 +56,7 @@ export function App() {
       <div className="flex h-full items-center justify-center">
         <div className="flex items-center gap-3 text-sm text-slate-400">
           <span className="h-2 w-2 animate-pulse rounded-full bg-ember" />
-          Ansluter till VibeForge-agenten…
+          Ansluter till Freevobe-agenten…
         </div>
       </div>
     );
@@ -66,7 +66,7 @@ export function App() {
     return (
       <div className="flex h-full items-center justify-center p-8">
         <div className="vf-panel max-w-lg space-y-3 p-6">
-          <h1 className="text-lg font-semibold">VibeForge-agenten svarar inte</h1>
+          <h1 className="text-lg font-semibold">Freevobe-agenten svarar inte</h1>
           <p className="text-sm text-slate-400">{connectionError}</p>
           <ol className="list-inside list-decimal space-y-1 text-xs text-slate-500">
             <li>
@@ -81,7 +81,7 @@ export function App() {
             </Button>
             <a
               className="vf-button"
-              href="https://vibeforge.dev/docs/agent"
+              href="https://freevobe.dev/docs/agent"
               target="_blank"
               rel="noreferrer"
             >

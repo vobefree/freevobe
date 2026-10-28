@@ -2,14 +2,14 @@ import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
   title: 'Integritetspolicy',
-  description: 'VibeForge behandlar allt lokalt. Här är exakt vad som sparas, var och varför.',
+  description: 'Freevobe behandlar allt lokalt. Här är exakt vad som sparas, var och varför.',
 };
 
 const SECTIONS = [
   {
     title: 'Kortversionen',
     items: [
-      'VibeForge körs lokalt och kräver inget konto.',
+      'Freevobe körs lokalt och kräver inget konto.',
       'Din kod, dina prompter och dina filer lämnar inte datorn om du inte själv aktiverar en molntjänst.',
       'Ingen telemetri och ingen analys skickas från skrivbordsappen.',
       'Sponsorplatsen i chatten är avstängd tills du säger ja vid första starten, och kan stängas av när som helst.',
@@ -46,7 +46,7 @@ const SECTIONS = [
     items: [
       'Du kan radera databasen, tokenfilen och .vibeforge-mapparna när som helst – de är vanliga filer i din hemmapp.',
       'Ingen data finns hos oss, så det finns inget konto att avsluta.',
-      'Frågor om integritet: privacy@vibeforge.dev.',
+      'Frågor om integritet: privacy@freevobe.dev.',
     ],
   },
 ];

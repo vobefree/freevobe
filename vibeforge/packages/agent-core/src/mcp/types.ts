@@ -6,7 +6,7 @@ export const MCP_PROTOCOL_VERSIONS = [
   '2024-11-05',
 ] as const;
 
-export const MCP_CLIENT_INFO = { name: 'VibeForge', version: '0.1.0' } as const;
+export const MCP_CLIENT_INFO = { name: 'Freevobe', version: '0.1.0' } as const;
 
 export interface JsonRpcRequest {
   jsonrpc: '2.0';
@@ -109,7 +109,7 @@ export class McpProtocolError extends Error {
   }
 }
 
-/** Gör en verktygstabell från MCP till VibeForges parametertyp. */
+/** Gör en verktygstabell från MCP till Freevobes parametertyp. */
 export function asJsonSchema(input: unknown): Record<string, unknown> {
   if (typeof input === 'object' && input !== null) {
     const record = input as Record<string, unknown>;

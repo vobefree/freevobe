@@ -172,7 +172,7 @@ export async function ensureProjectScaffold(root: string, projectName?: string):
     },
     {
       relative: VIBEFORGE_MEMORY_FILE,
-      content: `# Projektminne – ${projectName ?? path.basename(absoluteRoot)}\n\n<!-- VibeForge fyller på här. Filen är lokal och kan versionshanteras. -->\n`,
+      content: `# Projektminne – ${projectName ?? path.basename(absoluteRoot)}\n\n<!-- Freevobe fyller på här. Filen är lokal och kan versionshanteras. -->\n`,
     },
     { relative: path.join(VIBEFORGE_DIR, 'hooks.json'), content: '[]\n' },
   ];

@@ -1,4 +1,4 @@
-//! VibeForge-skalet.
+//! Freevobe-skalet.
 //!
 //! Skalet gör tre saker: startar den lokala agent-backenden (som sidecar, eller med `node`
 //! under utveckling), väntar tills den svarar, och injicerar adress + token i webbvyn så att
@@ -295,7 +295,7 @@ pub fn run() {
                             guard.child = Some(child);
                         }
                         Err(error) => {
-                            eprintln!("VibeForge: {error}");
+                            eprintln!("Freevobe: {error}");
                             drop(guard);
                             inject_bootstrap(&handle, &url, None);
                             return;
@@ -304,7 +304,7 @@ pub fn run() {
                 }
 
                 if !wait_for_agent(port, Duration::from_secs(30)) {
-                    eprintln!("VibeForge: agenten svarade inte inom 30 sekunder på {url}.");
+                    eprintln!("Freevobe: agenten svarade inte inom 30 sekunder på {url}.");
                 }
                 let token = read_token();
                 inject_bootstrap(&handle, &url, token.as_deref());
@@ -313,7 +313,7 @@ pub fn run() {
             Ok(())
         })
         .build(tauri::generate_context!())
-        .expect("VibeForge kunde inte starta")
+        .expect("Freevobe kunde inte starta")
         .run(|app, event| {
             if matches!(event, RunEvent::ExitRequested { .. } | RunEvent::Exit) {
                 // Städa upp agentprocessen när appen stängs.

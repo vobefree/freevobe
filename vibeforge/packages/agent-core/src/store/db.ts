@@ -16,8 +16,8 @@ export interface Migration {
 }
 
 /**
- * Allt VibeForge sparar lokalt: sessioner, meddelanden, projekt, inställningar, projektminne,
- * uppgifter och filindex. Databasen är en enda fil i användarens VibeForge-home.
+ * Allt Freevobe sparar lokalt: sessioner, meddelanden, projekt, inställningar, projektminne,
+ * uppgifter och filindex. Databasen är en enda fil i användarens Freevobe-home.
  *
  * Vi använder Node:s inbyggda `node:sqlite`, så inga native moduler behöver kompileras.
  */
@@ -179,7 +179,7 @@ export class VibeForgeDatabase {
   }
 }
 
-/** Var VibeForge sparar sin lokala data. */
+/** Var Freevobe sparar sin lokala data. */
 export function resolveVibeForgeHome(explicit?: string): string {
   if (explicit && explicit.trim() !== '') return path.resolve(explicit);
   const fromEnv = process.env.VIBEFORGE_HOME;

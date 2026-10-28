@@ -1,7 +1,7 @@
-# VibeForge
+# Freevobe
 
 **Local-first vibecoding for the desktop.** Connect Ollama, pick a model and build software by describing what you
-want. VibeForge plans, explores your codebase, writes code, runs commands, tests, reviews diffs, commits and can drive a
+want. Freevobe plans, explores your codebase, writes code, runs commands, tests, reviews diffs, commits and can drive a
 browser — all on your own machine.
 
 > **Your code never leaves your computer.** The model runs through Ollama on `localhost`. No telemetry, no sign-in, no

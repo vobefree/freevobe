@@ -32,10 +32,10 @@ export function AdSlot({ promptIndex, forceVisible = false }: AdSlotProps) {
 
   const provider = forceVisible ? (ads?.provider ?? 'custom') : (ads?.provider ?? 'none');
   const custom = ads?.custom ?? {
-    headline: 'Bygg snabbare med VibeForge Pro',
+    headline: 'Bygg snabbare med Freevobe Pro',
     body: 'Fler samtidiga agenter, delade skills mellan projekt och team-minne – fortfarande helt lokalt.',
     ctaLabel: 'Läs mer om Pro',
-    ctaUrl: 'https://vibeforge.dev/pro',
+    ctaUrl: 'https://freevobe.dev/pro',
   };
 
   return (

@@ -18,7 +18,7 @@ export function Logo({ size = 22 }: { size?: number }) {
         <path d="M13 21h7l-3-6h-7z" fill="var(--color-spark)" opacity="0.9" />
       </svg>
       <span className="text-base font-semibold tracking-tight">
-        Vibe<span className="text-ember">Forge</span>
+        Free<span className="text-ember">vobe</span>
       </span>
     </span>
   );
@@ -28,7 +28,7 @@ export function SiteHeader() {
   return (
     <header className="sticky top-0 z-10 border-b border-steel bg-forge/90 backdrop-blur">
       <div className="mx-auto flex max-w-6xl items-center gap-4 px-5 py-3">
-        <Link href="/" aria-label="VibeForge startsida">
+        <Link href="/" aria-label="Freevobe startsida">
           <Logo />
         </Link>
         <nav className="ml-auto flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-slate-400">
@@ -75,11 +75,11 @@ export function SiteFooter() {
             </Link>
           </p>
           <p>
-            <a href="https://github.com/vibeforge/vibeforge" className="hover:text-slate-200">
+            <a href="https://github.com/vobefree/freevobe" className="hover:text-slate-200">
               Källkod (MIT)
             </a>
           </p>
-          <p>© {new Date().getFullYear()} VibeForge</p>
+          <p>© {new Date().getFullYear()} Freevobe</p>
         </div>
       </div>
     </footer>

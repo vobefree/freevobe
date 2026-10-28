@@ -50,7 +50,7 @@ test.describe('Editorn är helt lokal', () => {
     await page.getByRole('button', { name: 'src/app.ts', exact: true }).click();
     await expect(page.locator('.monaco-editor')).toBeVisible({ timeout: 30_000 });
 
-    // VibeForge-temat (#14161c) finns bara i vår egen Monaco-instans.
+    // Freevobe-temat (#14161c) finns bara i vår egen Monaco-instans.
     await expect(page.locator('.lines-content.monaco-editor-background')).toHaveCSS(
       'background-color',
       'rgb(20, 22, 28)',

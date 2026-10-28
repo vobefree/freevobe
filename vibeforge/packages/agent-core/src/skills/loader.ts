@@ -125,7 +125,7 @@ function toStringArray(value: unknown): string[] {
   return [];
 }
 
-/** Läser inbyggda skills som följer med VibeForge. */
+/** Läser inbyggda skills som följer med Freevobe. */
 export async function loadBuiltinSkills(): Promise<Skill[]> {
   return loadSkillsFromDirectory(BUILTIN_DIR, 'builtin');
 }

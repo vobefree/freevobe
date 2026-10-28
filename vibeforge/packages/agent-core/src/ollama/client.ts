@@ -24,7 +24,7 @@ export interface OllamaModelDetails {
 
 const DEFAULT_TIMEOUT_MS = 15_000;
 const DETAIL_CONCURRENCY = 4;
-const HELPER_URL = 'https://vibeforge.dev/docs/ollama';
+const HELPER_URL = 'https://freevobe.dev/docs/ollama';
 
 interface RawTagsResponse {
   models?: Array<{

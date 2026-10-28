@@ -24,7 +24,7 @@ interface ConnectedServer {
 
 /**
  * Håller MCP-servrar anslutna och speglar deras verktyg in i ToolRegistry som vanliga
- * VibeForge-verktyg (`mcp__<server>__<verktyg>`). Varje server kan slås av och på per projekt,
+ * Freevobe-verktyg (`mcp__<server>__<verktyg>`). Varje server kan slås av och på per projekt,
  * och verktygen kräver godkännande tills användaren godkänt servern i sessionen.
  */
 export class McpManager {

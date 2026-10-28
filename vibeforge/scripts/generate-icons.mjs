@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Genererar VibeForge-logotypen som riktiga ikonfiler (PNG, ICO och ICNS) helt utan
+ * Genererar Freevobe-logotypen som riktiga ikonfiler (PNG, ICO och ICNS) helt utan
  * externa beroenden. Formen ritas matematiskt och skrivs med Node:s inbyggda zlib.
  *
  * Kör: npm run icons
@@ -199,7 +199,7 @@ function render(size) {
   return rgba;
 }
 
-const LOGO_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="VibeForge">
+const LOGO_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Freevobe">
   <rect x="2.2" y="2.2" width="59.6" height="59.6" rx="13" fill="#1b1f27" stroke="#2a2f3a" stroke-width="2.6"/>
   <path d="M16.6 15.4 32 43.5 47.4 15.4" fill="none" stroke="#ff7a3d" stroke-width="9.6" stroke-linecap="round" stroke-linejoin="round"/>
   <rect x="18" y="50" width="28" height="4.2" rx="2.1" fill="#3a4150"/>

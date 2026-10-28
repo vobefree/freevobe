@@ -5,7 +5,7 @@ import { GALLERY_SKILLS } from '@/lib/content';
 export const metadata: Metadata = {
   title: 'Skills-galleri',
   description:
-    'Färdiga VibeForge-skills för React, Next.js, API:er, tester, granskning, refaktorering och dokumentation.',
+    'Färdiga Freevobe-skills för React, Next.js, API:er, tester, granskning, refaktorering och dokumentation.',
 };
 
 const EXAMPLE = `---
@@ -34,7 +34,7 @@ export default function SkillsPage() {
       <header className="space-y-3">
         <h1 className="text-3xl font-semibold">Skills-galleri</h1>
         <p className="max-w-2xl text-slate-400">
-          Tio färdiga skills följer med VibeForge. De är vanliga Markdown-filer i{' '}
+          Tio färdiga skills följer med Freevobe. De är vanliga Markdown-filer i{' '}
           <code className="font-mono">.vibeforge/skills/</code> som du kan granska, kopiera och
           versionshantera.
         </p>

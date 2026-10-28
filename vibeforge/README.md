@@ -1,7 +1,7 @@
-# VibeForge
+# Freevobe
 
 **Lokal-first vibecoding för skrivbordet.** Anslut Ollama, välj modell och bygg mjukvara genom att beskriva vad du
-vill ha. VibeForge planerar, utforskar kodbasen, skriver kod, kör kommandon, testar, granskar diffar, committar och kan
+vill ha. Freevobe planerar, utforskar kodbasen, skriver kod, kör kommandon, testar, granskar diffar, committar och kan
 styra en webbläsare – allt på din egen dator.
 
 > **Koden lämnar inte datorn.** Modellen körs via Ollama på `localhost`. Ingen telemetri, ingen inloggning, inget

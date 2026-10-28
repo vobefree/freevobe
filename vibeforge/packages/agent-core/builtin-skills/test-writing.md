@@ -28,7 +28,7 @@ triggers:
 
 - Ett påstående per beteende; namnet ska beskriva beteendet, inte funktionen.
 - Inga sömn- eller tidsberoenden utan kontrollerad klocka.
-- Inga nätverksanrop i enhetstester – injicera i stället (VibeForge använder injicerade transporter).
+- Inga nätverksanrop i enhetstester – injicera i stället (Freevobe använder injicerade transporter).
 - Mocka inte det du äger: använd riktig kod där det går.
 
 ## Checklista

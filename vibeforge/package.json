@@ -2,7 +2,7 @@
   "name": "vibeforge",
   "version": "0.1.0",
   "private": true,
-  "description": "VibeForge – lokal-first vibecoding desktop app med Ollama, agent-loop, skills, MCP och subagents.",
+  "description": "Freevobe – lokal-first vibecoding desktop app med Ollama, agent-loop, skills, MCP och subagents.",
   "license": "MIT",
   "type": "module",
   "engines": {

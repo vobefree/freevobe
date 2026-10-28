@@ -62,7 +62,7 @@ export async function resolveConnection(): Promise<AgentConnection> {
     throw new AgentRequestError({
       code: 'no_token',
       message:
-        'Ingen åtkomsttoken hittades. Starta VibeForge-agenten (npm run dev:server) eller öppna appen från skrivbordsversionen.',
+        'Ingen åtkomsttoken hittades. Starta Freevobe-agenten (npm run dev:server) eller öppna appen från skrivbordsversionen.',
     });
   }
   const payload = (await response.json()) as { data?: { token?: string } };
@@ -104,7 +104,7 @@ export class AgentClient {
     } catch (error) {
       throw new AgentRequestError({
         code: 'unreachable',
-        message: `Kan inte nå VibeForge-agenten på ${this.baseUrl}. Starta den med "npm run dev:server". (${error instanceof Error ? error.message : String(error)})`,
+        message: `Kan inte nå Freevobe-agenten på ${this.baseUrl}. Starta den med "npm run dev:server". (${error instanceof Error ? error.message : String(error)})`,
       });
     }
 

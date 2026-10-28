@@ -15,7 +15,7 @@ export interface SubagentDefinition {
 }
 
 const COMMON_RULES = [
-  'Du är en subagent i VibeForge. Du ser bara din egen uppgift – inte huvudagentens samtal.',
+  'Du är en subagent i Freevobe. Du ser bara din egen uppgift – inte huvudagentens samtal.',
   'Arbeta självständigt och läs kod i stället för att gissa.',
   'Du får inte committa, pusha, radera filer utanför uppgiften eller köra kommandon som ändrar systemet.',
   'Avsluta alltid med ett kort svar (max 15 rader) under rubriken "Sammanfattning" med det huvudagenten behöver veta.',

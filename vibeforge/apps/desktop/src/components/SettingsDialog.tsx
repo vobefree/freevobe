@@ -257,9 +257,9 @@ export function SettingsDialog() {
 
 function defaultCustom() {
   return {
-    headline: 'Bygg snabbare med VibeForge Pro',
+    headline: 'Bygg snabbare med Freevobe Pro',
     body: 'Fler samtidiga agenter och team-minne – fortfarande helt lokalt.',
     ctaLabel: 'Läs mer',
-    ctaUrl: 'https://vibeforge.dev/pro',
+    ctaUrl: 'https://freevobe.dev/pro',
   };
 }

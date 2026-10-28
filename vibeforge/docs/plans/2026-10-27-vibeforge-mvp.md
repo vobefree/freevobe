@@ -1,4 +1,4 @@
-# VibeForge MVP – Implementation Plan
+# Freevobe MVP – Implementation Plan
 
 > **For agentic workers:** Execute task-by-task, inline. Steps use checkbox (`- [ ]`) syntax.
 > Nothing is "done" until `npm run verify` (typecheck + lint + vitest) is green and the task's

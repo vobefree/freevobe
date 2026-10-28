@@ -38,7 +38,7 @@ beforeEach(async () => {
           {
             id: 'c2',
             name: 'edit_file',
-            args: { path: 'src/halsa.ts', oldString: "'hej'", newString: "'hej från VibeForge'" },
+            args: { path: 'src/halsa.ts', oldString: "'hej'", newString: "'hej från Freevobe'" },
           },
         ],
       },
@@ -147,7 +147,7 @@ describe('autentisering och skydd', () => {
   it('svarar på hälsokontrollen utan token', async () => {
     const response = await api<{ name: string }>('/api/health', { token: null });
     expect(response.status).toBe(200);
-    expect(response.data.name).toBe('VibeForge Agent');
+    expect(response.data.name).toBe('Freevobe Agent');
   });
 
   it('kräver token för API-anrop', async () => {
@@ -273,7 +273,7 @@ describe('chatten över HTTP', () => {
     expect(finished?.type === 'run_finished' && finished.reason).toBe('final');
 
     expect(await fs.readFile(path.join(projectRoot, 'src', 'halsa.ts'), 'utf8')).toContain(
-      "'hej från VibeForge'",
+      "'hej från Freevobe'",
     );
 
     const messages = await api<Array<{ role: string; content: string }>>(
@@ -321,7 +321,7 @@ describe('chatten över HTTP', () => {
     expect(approvalId).not.toBe('');
     expect(events.some((event) => event.type === 'approval_resolved')).toBe(true);
     expect(await fs.readFile(path.join(projectRoot, 'src', 'halsa.ts'), 'utf8')).toContain(
-      'hej från VibeForge',
+      'hej från Freevobe',
     );
   });
 

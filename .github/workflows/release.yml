@@ -148,7 +148,8 @@ jobs:
           $ErrorActionPreference = 'Stop'
 
           $files = @(Get-ChildItem 'dist-release/*-setup.exe' | ForEach-Object { $_.FullName })
-          $mainExe = 'apps/desktop/src-tauri/target/release/vibeforge-desktop.exe'
+          # Huvudbinären får sitt namn av mainBinaryName i tauri.conf.json, inte av craten.
+          $mainExe = 'apps/desktop/src-tauri/target/release/Freevobe.exe'
           if (Test-Path $mainExe) { $files += (Resolve-Path $mainExe).Path }
           if ($files.Count -eq 0) { throw 'Hittade inga byggda filer att verifiera.' }
 
@@ -570,10 +571,16 @@ jobs:
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
+      # Skriptet hämtas hit: jobbet checkar annars inte ut repot, och kontrollsummorna räknas i
+      # den här workflowen (inte i byggjobben) så att de gäller exakt de bytes som publiceras.
+      - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
         with:
           path: artifacts
           merge-multiple: true
+      - name: Beräkna SHA-256 för filerna
+        shell: bash
+        run: bash .github/scripts/release-checksums.sh compute artifacts
       - name: Ladda upp filerna till releasen för taggen
         shell: bash
         env:
@@ -595,3 +602,14 @@ jobs:
           # Publicera den därför alltid om, så att nedladdningssidan hittar filerna.
           gh release edit "$GITHUB_REF_NAME" --repo "$repo" --draft=false --latest
           gh release view "$GITHUB_REF_NAME" --repo "$repo" --json assets --jq '.assets[].name'
+
+      # Summorna skrivs också in i releaseanteckningarna. GitHub-API:et svarar med CORS, men själva
+      # filnedladdningen gör det inte – därför läser nedladdningssidan summorna ur releasens text i
+      # stället för att hämta SHA256SUMS.txt i webbläsaren.
+      - name: Skriv in kontrollsummorna i releaseanteckningarna
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: >-
+          bash .github/scripts/release-checksums.sh body
+          "$GITHUB_REF_NAME" artifacts/SHA256SUMS.txt

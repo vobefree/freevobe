@@ -1,6 +1,6 @@
 @import 'tailwindcss';
 
-/* VibeForge-tema. Mörkt som standard, egen palett (inte ett varumärkeslån). */
+/* Freevobe-tema. Mörkt som standard, egen palett (inte ett varumärkeslån). */
 @theme {
   --color-anvil: #14161c;
   --color-forge: #1b1f27;

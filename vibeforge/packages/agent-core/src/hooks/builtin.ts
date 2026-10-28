@@ -2,7 +2,7 @@ import type { HookConfig } from '@vibeforge/protocol';
 
 /**
  * Färdiga hook-mallar som användaren kan aktivera per projekt. Alla är avstängda som standard
- * så att VibeForge aldrig kör kommandon användaren inte bett om.
+ * så att Freevobe aldrig kör kommandon användaren inte bett om.
  */
 export function defaultHookTemplates(): HookConfig[] {
   return [

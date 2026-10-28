@@ -288,7 +288,7 @@ export function evaluateToolCall(
       return {
         effect: 'block',
         reason: resolved.reason ?? 'Ogiltig sökväg.',
-        detail: 'VibeForge får bara ändra filer i projektet.',
+        detail: 'Freevobe får bara ändra filer i projektet.',
       };
     }
   }
@@ -318,7 +318,7 @@ export function evaluateToolCall(
         effect: 'block',
         reason: 'Anropet ser ut att innehålla en hemlighet.',
         detail:
-          'VibeForge skickar aldrig nycklar eller lösenord till externa tjänster utan att du granskat dem.',
+          'Freevobe skickar aldrig nycklar eller lösenord till externa tjänster utan att du granskat dem.',
       };
     }
     if (context.mode === 'full-auto') {

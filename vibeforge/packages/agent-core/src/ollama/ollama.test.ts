@@ -56,7 +56,7 @@ describe('OllamaClient.probe', () => {
     const result = await client.probe();
     expect(result.available).toBe(false);
     expect(result.error).toBeTruthy();
-    expect(result.helpUrl).toBe('https://vibeforge.dev/docs/ollama');
+    expect(result.helpUrl).toBe('https://freevobe.dev/docs/ollama');
   });
 });
 

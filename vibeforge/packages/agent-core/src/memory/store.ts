@@ -24,7 +24,7 @@ const SECTION_TITLES: Record<MemoryKind, string> = {
 
 /**
  * Projektminnet är en vanlig Markdown-fil på disk (`.vibeforge/memory.md`), så att det kan
- * läsas, redigeras och versionshanteras utan VibeForge. Ingen databas emellan.
+ * läsas, redigeras och versionshanteras utan Freevobe. Ingen databas emellan.
  */
 export class ProjectMemory {
   private readonly file: string;

@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Lokal VibeForge-agent över HTTP+SSE på 127.0.0.1. Startas av skrivbordsappen (Tauri-sidecar) eller manuellt.",
+  "description": "Lokal Freevobe-agent över HTTP+SSE på 127.0.0.1. Startas av skrivbordsappen (Tauri-sidecar) eller manuellt.",
   "bin": {
     "vibeforge-agent": "./bin/vibeforge-agent.mjs"
   },

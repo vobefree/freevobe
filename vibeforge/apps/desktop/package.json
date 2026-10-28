@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "VibeForge skrivbordsapp: Tauri 2 + React + Monaco + xterm.",
+  "description": "Freevobe skrivbordsapp: Tauri 2 + React + Monaco + xterm.",
   "scripts": {
     "dev": "vite",
     "build": "vite build",

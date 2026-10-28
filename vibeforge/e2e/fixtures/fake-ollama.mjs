@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Fejkad Ollama för E2E-testerna. Svarar på de endpoints VibeForge använder och spelar upp
+ * Fejkad Ollama för E2E-testerna. Svarar på de endpoints Freevobe använder och spelar upp
  * en förutbestämd turordning: läs en fil, skriv en ny fil, sammanfatta.
  *
  * Den här servern kör bara i tester och används för att kunna verifiera hela kedjan

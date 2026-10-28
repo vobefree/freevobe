@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Minimal MCP-server över stdio som används i VibeForges tester.
+ * Minimal MCP-server över stdio som används i Freevobes tester.
  * Implementerar initialize, tools/list, tools/call, resources/list och prompts/list.
  */
 import readline from 'node:readline';

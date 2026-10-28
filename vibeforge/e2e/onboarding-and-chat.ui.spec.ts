@@ -127,7 +127,7 @@ test.describe('Skrivbordsgränssnittet', () => {
     // Simulerar att agent-backenden är nere genom att svara med ett transportfel.
     await page.route('**/api/health', (route) => route.abort('failed'));
     await page.goto('/');
-    await expect(page.getByText('VibeForge-agenten svarar inte')).toBeVisible();
+    await expect(page.getByText('Freevobe-agenten svarar inte')).toBeVisible();
     await expect(page.getByRole('link', { name: 'Öppna hjälp' })).toBeVisible();
   });
 });

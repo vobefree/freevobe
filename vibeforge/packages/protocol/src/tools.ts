@@ -1,6 +1,6 @@
 import type { JsonSchema } from './json-schema.js';
 
-/** Alla inbyggda verktyg VibeForge-agenten kan anropa. MCP-verktyg har formen `mcp__<server>__<tool>`. */
+/** Alla inbyggda verktyg Freevobe-agenten kan anropa. MCP-verktyg har formen `mcp__<server>__<tool>`. */
 export type BuiltinToolName =
   | 'list_files'
   | 'read_file'

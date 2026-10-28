@@ -52,7 +52,7 @@ export function createRoutes(serverInfo: { port: number; devMode: boolean }): Ro
   return [
     route('GET', '/api/health', () => ({
       ok: true,
-      name: 'VibeForge Agent',
+      name: 'Freevobe Agent',
       protocol: VIBEFORGE_PROTOCOL_VERSION,
       port: serverInfo.port,
       node: process.versions.node,

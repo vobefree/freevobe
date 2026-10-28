@@ -380,7 +380,7 @@ export const useAppStore = create<AppState>((set, get) => {
             phase: event.code === 'ollama_unavailable' ? 'idle' : state.phase,
             agentHelpUrl:
               event.code === 'ollama_unavailable'
-                ? (state.agentHelpUrl ?? 'https://vibeforge.dev/docs/ollama')
+                ? (state.agentHelpUrl ?? 'https://freevobe.dev/docs/ollama')
                 : state.agentHelpUrl,
           };
         case 'run_finished':
@@ -496,7 +496,7 @@ export const useAppStore = create<AppState>((set, get) => {
         set({
           connectionStatus: 'error',
           connectionError: error instanceof AgentRequestError ? error.message : String(error),
-          agentHelpUrl: 'https://vibeforge.dev/docs/agent',
+          agentHelpUrl: 'https://freevobe.dev/docs/agent',
         });
       }
     },

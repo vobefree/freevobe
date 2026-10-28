@@ -1,6 +1,6 @@
 # Arkitektur
 
-VibeForge är tre lager ovanpå varandra, alla på din maskin.
+Freevobe är tre lager ovanpå varandra, alla på din maskin.
 
 ```
 ┌──────────────────────────── apps/desktop (Tauri 2 + React) ────────────────────────────┐

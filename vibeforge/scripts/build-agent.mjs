@@ -32,7 +32,7 @@ import { main } from './packages/agent-server/src/index.ts';
 
 main(process.argv.slice(2)).catch((error) => {
   process.stderr.write(
-    \`VibeForge-agenten kunde inte starta: \${error instanceof Error ? error.message : String(error)}\\n\`,
+    \`Freevobe-agenten kunde inte starta: \${error instanceof Error ? error.message : String(error)}\\n\`,
   );
   process.exit(1);
 });

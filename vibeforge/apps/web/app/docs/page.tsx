@@ -5,7 +5,7 @@ import { DOC_SECTIONS } from '@/lib/content';
 export const metadata: Metadata = {
   title: 'Dokumentation',
   description:
-    'Kom igång med VibeForge: installation, arkitektur, verktyg, säkerhet, skills och MCP.',
+    'Kom igång med Freevobe: installation, arkitektur, verktyg, säkerhet, skills och MCP.',
 };
 
 export default function DocsPage() {

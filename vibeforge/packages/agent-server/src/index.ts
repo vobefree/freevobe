@@ -10,7 +10,7 @@ export * from './routes.js';
 export { PlaywrightBrowserDriver, playwrightAvailable } from './browser/playwrightDriver.js';
 
 /**
- * Startar VibeForge-agenten. Anropas av skrivbordsappens sidecar (utan argument) eller
+ * Startar Freevobe-agenten. Anropas av skrivbordsappens sidecar (utan argument) eller
  * manuellt under utveckling (`npm run dev:server`).
  */
 export async function main(argv: string[] = process.argv.slice(2)): Promise<void> {
@@ -60,7 +60,7 @@ const isDirectRun =
 if (isDirectRun) {
   main().catch((error: unknown) => {
     process.stderr.write(
-      `VibeForge-agenten kunde inte starta: ${error instanceof Error ? error.message : String(error)}\n`,
+      `Freevobe-agenten kunde inte starta: ${error instanceof Error ? error.message : String(error)}\n`,
     );
     process.exit(1);
   });

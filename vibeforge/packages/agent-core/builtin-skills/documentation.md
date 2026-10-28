@@ -20,7 +20,7 @@ triggers:
 
 1. Bestäm vilken typ av dokument det gäller: handledning, förklaring, referens eller hur-gör-jag.
 2. Läs koden du dokumenterar. Skriv inget du inte verifierat.
-3. Skriv på användarens språk (svenska i VibeForge), kod och identifierare på engelska.
+3. Skriv på användarens språk (svenska i Freevobe), kod och identifierare på engelska.
 4. Lägg ett körbart exempel i varje avsnitt där det går.
 
 ## Regler

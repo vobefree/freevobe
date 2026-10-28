@@ -50,7 +50,7 @@ export default function HomePage() {
             körs på din dator.
           </h1>
           <p className="max-w-xl text-slate-400">
-            VibeForge planerar, utforskar kodbasen, skriver kod, kör kommandon, testar, granskar
+            Freevobe planerar, utforskar kodbasen, skriver kod, kör kommandon, testar, granskar
             diffar och committar. Modellen kör via Ollama – koden lämnar aldrig datorn om du inte
             själv aktiverar en molntjänst.
           </p>
@@ -59,7 +59,7 @@ export default function HomePage() {
               href="/download/"
               className="rounded-md bg-ember px-5 py-2.5 text-sm font-semibold text-anvil hover:brightness-110"
             >
-              Ladda ner VibeForge
+              Ladda ner Freevobe
             </Link>
             <Link href="/docs/" className="vf-card px-5 py-2.5 text-sm hover:border-iron">
               Läs dokumentationen

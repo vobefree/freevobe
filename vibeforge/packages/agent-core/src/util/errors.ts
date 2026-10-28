@@ -23,7 +23,7 @@ export class OllamaUnavailableError extends VibeForgeError {
   constructor(baseUrl: string, detail?: string) {
     super('ollama_unavailable', `Kan inte nå Ollama på ${baseUrl}.`, {
       detail,
-      helpUrl: 'https://vibeforge.dev/docs/ollama',
+      helpUrl: 'https://freevobe.dev/docs/ollama',
     });
     this.name = 'OllamaUnavailableError';
   }

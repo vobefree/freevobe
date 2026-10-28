@@ -84,7 +84,7 @@ export const webFetchTool: RegisteredTool = {
         method,
         ...(typeof args.body === 'string' ? { body: args.body } : {}),
         headers: {
-          'user-agent': 'VibeForge/0.1 (+lokal agent)',
+          'user-agent': 'Freevobe/0.1 (+lokal agent)',
           accept: 'text/html,application/json,text/plain',
         },
         signal: AbortSignal.any([ctx.signal, AbortSignal.timeout(FETCH_TIMEOUT_MS)]),

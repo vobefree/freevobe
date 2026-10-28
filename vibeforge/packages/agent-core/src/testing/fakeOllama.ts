@@ -81,7 +81,7 @@ function readBody(request: http.IncomingMessage): Promise<string> {
 
 /**
  * En liten HTTP-server som uppför sig som Ollama. Används av enhets- och E2E-tester så att
- * VibeForge kan verifieras utan att en riktig modell är installerad.
+ * Freevobe kan verifieras utan att en riktig modell är installerad.
  */
 export async function startFakeOllama(options: FakeOllamaOptions = {}): Promise<FakeOllamaHandle> {
   const models = options.models ?? DEFAULT_MODELS;

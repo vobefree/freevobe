@@ -4,7 +4,7 @@ import { COMMUNITY_LINKS } from '@/lib/content';
 
 export const metadata: Metadata = {
   title: 'Community',
-  description: 'Delta i VibeForge-communityt: frågor, buggar, skills och bidrag.',
+  description: 'Delta i Freevobe-communityt: frågor, buggar, skills och bidrag.',
 };
 
 export default function CommunityPage() {
@@ -13,7 +13,7 @@ export default function CommunityPage() {
       <header className="space-y-3">
         <h1 className="text-3xl font-semibold">Community</h1>
         <p className="max-w-2xl text-slate-400">
-          VibeForge utvecklas öppet. Buggar, idéer och nya skills är lika välkomna – allt går via
+          Freevobe utvecklas öppet. Buggar, idéer och nya skills är lika välkomna – allt går via
           GitHub.
         </p>
       </header>

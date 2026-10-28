@@ -31,7 +31,7 @@ jobs:
       - run: npm run lint
 
   freevobe-desktop:
-    name: Freevobe Desktop (VibeForge)
+    name: Freevobe Desktop
     runs-on: ubuntu-latest
     defaults:
       run:

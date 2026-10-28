@@ -1,4 +1,4 @@
-# VibeForge – Design
+# Freevobe – Design
 
 **Datum:** 2026-10-27
 **Status:** Godkänd av beställaren via detaljerad spec (se nedan)
@@ -6,16 +6,16 @@
 
 ## 1. Intent och varför
 
-VibeForge är en **lokal-first vibecoding-desktopapp**: användaren ansluter Ollama, väljer modell och
+Freevobe är en **lokal-first vibecoding-desktopapp**: användaren ansluter Ollama, väljer modell och
 bygger mjukvara genom naturligt språk. Koden lämnar aldrig datorn om användaren inte uttryckligen
 aktiverar en molntjänst.
 
 Problemet som löses: dagens AI-kodverktyg är antingen molnbundna (koden skickas till en leverantör),
-eller så är de tunna chattar utan agent-loop, säkerhetsmodell eller kontextmotor. VibeForge ger
+eller så är de tunna chattar utan agent-loop, säkerhetsmodell eller kontextmotor. Freevobe ger
 Claude-Code-liknande arbetsyta (planera → utforska → skriva → köra → granska diff → committa) med
 lokal modell, lokal sessionshistorik, lokal projektminne och explicit samtycke per sidoeffekt.
 
-**Eget varumärke:** VibeForge är inte en kopia av Claude Code, Cursor, Freebuff eller något annat
+**Eget varumärke:** Freevobe är inte en kopia av Claude Code, Cursor, Freebuff eller något annat
 märke. Egen logotyp (Tändstål/hammare-„V" – se `apps/web/public/logo.svg` och
 `apps/desktop/public/logo.svg`), egen copy, egen design, egna modulnamn och egna koncept
 (_Forge, Anvil, Ember, Sparks, Blueprint_ – se ordlistan i `README.md`).
@@ -88,7 +88,7 @@ agent-backend som körs i Node utan Rust, (b) att webbläsarautomation och MCP-s
 långlivade processer utanför UI-tråden, (c) att UI:t kan utvecklas mot en riktig server i Vite
 med hot reload, och (d) att samma backend kan paketeras som Tauri-sidecar i produktion
 (`src-tauri/binaries/vibeforge-agent-<target-triple>`). Servern binder alltid till `127.0.0.1`
-och kräver en token som skrivs till en fil i användarens VibeForge-home (aldrig i git).
+och kräver en token som skrivs till en fil i användarens Freevobe-home (aldrig i git).
 
 **Dataflöde för en tur**
 
@@ -162,7 +162,7 @@ Allt ovan emitteras som `AgentEvent` (protocol-paketet) över SSE så UI:t kan r
 
 ## 9. Varumärke och copy
 
-- **Namn:** VibeForge
+- **Namn:** Freevobe
 - **Tagline (sv):** _Smida mjukvara i din egen smedja._
 - **Tagline (en):** _Forge software in your own workshop._
 - **Röst:** kort, konkret, ingen hype, inga utropstecken i UI-text.

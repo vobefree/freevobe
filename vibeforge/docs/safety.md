@@ -1,6 +1,6 @@
 # Säkerhet
 
-Allt i VibeForge utgår från en enda princip: **agenten får inte göra något du inte kan se och säga nej till.**
+Allt i Freevobe utgår från en enda princip: **agenten får inte göra något du inte kan se och säga nej till.**
 
 ## Behörighetslägen
 

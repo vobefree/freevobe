@@ -1,8 +1,8 @@
 [package]
 name = "vibeforge-desktop"
 version = "0.1.0"
-description = "VibeForge – lokal-first vibecoding med Ollama"
-authors = ["VibeForge"]
+description = "Freevobe – lokal-first vibecoding med Ollama"
+authors = ["Freevobe"]
 edition = "2021"
 rust-version = "1.77.2"
 license = "MIT"

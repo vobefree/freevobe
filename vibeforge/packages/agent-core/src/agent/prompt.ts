@@ -33,15 +33,15 @@ const PERMISSION_TEXT: Record<PermissionMode, string> = {
 
 /**
  * Bygger systemprompten. Ordningen är avsiktlig: identitet och regler först, sedan kontext.
- * Projektets egna regler och minne har företräde framför VibeForges allmänna råd.
+ * Projektets egna regler och minne har företräde framför Freevobes allmänna råd.
  */
 export function buildSystemPrompt(input: SystemPromptInput): string {
   const sections: string[] = [];
 
   sections.push(
     [
-      '# VibeForge',
-      'Du är VibeForge – en lokal-first kodagent som körs på användarens egen dator med en lokal modell.',
+      '# Freevobe',
+      'Du är Freevobe – en lokal-first kodagent som körs på användarens egen dator med en lokal modell.',
       'Du svarar på svenska om användaren skriver svenska, annars på samma språk som användaren.',
       '',
       '## Grundprinciper',

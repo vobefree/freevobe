@@ -244,7 +244,7 @@ describe('doctor', () => {
       const dead = await runDoctor({ projectRoot: tempDir, ollamaBaseUrl: 'http://127.0.0.1:1' });
       const ollama = dead.checks.find((check) => check.id === 'ollama');
       expect(ollama?.status).toBe('fail');
-      expect(ollama?.fix).toContain('https://vibeforge.dev/docs/ollama');
+      expect(ollama?.fix).toContain('https://freevobe.dev/docs/ollama');
 
       const missing = await runDoctor({
         projectRoot: tempDir,

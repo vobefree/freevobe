@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Delade typer och kontrakt mellan VibeForge-agenten, servern och UI:t.",
+  "description": "Delade typer och kontrakt mellan Freevobe-agenten, servern och UI:t.",
   "exports": {
     ".": "./src/index.ts"
   },

@@ -5,7 +5,7 @@ export function truncate(text: string, maxChars: number): { text: string; trunca
   const head = Math.max(0, Math.floor(maxChars * 0.7));
   const tail = Math.max(0, maxChars - head - 40);
   const omitted = text.length - head - tail;
-  const marker = `\n… [${omitted} tecken bortklippta av VibeForge] …\n`;
+  const marker = `\n… [${omitted} tecken bortklippta av Freevobe] …\n`;
   return {
     text: text.slice(0, head) + marker + (tail > 0 ? text.slice(text.length - tail) : ''),
     truncated: true,

@@ -3,7 +3,7 @@ import { CHANGELOG } from '@/lib/content';
 
 export const metadata: Metadata = {
   title: 'Changelog',
-  description: 'Vad som ändrats i VibeForge mellan versioner.',
+  description: 'Vad som ändrats i Freevobe mellan versioner.',
 };
 
 export default function ChangelogPage() {
