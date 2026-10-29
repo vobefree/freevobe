@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import type {
   VerificationCheckResult,
   VerificationCommand,
@@ -8,11 +9,11 @@ import { useAppStore } from '../../store/appStore';
 import { Button, Chip, EmptyState } from '../ui';
 import { clockTime } from '../../lib/format';
 
-const STATUS_LABELS: Record<VerificationCheckResult['status'], string> = {
-  passed: 'grön',
-  failed: 'röd',
-  timeout: 'tidsgräns',
-  skipped: 'överhoppad',
+const STATUS_KEYS: Record<VerificationCheckResult['status'], string> = {
+  passed: 'verify.status.passed',
+  failed: 'verify.status.failed',
+  timeout: 'verify.status.timeout',
+  skipped: 'verify.status.skipped',
 };
 
 const STATUS_TONE: Record<
@@ -25,13 +26,14 @@ const STATUS_TONE: Record<
   skipped: 'neutral',
 };
 
-const TRIGGER_LABELS: Record<VerificationReport['trigger'], string> = {
-  run: 'automatiskt efter körningen',
-  manual: 'manuellt',
-  tool: 'av agenten',
+const TRIGGER_KEYS: Record<VerificationReport['trigger'], string> = {
+  run: 'verify.trigger.run',
+  manual: 'verify.trigger.manual',
+  tool: 'verify.trigger.tool',
 };
 
 function CheckRow({ check }: { check: VerificationCheckResult }) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(check.status !== 'passed');
 
   return (
@@ -42,13 +44,15 @@ function CheckRow({ check }: { check: VerificationCheckResult }) {
         className="flex w-full cursor-pointer items-center gap-2 px-2 py-1.5 text-left"
         title={check.command}
       >
-        <Chip tone={STATUS_TONE[check.status]}>{STATUS_LABELS[check.status]}</Chip>
+        <Chip tone={STATUS_TONE[check.status]}>{t(STATUS_KEYS[check.status])}</Chip>
         <span className="text-xs font-medium text-slate-200">{check.label}</span>
         <span className="truncate font-mono text-[10px] text-slate-500">{check.command}</span>
         <span className="ml-auto shrink-0 text-[10px] text-slate-500">
-          {check.durationMs} ms
+          {t('verify.ms', { count: check.durationMs })}
           {check.kind === 'test' && check.passed !== undefined
-            ? ` · ${check.passed} gröna${check.failed ? `, ${check.failed} röda` : ''}`
+            ? ` · ${t('rightPanel.tests.passed', { count: check.passed })}${
+                check.failed ? `, ${t('rightPanel.tests.failed', { count: check.failed })}` : ''
+              }`
             : ''}
         </span>
         <span className="shrink-0 text-[10px] text-slate-600">{open ? '▾' : '▸'}</span>
@@ -60,7 +64,7 @@ function CheckRow({ check }: { check: VerificationCheckResult }) {
           </pre>
         ) : (
           <p className="border-t border-steel/60 px-2 py-1.5 text-[10.5px] text-slate-600">
-            {check.status === 'skipped' ? 'Steget hoppades över.' : 'Kommandot gav ingen utdata.'}
+            {check.status === 'skipped' ? t('verify.skippedStep') : t('verify.noOutput')}
           </p>
         )
       ) : null}
@@ -79,6 +83,7 @@ function CommandList({ commands }: { commands: VerificationCommand[] }) {
 }
 
 export function VerificationPane() {
+  const { t } = useTranslation();
   const verification = useAppStore((state) => state.verification);
   const commands = useAppStore((state) => state.verificationCommands);
   const progress = useAppStore((state) => state.verificationProgress);
@@ -95,9 +100,9 @@ export function VerificationPane() {
             disabled={!hasProject || running}
             onClick={() => void runVerification()}
             testId="run-verification"
-            title="Kör typkontroll, lint, tester och bygge – de som finns i projektet"
+            title={t('verify.runTitle')}
           >
-            {running ? 'Verifierar…' : 'Kör verifieringen'}
+            {running ? t('verify.running') : t('verify.run')}
           </Button>
           {verification ? (
             <span className="text-[11px] text-slate-500">{verification.summary}</span>
@@ -106,8 +111,7 @@ export function VerificationPane() {
         {commands.length > 0 ? <CommandList commands={commands} /> : null}
         {commands.length === 0 ? (
           <p className="text-[10.5px] text-slate-600">
-            Inga verifieringssteg hittades. Lägg till skript i <code>package.json</code>
-            (typecheck, lint, test, build) eller motsvarande konfiguration.
+            {t('verify.none.before')} <code>package.json</code> {t('verify.none.after')}
           </p>
         ) : null}
       </div>
@@ -116,7 +120,7 @@ export function VerificationPane() {
         {running ? (
           <ul className="space-y-1" data-testid="verification-progress">
             {progress.length === 0 ? (
-              <li className="text-[11px] text-slate-500">Kör första steget…</li>
+              <li className="text-[11px] text-slate-500">{t('verify.firstStep')}</li>
             ) : null}
             {progress.map((check) => (
               <CheckRow key={check.id} check={check} />
@@ -127,14 +131,14 @@ export function VerificationPane() {
             <header className="flex flex-wrap items-center gap-2">
               <Chip tone={verification.status === 'passed' ? 'mint' : 'alert'}>
                 {verification.status === 'passed'
-                  ? 'allt grönt'
+                  ? t('verify.summary.allGreen')
                   : verification.status === 'failed'
-                    ? 'röda steg'
-                    : 'inget kört'}
+                    ? t('verify.summary.failed')
+                    : t('verify.summary.none')}
               </Chip>
               <span className="text-[11px] text-slate-400">{verification.summary}</span>
               <span className="ml-auto text-[10px] text-slate-600">
-                {clockTime(verification.finishedAt)} · {TRIGGER_LABELS[verification.trigger]}
+                {clockTime(verification.finishedAt)} · {t(TRIGGER_KEYS[verification.trigger])}
               </span>
             </header>
             <ul className="space-y-1">
@@ -144,10 +148,7 @@ export function VerificationPane() {
             </ul>
           </div>
         ) : (
-          <EmptyState
-            title="Ingen verifiering körd än"
-            hint="Efter en körning som ändrat filer körs typkontroll, lint och tester automatiskt – rapporten hamnar här."
-          />
+          <EmptyState title={t('verify.empty.title')} hint={t('verify.empty.hint')} />
         )}
       </div>
     </div>

@@ -7,8 +7,8 @@ import {
   Sparkles,
   type LucideIcon,
 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { Reveal, RevealGroup, RevealItem } from '@/components/motion/reveal';
-import { features } from '@/lib/site';
 import { card, eyebrow, sectionTitle } from '@/lib/tokens';
 import { cn } from '@/lib/utils';
 
@@ -21,17 +21,22 @@ const ICONS: Record<string, LucideIcon> = {
   blocks: Blocks,
 };
 
+type Item = { icon: string; title: string; body: string };
+
 export function Features() {
+  const t = useTranslations('features');
+  const items = t.raw('items') as Item[];
+
   return (
     <section id="features" className="scroll-mt-24 py-20 lg:py-24">
       <div className="vf-shell">
         <Reveal>
-          <p className={eyebrow()}>Features</p>
-          <h2 className={sectionTitle()}>Everything you need to vobe.</h2>
+          <p className={eyebrow()}>{t('eyebrow')}</p>
+          <h2 className={sectionTitle()}>{t('heading')}</h2>
         </Reveal>
 
         <RevealGroup className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {features.map((feature) => {
+          {items.map((feature) => {
             const Icon = ICONS[feature.icon] ?? Plug;
             return (
               <RevealItem key={feature.title}>

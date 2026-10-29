@@ -1,7 +1,8 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAppStore } from '../../store/appStore';
 import { Button, Chip, EmptyState } from '../ui';
-import { RISK_LABELS } from '../../lib/format';
+import { PERMISSION_LABELS, RISK_LABELS } from '../../lib/format';
 import { DiffLineList } from './DiffPane';
 import type { PendingApproval } from '../../store/appStore';
 
@@ -16,6 +17,7 @@ function QuestionBlock({
   onToggle: (questionId: string, label: string, multiSelect: boolean) => void;
   onText: (questionId: string, value: string) => void;
 }) {
+  const { t } = useTranslation();
   if (!approval.questions?.length) return null;
   return (
     <div className="mt-2 space-y-2">
@@ -53,7 +55,7 @@ function QuestionBlock({
             })}
           </div>
           <input
-            placeholder="Eget svar…"
+            placeholder={t('approval.customAnswer')}
             onChange={(event) => onText(question.id, event.target.value)}
             className="mt-1.5 w-full rounded border border-steel bg-anvil px-2 py-1 text-xs text-slate-200 placeholder:text-slate-600"
           />
@@ -64,6 +66,7 @@ function QuestionBlock({
 }
 
 export function ApprovalCard({ approval }: { approval: PendingApproval }) {
+  const { t } = useTranslation();
   const resolveApproval = useAppStore((state) => state.resolveApproval);
   const [answers, setAnswers] = useState<Record<string, string[]>>({});
   const [showDiff, setShowDiff] = useState(true);
@@ -113,7 +116,7 @@ export function ApprovalCard({ approval }: { approval: PendingApproval }) {
 
       {approval.hardBlock ? (
         <p className="mt-1 rounded border border-alert/40 bg-alert/10 px-2 py-1 text-[10px] text-alert">
-          Skyddad åtgärd: körs aldrig automatiskt, även i full auto.
+          {t('approval.hardBlock')}
         </p>
       ) : null}
 
@@ -136,7 +139,8 @@ export function ApprovalCard({ approval }: { approval: PendingApproval }) {
           >
             <span className="font-mono">{approval.diff.path}</span>
             <span className="ml-auto">
-              +{approval.diff.additions} −{approval.diff.deletions} · {showDiff ? 'dölj' : 'visa'}
+              +{approval.diff.additions} −{approval.diff.deletions} ·{' '}
+              {showDiff ? t('approval.hide') : t('approval.show')}
             </span>
           </button>
           {showDiff ? (
@@ -155,29 +159,30 @@ export function ApprovalCard({ approval }: { approval: PendingApproval }) {
           onClick={() => void resolveApproval(approval.id, 'approved', submittedAnswers)}
           testId="approve"
         >
-          Godkänn
+          {t('approval.approve')}
         </Button>
         <Button
           variant="danger"
           onClick={() => void resolveApproval(approval.id, 'rejected', submittedAnswers)}
         >
-          Avvisa
+          {t('approval.reject')}
         </Button>
-        <span className="text-[10px] text-slate-600">Beslutet loggas i sessionshistoriken.</span>
+        <span className="text-[10px] text-slate-600">{t('approval.logged')}</span>
       </footer>
     </article>
   );
 }
 
 export function ApprovalPane() {
+  const { t } = useTranslation();
   const approvals = useAppStore((state) => state.approvals);
   const permissionMode = useAppStore((state) => state.permissionMode);
 
   if (approvals.length === 0) {
     return (
       <EmptyState
-        title="Inget väntar på besked"
-        hint={`Behörighetsläge: ${permissionMode}. Ändringar och kommandon som kräver ditt godkännande hamnar här.`}
+        title={t('approval.empty.title')}
+        hint={t('approval.empty.hint', { mode: PERMISSION_LABELS[permissionMode] })}
       />
     );
   }

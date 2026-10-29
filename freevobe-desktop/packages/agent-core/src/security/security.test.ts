@@ -2,7 +2,7 @@ import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { assertWritable, isProtectedPath, resolveProjectPath } from './paths.js';
 import { containsSecret, redactSecrets, scanForSecrets } from './secrets.js';
-import { evaluateCommand, evaluateToolCall, type PolicyContext } from './policy.js';
+import { evaluateCommand, evaluateToolCall, toolCategory, type PolicyContext } from './policy.js';
 import type { ToolSpec } from '@freevobe/protocol';
 
 const ROOT = path.resolve('/tmp/freevobe-projekt');
@@ -348,5 +348,61 @@ describe('auto-godkännande per kategori', () => {
       context({ mode: 'auto-run', autoApprove: {} }),
     );
     expect(decision.effect).toBe('allow');
+  });
+});
+
+describe('connector-verktyg', () => {
+  const readSpec: ToolSpec = {
+    name: 'vercel_list_projects',
+    description: 'listar projekt',
+    parameters: { type: 'object' },
+    danger: 'network',
+    source: 'connector',
+    connectorId: 'vercel',
+  };
+
+  const deploySpec: ToolSpec = {
+    name: 'vercel_deploy',
+    description: 'deployar',
+    parameters: { type: 'object' },
+    danger: 'execute',
+    source: 'connector',
+    connectorId: 'vercel',
+    alwaysRequiresApproval: true,
+  };
+
+  it('frågar om läsning men låter kategorin network auto-godkännas', () => {
+    const asked = evaluateToolCall({ spec: readSpec, args: {} }, context({ mode: 'ask' }));
+    expect(asked.effect).toBe('require-approval');
+    if (asked.effect === 'require-approval') expect(asked.hardBlock).toBe(false);
+
+    const auto = evaluateToolCall(
+      { spec: readSpec, args: {} },
+      context({ mode: 'ask', autoApprove: { network: true } }),
+    );
+    expect(auto.effect).toBe('allow');
+  });
+
+  it('tillåter läsning i Full auto', () => {
+    const decision = evaluateToolCall({ spec: readSpec, args: {} }, context({ mode: 'full-auto' }));
+    expect(decision.effect).toBe('allow');
+  });
+
+  it('kräver alltid ett personligt ja för ändringar, även i Full auto', () => {
+    const decision = evaluateToolCall(
+      { spec: deploySpec, args: {} },
+      context({ mode: 'full-auto', autoApprove: { network: true } }),
+    );
+    expect(decision.effect).toBe('require-approval');
+    if (decision.effect === 'require-approval') {
+      expect(decision.hardBlock).toBe(true);
+      expect(decision.risk).toBe('high');
+      expect(decision.reason).toContain('vercel');
+    }
+  });
+
+  it('kategoriserar connectoranrop som network', () => {
+    expect(toolCategory(readSpec)).toBe('network');
+    expect(toolCategory(deploySpec)).toBe('network');
   });
 });

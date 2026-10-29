@@ -1,6 +1,7 @@
 'use client';
 
 import { Moon, Sun } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
 
@@ -11,6 +12,7 @@ const STORAGE_KEY = 'freevobe-theme';
  * samma klass som CSS-tokenöversättningen i globals.css lyssnar på.
  */
 export function ThemeToggle({ className }: { className?: string }) {
+  const t = useTranslations('common');
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
 
   useEffect(() => {
@@ -29,13 +31,14 @@ export function ThemeToggle({ className }: { className?: string }) {
   }
 
   const isDark = theme === 'dark';
+  const label = isDark ? t('switchToLight') : t('switchToDark');
 
   return (
     <button
       type="button"
       onClick={toggle}
-      aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
-      title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+      aria-label={label}
+      title={label}
       className={cn(
         'flex size-9 cursor-pointer items-center justify-center rounded-lg border border-line bg-card text-muted transition-colors hover:border-accent/50 hover:text-fg',
         className,

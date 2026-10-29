@@ -1,14 +1,15 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { Checkpoint } from '@freevobe/protocol';
 import { useAppStore } from '../../store/appStore';
 import { Button, Chip, EmptyState } from '../ui';
 import { timeAgo } from '../../lib/format';
 
-const STATUS_LABELS: Record<Checkpoint['status'], string> = {
-  open: 'Öppen',
-  restored: 'Återställd',
-  committed: 'Committad',
-  discarded: 'Avförd',
+const STATUS_KEYS: Record<Checkpoint['status'], string> = {
+  open: 'checkpoints.status.open',
+  restored: 'checkpoints.status.restored',
+  committed: 'checkpoints.status.committed',
+  discarded: 'checkpoints.status.discarded',
 };
 
 const STATUS_TONES: Record<Checkpoint['status'], 'neutral' | 'mint' | 'sky' | 'ember'> = {
@@ -20,6 +21,7 @@ const STATUS_TONES: Record<Checkpoint['status'], 'neutral' | 'mint' | 'sky' | 'e
 
 /** Checkpointens filer med sin nettoändring, så att listan går att överblicka utan att öppna diffen. */
 function FileList({ checkpoint }: { checkpoint: Checkpoint }) {
+  const { t } = useTranslation();
   return (
     <ul className="mt-1.5 space-y-0.5">
       {checkpoint.files.slice(0, 6).map((file) => (
@@ -47,7 +49,7 @@ function FileList({ checkpoint }: { checkpoint: Checkpoint }) {
       ))}
       {checkpoint.files.length > 6 ? (
         <li className="text-[10px] text-slate-600">
-          … och {checkpoint.files.length - 6} filer till
+          {t('checkpoints.moreFiles', { count: checkpoint.files.length - 6 })}
         </li>
       ) : null}
     </ul>
@@ -55,6 +57,7 @@ function FileList({ checkpoint }: { checkpoint: Checkpoint }) {
 }
 
 function CheckpointCard({ checkpoint }: { checkpoint: Checkpoint }) {
+  const { t } = useTranslation();
   const busy = useAppStore((state) => state.checkpointBusy);
   const showCheckpointDiff = useAppStore((state) => state.showCheckpointDiff);
   const restoreCheckpoint = useAppStore((state) => state.restoreCheckpoint);
@@ -82,17 +85,23 @@ function CheckpointCard({ checkpoint }: { checkpoint: Checkpoint }) {
     >
       <header className="flex flex-wrap items-center gap-1.5">
         <span className="text-[11px] font-semibold text-slate-200">{checkpoint.label}</span>
-        <Chip tone={STATUS_TONES[checkpoint.status]}>{STATUS_LABELS[checkpoint.status]}</Chip>
-        <Chip>{checkpoint.reason === 'manual' ? 'manuell' : 'agent'}</Chip>
-        {checkpoint.testStatus === 'passed' ? <Chip tone="mint">tester gröna</Chip> : null}
-        {checkpoint.testStatus === 'failed' ? <Chip tone="alert">tester röda</Chip> : null}
+        <Chip tone={STATUS_TONES[checkpoint.status]}>{t(STATUS_KEYS[checkpoint.status])}</Chip>
+        <Chip>
+          {checkpoint.reason === 'manual' ? t('checkpoints.manual') : t('checkpoints.agent')}
+        </Chip>
+        {checkpoint.testStatus === 'passed' ? (
+          <Chip tone="mint">{t('checkpoints.testsPassed')}</Chip>
+        ) : null}
+        {checkpoint.testStatus === 'failed' ? (
+          <Chip tone="alert">{t('checkpoints.testsFailed')}</Chip>
+        ) : null}
         <span className="ml-auto font-mono text-[10px] text-slate-600">
           {timeAgo(checkpoint.createdAt)}
         </span>
       </header>
 
       <p className="mt-1 font-mono text-[10px] text-slate-600">
-        {checkpoint.files.length} filer
+        {t('checkpoints.files', { count: checkpoint.files.length })}
         {checkpoint.committedHash ? ` · commit ${checkpoint.committedHash}` : ''}
         {checkpoint.testSummary && checkpoint.testStatus !== 'unknown'
           ? ` · ${checkpoint.testSummary}`
@@ -107,8 +116,7 @@ function CheckpointCard({ checkpoint }: { checkpoint: Checkpoint }) {
           data-testid="checkpoint-conflicts"
         >
           <p className="text-[10.5px] text-spark">
-            {conflicts.length === 1 ? '1 fil har' : `${conflicts.length} filer har`} ändrats sedan
-            checkpointen och hoppades över: {conflicts.join(', ')}.
+            {t('checkpoints.conflicts', { count: conflicts.length, paths: conflicts.join(', ') })}
           </p>
           {forcing ? (
             <div className="mt-1 flex items-center gap-1.5">
@@ -121,10 +129,10 @@ function CheckpointCard({ checkpoint }: { checkpoint: Checkpoint }) {
                 }}
                 testId="checkpoint-confirm-force"
               >
-                Skriv över ändå
+                {t('checkpoints.forceConfirm')}
               </Button>
               <Button variant="ghost" onClick={() => setForcing(false)}>
-                Avbryt
+                {t('checkpoints.cancel')}
               </Button>
             </div>
           ) : (
@@ -132,10 +140,10 @@ function CheckpointCard({ checkpoint }: { checkpoint: Checkpoint }) {
               className="mt-1"
               disabled={disabled}
               onClick={() => setForcing(true)}
-              title="Skriv över filerna även om de ändrats sedan checkpointen"
+              title={t('checkpoints.forceTitle')}
               testId="checkpoint-force"
             >
-              Tvinga återställning
+              {t('checkpoints.force')}
             </Button>
           )}
         </div>
@@ -147,7 +155,7 @@ function CheckpointCard({ checkpoint }: { checkpoint: Checkpoint }) {
           disabled={disabled || discarded}
           testId="checkpoint-diff"
         >
-          Diff
+          {t('checkpoints.diff')}
         </Button>
 
         {confirming ? (
@@ -161,10 +169,10 @@ function CheckpointCard({ checkpoint }: { checkpoint: Checkpoint }) {
               }}
               testId="checkpoint-confirm-restore"
             >
-              Skriv över filerna
+              {t('checkpoints.overwrite')}
             </Button>
             <Button variant="ghost" onClick={() => setConfirming(false)}>
-              Avbryt
+              {t('checkpoints.cancel')}
             </Button>
           </>
         ) : (
@@ -172,10 +180,10 @@ function CheckpointCard({ checkpoint }: { checkpoint: Checkpoint }) {
             variant="primary"
             disabled={disabled || discarded}
             onClick={() => setConfirming(true)}
-            title="Skriv tillbaka filerna som de såg ut före checkpointen"
+            title={t('checkpoints.restoreTitle')}
             testId="checkpoint-restore"
           >
-            Återställ
+            {t('checkpoints.restore')}
           </Button>
         )}
 
@@ -195,20 +203,20 @@ function CheckpointCard({ checkpoint }: { checkpoint: Checkpoint }) {
               }}
               testId="checkpoint-commit-send"
             >
-              Committa
+              {t('checkpoints.commitSend')}
             </Button>
             <Button variant="ghost" onClick={() => setCommitting(false)}>
-              Avbryt
+              {t('checkpoints.cancel')}
             </Button>
           </div>
         ) : (
           <Button
             disabled={disabled || discarded}
             onClick={() => setCommitting(true)}
-            title="Skapa en Git-commit av filerna i checkpointen"
+            title={t('checkpoints.commitTitle')}
             testId="checkpoint-commit"
           >
-            Committa
+            {t('checkpoints.commit')}
           </Button>
         )}
 
@@ -219,7 +227,7 @@ function CheckpointCard({ checkpoint }: { checkpoint: Checkpoint }) {
           onClick={() => void discardCheckpoint(checkpoint.id)}
           testId="checkpoint-discard"
         >
-          Kassera
+          {t('checkpoints.discard')}
         </Button>
       </footer>
     </article>
@@ -227,6 +235,7 @@ function CheckpointCard({ checkpoint }: { checkpoint: Checkpoint }) {
 }
 
 export function CheckpointsPane() {
+  const { t } = useTranslation();
   const checkpoints = useAppStore((state) => state.checkpoints);
   const createCheckpoint = useAppStore((state) => state.createCheckpoint);
   const refreshCheckpoints = useAppStore((state) => state.refreshCheckpoints);
@@ -240,18 +249,16 @@ export function CheckpointsPane() {
           disabled={busy !== null}
           onClick={() => void createCheckpoint()}
           testId="new-checkpoint"
-          title="Spara nuvarande innehåll i ändrade filer"
+          title={t('checkpoints.newTitle')}
         >
-          Ny checkpoint
+          {t('checkpoints.new')}
         </Button>
-        <span className="text-[10.5px] text-slate-600">
-          Sparas lokalt, utan att röra Git-historiken
-        </span>
+        <span className="text-[10.5px] text-slate-600">{t('checkpoints.localOnly')}</span>
         <Button
           variant="ghost"
           className="ml-auto"
           onClick={() => void refreshCheckpoints()}
-          title="Läs om listan"
+          title={t('checkpoints.refresh')}
         >
           ↻
         </Button>
@@ -259,10 +266,7 @@ export function CheckpointsPane() {
 
       <div className="min-h-0 flex-1 space-y-2 overflow-y-auto p-2">
         {checkpoints.length === 0 ? (
-          <EmptyState
-            title="Inga checkpoints än"
-            hint="Varje gång agenten ändrar en fil sparas filens tidigare innehåll här. Sedan kan du backa till valfri punkt utan att röra Git."
-          />
+          <EmptyState title={t('checkpoints.empty.title')} hint={t('checkpoints.empty.hint')} />
         ) : (
           checkpoints.map((checkpoint) => (
             <CheckpointCard key={checkpoint.id} checkpoint={checkpoint} />

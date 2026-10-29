@@ -1,4 +1,5 @@
 import { ArrowRight } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { AppMockup } from '@/components/app-mockup';
 import { DownloadButton } from '@/components/download/download-button';
 import { PlatformButtons } from '@/components/download/platform-buttons';
@@ -6,8 +7,11 @@ import { ReleaseBadge } from '@/components/download/release-badge';
 import { Reveal } from '@/components/motion/reveal';
 import { Badge, StatusDot } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { LocaleLink } from '@/components/site/locale-link';
 
 export function Hero() {
+  const t = useTranslations('hero');
+
   return (
     <section id="top" className="relative overflow-hidden pt-16 pb-20 sm:pt-24 lg:pb-28">
       {/* Bakgrund: rutnät, glöd och en diskret horisontlinje. */}
@@ -22,20 +26,19 @@ export function Hero() {
           <Reveal from="none">
             <Badge className="mx-auto">
               <StatusDot />
-              Local-first AI coding agent
+              {t('badge')}
             </Badge>
           </Reveal>
 
           <Reveal delay={0.05}>
             <h1 className="mt-7 text-5xl leading-[1.02] font-semibold tracking-tight text-balance sm:text-6xl lg:text-7xl">
-              <span className="vf-text-gradient">Vobe with Ollama.</span>
+              <span className="vf-text-gradient">{t('title')}</span>
             </h1>
           </Reveal>
 
           <Reveal delay={0.1}>
             <p className="mx-auto mt-6 max-w-2xl text-base leading-relaxed text-muted text-pretty sm:text-lg">
-              Freevobe is your local vibecoding agent. Install it, connect Ollama and build software
-              through natural-language chat — no API keys, no token counting, no cloud dependency.
+              {t('body')}
             </p>
           </Reveal>
 
@@ -43,10 +46,10 @@ export function Hero() {
             <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
               <DownloadButton className="w-full sm:w-auto" />
               <Button asChild size="lg" variant="secondary" className="w-full sm:w-auto">
-                <a href="#how-it-works">
-                  See how it works
+                <LocaleLink href="#how-it-works">
+                  {t('secondary')}
                   <ArrowRight className="size-4" />
-                </a>
+                </LocaleLink>
               </Button>
             </div>
           </Reveal>
@@ -63,7 +66,7 @@ export function Hero() {
 
           <Reveal delay={0.2}>
             <p className="mt-6 font-mono text-xs tracking-wide text-muted sm:text-[13px]">
-              No tokens. No limits. Just vibes.
+              {t('footnote')}
             </p>
           </Reveal>
         </div>
@@ -74,9 +77,7 @@ export function Hero() {
             aria-hidden="true"
           />
           <AppMockup />
-          <p className="mt-4 text-center text-[11.5px] text-muted">
-            The whole loop on your machine — plan, diff, terminal and tests in one workspace.
-          </p>
+          <p className="mt-4 text-center text-[11.5px] text-muted">{t('mockupCaption')}</p>
         </Reveal>
       </div>
     </section>

@@ -1,22 +1,25 @@
 import { Activity, Cpu, KeyRound, ShieldCheck, Sparkles } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { Reveal } from '@/components/motion/reveal';
-import { communityBadges } from '@/lib/site';
 
 const ICONS = [Activity, Cpu, KeyRound, Sparkles, ShieldCheck] as const;
 
 export function SocialProof() {
+  const t = useTranslations('socialProof');
+  const badges = (t.raw('badges') as string).split(';').filter(Boolean);
+
   return (
-    <section aria-label="Built for the community" className="border-y border-line bg-bg-soft/60">
+    <section aria-label={t('aria')} className="border-y border-line bg-bg-soft/60">
       <div className="vf-shell py-10">
         <Reveal from="none">
           <p className="text-center text-xs font-medium tracking-[0.16em] text-muted uppercase">
-            Built for the AI &amp; vibe coding community
+            {t('heading')}
           </p>
         </Reveal>
 
         <Reveal delay={0.08}>
           <ul className="mt-6 flex flex-wrap items-center justify-center gap-2.5 sm:gap-3">
-            {communityBadges.map((badge, index) => {
+            {badges.map((badge, index) => {
               const Icon = ICONS[index] ?? Activity;
               return (
                 <li

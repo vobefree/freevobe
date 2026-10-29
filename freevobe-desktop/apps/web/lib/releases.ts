@@ -7,7 +7,7 @@
  */
 
 export const RELEASE_REPO = 'vobefree/freevobe';
-export const RELEASE_TAG = 'v0.1.0';
+export const RELEASE_TAG = 'v0.2.0';
 
 /** Mobilappens egen version (`freevobe-mobile/app.json`), inte releasetaggens. */
 export const MOBILE_VERSION = '1.0.0';
@@ -74,11 +74,8 @@ export function assetUrl(file: string): string {
  * publiceras – saknas en summa visas filen utan kontrollrad i stället för med en gissning.
  */
 export const RELEASE_SHA256: Record<string, string> = {
-  'Freevobe_v0.1.0_x64-setup.exe':
-    'a1446e2d4425b28c375efa4278f029ad4462418e5c1597ab5a572980037fdae4',
-  'Freevobe_v0.1.0_aarch64.dmg': '4783a6d4b00c38eb2a34f9ebd260e0781397b10d4d4fbf4d04edd0bf57371461',
-  'Freevobe_v0.1.0_x64.dmg': '39abb4f9278ccaede265c49223b552812d7b43c658d8427a40b7b47382cd7ecf',
-  'Freevobe_v0.1.0_amd64.AppImage':
-    '5a55960baa2376cbb95bd8226c98fdbc315610ad62f7fcdbf13018234877c64f',
+  // v0.2.0-filerna saknar summor här ännu: de byggs av release-workflowen, som publicerar
+  // SHA256SUMS.txt bredvid installationsfilerna. Filen visas utan kontrollrad tills summorna
+  // är ifyllda i stället för med en gissning.
   'Freevobe-Mobile_1.0.0.apk': '74aa14ed121f5edf42a2abd546e3308cb48b963c90f5e698861a01c2360f81a7',
 };

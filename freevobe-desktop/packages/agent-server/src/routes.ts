@@ -1,6 +1,7 @@
 import path from 'node:path';
 import type {
   ApprovalAnswer,
+  ConnectorsResponse,
   HookConfig,
   McpServerConfig,
   PermissionMode,
@@ -225,6 +226,65 @@ export function createRoutes(serverInfo: { port: number; devMode: boolean }): Ro
       hub.requireWorkspace(params.projectId as string).mcp.approve(params.serverId as string);
       return { ok: true };
     }),
+
+    // ---- connectors: opt-in-bryggor till externa tjänster. Token lämnar aldrig servern.
+    route('GET', '/api/projects/:projectId/connectors', ({ hub, params }) => {
+      const projectId = hub.requireWorkspace(params.projectId as string).project.id;
+      const payload: ConnectorsResponse = {
+        connectors: hub.connectors.list(projectId),
+        storage: hub.connectors.storage,
+      };
+      return payload;
+    }),
+    route(
+      'POST',
+      '/api/projects/:projectId/connectors/:connectorId/connect',
+      async ({ hub, params, body }) => {
+        const projectId = hub.requireWorkspace(params.projectId as string).project.id;
+        const payload = (await body()) as { secret?: unknown; accountLabel?: unknown };
+        if (payload.secret !== undefined && typeof payload.secret !== 'string') {
+          throw new Error('Fältet "secret" måste vara en sträng.');
+        }
+        if (payload.accountLabel !== undefined && typeof payload.accountLabel !== 'string') {
+          throw new Error('Fältet "accountLabel" måste vara en sträng.');
+        }
+        const view = hub.connectors.connect(projectId, params.connectorId as string, {
+          ...(typeof payload.secret === 'string' ? { secret: payload.secret } : {}),
+          ...(typeof payload.accountLabel === 'string'
+            ? { accountLabel: payload.accountLabel }
+            : {}),
+        });
+        // Verktygen ska finnas direkt efter anslutningen, utan att projektet öppnas om.
+        hub.requireWorkspace(projectId).syncConnectorTools();
+        return view;
+      },
+    ),
+    route('DELETE', '/api/projects/:projectId/connectors/:connectorId', ({ hub, params }) => {
+      const result = hub.connectors.disconnect(
+        params.projectId as string,
+        params.connectorId as string,
+      );
+      hub.requireWorkspace(params.projectId as string).syncConnectorTools();
+      return result;
+    }),
+    route(
+      'PATCH',
+      '/api/projects/:projectId/connectors/:connectorId',
+      async ({ hub, params, body }) => {
+        const projectId = hub.requireWorkspace(params.projectId as string).project.id;
+        const payload = (await body()) as { enabled?: unknown };
+        if (typeof payload.enabled !== 'boolean') {
+          throw new Error('Fältet "enabled" måste vara sant eller falskt.');
+        }
+        const view = hub.connectors.setEnabled(
+          projectId,
+          params.connectorId as string,
+          payload.enabled,
+        );
+        hub.requireWorkspace(projectId).syncConnectorTools();
+        return view;
+      },
+    ),
 
     // ---- minne, regler, hooks
     route('GET', '/api/projects/:projectId/memory', async ({ hub, params }) => ({

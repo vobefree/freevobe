@@ -8,6 +8,10 @@ import type {
   ChatMessage,
   Checkpoint,
   CheckpointRestoreReport,
+  ConnectorDisconnectResult,
+  ConnectorSecretStorageInfo,
+  ConnectorsResponse,
+  ConnectorView,
   ContextFile,
   Contribution,
   DoctorReport,
@@ -35,18 +39,11 @@ import {
   resolveConnection,
   type AgentConnection,
 } from '../lib/agentClient';
+import i18n from '../i18n';
 import { AUTO_APPROVE_LABELS } from '../lib/format';
 
 export type RightTab =
-  | 'diff'
-  | 'terminal'
-  | 'logs'
-  | 'tests'
-  | 'verify'
-  | 'approvals'
-  | 'checkpoints'
-  | 'mcp'
-  | 'gives';
+  'diff' | 'terminal' | 'logs' | 'tests' | 'verify' | 'approvals' | 'checkpoints' | 'mcp' | 'gives';
 export type CenterTab = 'editor' | 'preview' | 'search' | 'context';
 
 export interface LogEntry {
@@ -152,6 +149,12 @@ export interface AppState {
   memory: string;
   doctor: DoctorReport | null;
 
+  // connectors: opt-in-bryggor till externa tjänster
+  connectors: ConnectorView[];
+  connectorStorage: ConnectorSecretStorageInfo | null;
+  connectorBusy: string | null;
+  connectorMessage: string | null;
+
   // gränssnitt
   leftOpen: boolean;
   rightOpen: boolean;
@@ -234,6 +237,11 @@ export interface AppState {
   connectMcp(serverId: string): Promise<void>;
   disconnectMcp(serverId: string): Promise<void>;
 
+  refreshConnectors(): Promise<void>;
+  connectConnector(id: string, secret: string, accountLabel?: string): Promise<void>;
+  disconnectConnector(id: string): Promise<string[]>;
+  setConnectorEnabled(id: string, enabled: boolean): Promise<void>;
+
   refreshMemory(): Promise<void>;
   saveMemory(content: string): Promise<void>;
   runDoctor(): Promise<void>;
@@ -269,6 +277,11 @@ export interface AppState {
 
 const LOG_LIMIT = 400;
 const TERMINAL_LIMIT = 2_000;
+
+/** Byter ut en connector i listan utan att röra ordningen (katalogen äger ordningen). */
+function replaceConnector(connectors: ConnectorView[], view: ConnectorView): ConnectorView[] {
+  return connectors.map((entry) => (entry.definition.id === view.definition.id ? view : entry));
+}
 
 function logEntry(text: string, level: LogEntry['level'] = 'info'): LogEntry {
   return {
@@ -591,6 +604,10 @@ export const useAppStore = create<AppState>((set, get) => {
     mcpExamples: [],
     memory: '',
     doctor: null,
+    connectors: [],
+    connectorStorage: null,
+    connectorBusy: null,
+    connectorMessage: null,
 
     leftOpen: true,
     rightOpen: true,
@@ -683,7 +700,9 @@ export const useAppStore = create<AppState>((set, get) => {
         logs: [
           ...get().logs,
           logEntry(
-            `Auto-godkännande ${enabled ? 'på' : 'av'} för ${AUTO_APPROVE_LABELS[category]}.`,
+            i18n.t(enabled ? 'log.autoApproveOn' : 'log.autoApproveOff', {
+              category: AUTO_APPROVE_LABELS[category],
+            }),
           ),
         ].slice(-LOG_LIMIT),
       });
@@ -734,10 +753,7 @@ export const useAppStore = create<AppState>((set, get) => {
         set({
           contributions: payload.entries,
           contributionsSummary: payload.summary,
-          logs: [
-            ...get().logs,
-            logEntry('Stöd registrerat i din lokala påverkanslogg (egen rapportering).'),
-          ].slice(-LOG_LIMIT),
+          logs: [...get().logs, logEntry(i18n.t('log.contributionSaved'))].slice(-LOG_LIMIT),
         });
       } catch (error) {
         set({
@@ -781,6 +797,7 @@ export const useAppStore = create<AppState>((set, get) => {
           get().loadSessions(),
           get().refreshSkills(),
           get().refreshMcp(),
+          get().refreshConnectors(),
           get().refreshMemory(),
           get().refreshGit(),
           get().refreshCheckpoints(),
@@ -826,7 +843,7 @@ export const useAppStore = create<AppState>((set, get) => {
         diffs: [],
         plans: [],
         streamingText: '',
-        logs: [logEntry('Ny chatt startad.')],
+        logs: [logEntry(i18n.t('log.newChat'))],
       });
       await get().loadSessions();
     },
@@ -957,7 +974,7 @@ export const useAppStore = create<AppState>((set, get) => {
       set({
         isRunning: false,
         phase: 'idle',
-        logs: [...get().logs, logEntry('Du avbröt körningen.')].slice(-LOG_LIMIT),
+        logs: [...get().logs, logEntry(i18n.t('log.aborted'))].slice(-LOG_LIMIT),
       });
     },
 
@@ -1120,6 +1137,82 @@ export const useAppStore = create<AppState>((set, get) => {
       await get().refreshMcp();
     },
 
+    async refreshConnectors() {
+      const { client, project } = get();
+      if (!client || !project) return;
+      try {
+        const payload = await client.get<ConnectorsResponse>(
+          `/api/projects/${project.id}/connectors`,
+        );
+        set({ connectors: payload.connectors, connectorStorage: payload.storage });
+      } catch (error) {
+        set({
+          logs: [...get().logs, logEntry(String(error), 'error')].slice(-LOG_LIMIT),
+        });
+      }
+    },
+
+    async connectConnector(id, secret, accountLabel) {
+      const { client, project, connectors } = get();
+      if (!client || !project) return;
+      set({ connectorBusy: id });
+      try {
+        const view = await client.post<ConnectorView>(
+          `/api/projects/${project.id}/connectors/${id}/connect`,
+          { secret, ...(accountLabel?.trim() ? { accountLabel: accountLabel.trim() } : {}) },
+        );
+        set({
+          connectors: replaceConnector(connectors, view),
+          connectorMessage: i18n.t('connectors.toast.connected', {
+            name: i18n.t(`connectors.${id}.name`),
+          }),
+        });
+      } finally {
+        set({ connectorBusy: null });
+      }
+    },
+
+    async disconnectConnector(id) {
+      const { client, project, connectors } = get();
+      if (!client || !project) return [];
+      set({ connectorBusy: id });
+      try {
+        const result = await client.del<ConnectorDisconnectResult>(
+          `/api/projects/${project.id}/connectors/${id}`,
+        );
+        set({
+          connectors: replaceConnector(connectors, result.view),
+          connectorMessage: i18n.t('connectors.toast.disconnected', {
+            name: i18n.t(`connectors.${id}.name`),
+          }),
+        });
+        return result.revokedScopes;
+      } finally {
+        set({ connectorBusy: null });
+      }
+    },
+
+    async setConnectorEnabled(id, enabled) {
+      const { client, project, connectors } = get();
+      if (!client || !project) return;
+      set({ connectorBusy: id });
+      try {
+        const view = await client.patch<ConnectorView>(
+          `/api/projects/${project.id}/connectors/${id}`,
+          { enabled },
+        );
+        set({
+          connectors: replaceConnector(connectors, view),
+          connectorMessage: i18n.t(
+            enabled ? 'connectors.toast.enabled' : 'connectors.toast.disabled',
+            { name: i18n.t(`connectors.${id}.name`) },
+          ),
+        });
+      } finally {
+        set({ connectorBusy: null });
+      }
+    },
+
     async refreshMemory() {
       const { client, project } = get();
       if (!client || !project) return;
@@ -1212,10 +1305,7 @@ export const useAppStore = create<AppState>((set, get) => {
         const diff = await client.get<{ files: FileDiff[] }>(`/api/checkpoints/${id}/diff`);
         if (diff.files.length === 0) {
           set({
-            logs: [
-              ...get().logs,
-              logEntry('Checkpointen motsvarar filerna på disk – ingen skillnad kvar.'),
-            ].slice(-LOG_LIMIT),
+            logs: [...get().logs, logEntry(i18n.t('log.checkpointSame'))].slice(-LOG_LIMIT),
           });
           return;
         }

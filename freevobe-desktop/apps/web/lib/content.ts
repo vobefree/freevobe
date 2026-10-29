@@ -57,6 +57,16 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '0.2.0',
+    date: '2026-10-29',
+    highlights: [
+      'Connectors: koppla in Vercel, GitHub och fler tjänster med token i det lokala valvet – verktygen syns bara när connectorn är påslagen i projektet.',
+      'Vercel-connectorn: projekt, preview-deploy, byggloggar, env-variabler och domäner. Produktion kräver alltid ett extra godkännande.',
+      'Gränssnittet finns på tolv språk med språkvalsmeny i inställningarna; svenska och engelska är översatta för hand.',
+      'Säkrare godkännanden: connectorverktyg är fail-closed och hemliga värden maskeras i godkännandekortet.',
+    ],
+  },
+  {
     version: '0.1.0',
     date: '2026-10-27',
     highlights: [

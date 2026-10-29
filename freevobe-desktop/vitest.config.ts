@@ -12,6 +12,8 @@ export default defineConfig({
     exclude: ['**/node_modules/**', '**/dist/**', 'e2e/**', 'packages/*/dist/**'],
     environment: 'node',
     globals: false,
+    // Testerna renderar den svenska ytan; setupen väljer svenska innan första testet.
+    setupFiles: ['apps/desktop/src/test-setup.ts'],
     // Integrationstester startar riktiga processer (Ollama-attrapp, MCP-server, terminal).
     testTimeout: 30_000,
     hookTimeout: 30_000,

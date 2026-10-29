@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { AUTO_APPROVE_CATEGORIES, type AppSettings } from '@freevobe/protocol';
 import { AUTO_APPROVE_DESCRIPTIONS, AUTO_APPROVE_LABELS } from '../lib/format';
 
@@ -12,18 +13,22 @@ export interface AutoApproveSettingsProps {
  * (farliga kommandon, webbläsarautomation, icke-godkända MCP-servrar) gäller fortfarande.
  */
 export function AutoApproveSettings({ autoApprove, onToggle, disabled }: AutoApproveSettingsProps) {
+  const { t } = useTranslation();
   const enabledCount = AUTO_APPROVE_CATEGORIES.filter((category) => autoApprove[category]).length;
 
   return (
     <div className="space-y-1.5" data-testid="auto-approve-settings">
       <div className="flex items-center gap-2">
         <h4 className="text-[11px] font-semibold tracking-wide text-slate-400 uppercase">
-          Auto-godkänn per kategori
+          {t('autoApprove.section')}
         </h4>
         <span className="text-[10.5px] text-slate-600">
           {enabledCount === 0
-            ? 'Inget auto-godkänns'
-            : `${enabledCount} av ${AUTO_APPROVE_CATEGORIES.length} kategorier`}
+            ? t('autoApprove.none')
+            : t('autoApprove.count', {
+                enabled: enabledCount,
+                total: AUTO_APPROVE_CATEGORIES.length,
+              })}
         </span>
       </div>
 
@@ -54,16 +59,14 @@ export function AutoApproveSettings({ autoApprove, onToggle, disabled }: AutoApp
         ))}
       </div>
 
-      <p className="text-[10.5px] text-slate-500">
-        Farliga kommandon, skrivningar utanför projektet och icke-godkända MCP-servrar kräver alltid
-        din bekräftelse, oavsett vad som är ikryssat här.
-      </p>
+      <p className="text-[10.5px] text-slate-500">{t('autoApprove.alwaysAsk')}</p>
     </div>
   );
 }
 
 /** Kort sammanfattning för vänsterpanelen: vilka kategorier som är på. */
 export function AutoApproveChips({ autoApprove }: { autoApprove: AppSettings['autoApprove'] }) {
+  const { t } = useTranslation();
   const enabled = AUTO_APPROVE_CATEGORIES.filter((category) => autoApprove[category]);
   if (enabled.length === 0) return null;
 
@@ -72,7 +75,7 @@ export function AutoApproveChips({ autoApprove }: { autoApprove: AppSettings['au
       className="mt-1 flex flex-wrap items-center gap-1 text-[10px] text-slate-500"
       data-testid="auto-approve-chips"
     >
-      <span className="text-slate-600">Auto:</span>
+      <span className="text-slate-600">{t('autoApprove.chipPrefix')}</span>
       {enabled.map((category) => (
         <span
           key={category}

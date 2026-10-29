@@ -1,0 +1,498 @@
+{
+  "common": {
+    "skipToContent": "Skip to content",
+    "mainNav": "Main",
+    "home": "Freevobe home",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu",
+    "switchToLight": "Switch to light mode",
+    "switchToDark": "Switch to dark mode",
+    "allPlatforms": "All platforms & release notes",
+    "language": "Language",
+    "changeLanguage": "Change language"
+  },
+  "nav": {
+    "features": "Features",
+    "howItWorks": "How it works",
+    "skills": "Skills",
+    "givesBack": "Gives Back",
+    "faq": "FAQ",
+    "learn": "Learn",
+    "github": "GitHub"
+  },
+  "meta": {
+    "title": "Freevobe – vobe with Ollama, locally and without token limits",
+    "titleTemplate": "%s · Freevobe",
+    "description": "Freevobe is your local vibecoding agent. Install it, connect Ollama and build software through natural-language chat — no API keys, no token counting, no cloud dependency.",
+    "shortDescription": "Local-first AI coding agent for Ollama. No tokens, no limits, no cloud dependency.",
+    "ogTitle": "Freevobe – vobe with Ollama",
+    "keywords": "Ollama, local AI coding agent, vibecoding, vibe coding, local-first, Qwen coder, MCP, open source coding agent",
+    "featureList": "Local Ollama connection;Claude-like workspace with chat, diff and terminal;Diff review and command approval;Markdown skills and templates;Git and terminal integration;MCP integrations",
+    "category": "developer tools"
+  },
+  "hero": {
+    "badge": "Local-first AI coding agent",
+    "title": "Vobe with Ollama.",
+    "body": "Freevobe is your local vibecoding agent. Install it, connect Ollama and build software through natural-language chat — no API keys, no token counting, no cloud dependency.",
+    "secondary": "See how it works",
+    "footnote": "No tokens. No limits. Just vibes.",
+    "mockupCaption": "The whole loop on your machine — plan, diff, terminal and tests in one workspace."
+  },
+  "socialProof": {
+    "aria": "Built for the community",
+    "heading": "Built for the AI & vibe coding community",
+    "badges": "Local-first;Ollama-powered;No API key required;Open skills;Private by default"
+  },
+  "problem": {
+    "heading": "Token limits should not stop your flow.",
+    "body": "Cloud agents bill you for thinking. Freevobe runs the model you already have, so the meter never starts.",
+    "items": [
+      {
+        "problem": "Usage limits",
+        "solution": "Run locally with Ollama.",
+        "detail": "Your GPU does the work. No rate limits, no weekly caps and no waiting for a reset at midnight."
+      },
+      {
+        "problem": "API costs",
+        "solution": "No per-token billing.",
+        "detail": "One local model, unlimited prompts. The only cost is the electricity you already pay for."
+      },
+      {
+        "problem": "Cloud privacy concerns",
+        "solution": "Your code stays on your machine.",
+        "detail": "Files, prompts and diffs never leave your computer unless you explicitly connect a cloud model."
+      }
+    ]
+  },
+  "features": {
+    "eyebrow": "Features",
+    "heading": "Everything you need to vobe.",
+    "items": [
+      {
+        "icon": "plug",
+        "title": "Local Ollama connection",
+        "body": "Connect to your local models in one click."
+      },
+      {
+        "icon": "layout",
+        "title": "Claude-like workspace",
+        "body": "Chat, plan, edit, diff and run — in one clean workspace."
+      },
+      {
+        "icon": "shield",
+        "title": "Safe agent actions",
+        "body": "Review diffs and approve commands before anything changes."
+      },
+      {
+        "icon": "sparkles",
+        "title": "Skills & templates",
+        "body": "Use Markdown skills to teach Freevobe your workflow."
+      },
+      {
+        "icon": "git",
+        "title": "Git & terminal",
+        "body": "Create branches, commit changes and run tests without leaving the app."
+      },
+      {
+        "icon": "blocks",
+        "title": "MCP integrations",
+        "body": "Connect external tools through the Model Context Protocol."
+      }
+    ]
+  },
+  "howItWorks": {
+    "eyebrow": "How it works",
+    "heading": "Three steps to your first ship.",
+    "steps": [
+      {
+        "title": "Download Freevobe",
+        "body": "Grab the native app for Windows, macOS or Linux. Nothing else to install — the agent ships with it."
+      },
+      {
+        "title": "Connect Ollama",
+        "body": "Freevobe finds localhost:11434, lists your models and shows which ones support tool calling."
+      },
+      {
+        "title": "Start vobing",
+        "body": "Describe the app you want. Review every diff, approve commands and let the agent commit."
+      }
+    ],
+    "flow": [
+      { "step": "Install", "detail": "Native app for your OS" },
+      { "step": "Connect Ollama", "detail": "One click to localhost:11434" },
+      { "step": "Choose model", "detail": "Any model you have pulled" },
+      { "step": "Prompt", "detail": "Describe what to build" },
+      { "step": "Review diff", "detail": "Approve every change" },
+      { "step": "Ship", "detail": "Commit and run tests" }
+    ]
+  },
+  "skills": {
+    "eyebrow": "Skills & templates",
+    "heading": "Teach Freevobe how you build.",
+    "body": "Skills are plain Markdown files with YAML frontmatter. Drop them in your project and the agent picks them up — no plugins, no rebuild.",
+    "badge": "skill",
+    "items": [
+      {
+        "name": "React Component",
+        "description": "Scaffolds a typed component with tests and stories.",
+        "body": "export function {{name}}(props: {{name}}Props) {}"
+      },
+      {
+        "name": "Next.js Page",
+        "description": "App Router page with metadata and loading state.",
+        "body": "export default async function Page() {}"
+      },
+      {
+        "name": "API Endpoint",
+        "description": "Route handler with validation and typed responses.",
+        "body": "export async function POST(request: Request) {}"
+      },
+      {
+        "name": "Bug Fix",
+        "description": "Reproduce, isolate, fix — and prove it with a test.",
+        "body": "failing test → smallest fix → green suite"
+      },
+      {
+        "name": "Write Tests",
+        "description": "Table-driven tests around the code you just changed.",
+        "body": "describe(\"{{module}}\", () => { it(...) })"
+      },
+      {
+        "name": "Code Review",
+        "description": "Reviews a diff for bugs, edge cases and dead code.",
+        "body": "read diff → list findings → suggest patch"
+      }
+    ]
+  },
+  "givesBack": {
+    "eyebrow": "Gives Back",
+    "heading": "No ads. A choice to give back.",
+    "body": "Freevobe does not sell your attention. Instead of an advertising slot, the app can offer a voluntary reminder about a cause you picked. You give directly to the organisation — Freevobe never handles the money.",
+    "badge": "No ad network, no tracking, no checkout in the app.",
+    "principles": [
+      {
+        "title": "No advertising",
+        "body": "Freevobe ships without ad slots, ad scripts and ad networks. Nothing in the app is for sale."
+      },
+      {
+        "title": "No money through Freevobe",
+        "body": "The app has no checkout, no account and no payment provider. Every link opens the organisation’s own page."
+      },
+      {
+        "title": "Off by default",
+        "body": "The reminder in the chat is opt-in, appears in its own block and never touches the agent’s context."
+      },
+      {
+        "title": "Your log stays local",
+        "body": "If you record a contribution, it is marked as self-reported and stored only in your local database."
+      }
+    ],
+    "causes": [
+      {
+        "id": "lakare-utan-granser",
+        "name": "Médecins Sans Frontières",
+        "tagline": "Medical care where the need is greatest, wherever you are born.",
+        "description": "Medical aid in wars, disasters and areas without working healthcare. Independent of states and parties to conflicts.",
+        "url": "https://www.msf.org"
+      },
+      {
+        "id": "radda-barnen",
+        "name": "Save the Children",
+        "tagline": "Every child's right to protection, school and a safe childhood.",
+        "description": "Works for children's rights internationally: protection from violence, education and support after disasters.",
+        "url": "https://www.savethechildren.net"
+      },
+      {
+        "id": "unicef",
+        "name": "UNICEF",
+        "tagline": "Clean water, vaccines and school for children around the world.",
+        "description": "The UN children's fund works on vaccines, nutrition, clean water and schooling in more than 190 countries.",
+        "url": "https://www.unicef.org"
+      },
+      {
+        "id": "wwf",
+        "name": "WWF",
+        "tagline": "Forests, oceans and species that need to still be here.",
+        "description": "Preserves natural areas, protects threatened species and works to reduce climate impact.",
+        "url": "https://www.worldwildlife.org"
+      },
+      {
+        "id": "wikimedia",
+        "name": "Wikimedia Foundation",
+        "tagline": "Open knowledge that anyone can read and build on.",
+        "description": "Runs Wikipedia and the free knowledge projects. Volunteers write the content, and anyone may read it at no cost.",
+        "url": "https://donate.wikimedia.org"
+      },
+      {
+        "id": "kiva",
+        "name": "Kiva",
+        "tagline": "Small loans that let people build something of their own.",
+        "description": "Connects microloans to entrepreneurs who would not get a bank loan. The loans are repaid and can be lent out again.",
+        "url": "https://www.kiva.org"
+      }
+    ],
+    "causeFooter": "Opens {host} · reviewed {date}",
+    "footnote": "The catalogue is editorial and links point at each organisation's own front page rather than at a checkout, so a changed payment flow never turns into a broken promise. Freevobe has no partnership, commission or referral agreement with any organisation listed here. Read the full description in",
+    "footnoteLink": "docs/gives-back.md"
+  },
+  "privacy": {
+    "eyebrow": "Privacy",
+    "heading": "Your code stays yours.",
+    "body": "Freevobe runs locally by default. Connect Ollama on your own machine and keep your projects, prompts and files private.",
+    "bullets": "No account and no sign-in.;No telemetry leaving the app.;Diff and approval gate before every write.",
+    "dataPath": "Data path",
+    "path": "Your machine;Ollama;Freevobe;Your project",
+    "note": "Everything in that loop runs on hardware you already own. Nothing is uploaded unless you explicitly connect a cloud model."
+  },
+  "faq": {
+    "eyebrow": "FAQ",
+    "heading": "Questions, answered.",
+    "body": "Still curious? The docs cover the agent loop, skills and MCP in detail.",
+    "items": [
+      {
+        "question": "What does “vobe” mean?",
+        "answer": "To vobe is to build with Ollama through natural language — locally and without token limits. It is vibe coding, minus the meter running."
+      },
+      {
+        "question": "Do I need an API key?",
+        "answer": "No. Freevobe connects directly to your local Ollama installation."
+      },
+      {
+        "question": "Which models can I use?",
+        "answer": "Any model available in your local Ollama installation — Qwen, Llama, DeepSeek, Mistral, Gemma and whatever you pull next."
+      },
+      {
+        "question": "Does my code leave my computer?",
+        "answer": "Not by default. Freevobe is local-first: the agent, the model and your files run on your machine. A cloud model is only used if you connect one yourself."
+      },
+      {
+        "question": "Is Freevobe free?",
+        "answer": "The core app is free to use with your own local Ollama models."
+      },
+      {
+        "question": "Which platforms are supported?",
+        "answer": "Windows, macOS and Linux."
+      }
+    ]
+  },
+  "finalCta": {
+    "heading": "Ready to vobe?",
+    "body": "Install the app, point it at Ollama and describe what you want to build. The diff lands before a single file changes.",
+    "secondary": "All platforms & release notes",
+    "free": "Free to use with your local Ollama models."
+  },
+  "footer": {
+    "tagline": "Local-first vibecoding with Ollama. Vobe without counting tokens.",
+    "product": "Product",
+    "resources": "Resources",
+    "legal": "Legal",
+    "features": "Features",
+    "howItWorks": "How it works",
+    "skills": "Skills",
+    "givesBack": "Gives Back",
+    "learn": "Learn How to Vobe",
+    "download": "Download",
+    "documentation": "Documentation",
+    "github": "GitHub",
+    "discord": "Discord",
+    "faq": "FAQ",
+    "privacy": "Privacy",
+    "terms": "Terms",
+    "licenseLink": "License (MIT)",
+    "socialGithub": "GitHub",
+    "socialDiscord": "Discord",
+    "socialX": "X",
+    "copyright": "© 2026 Freevobe.",
+    "builtFor": "Built for the vibe coding community."
+  },
+  "download": {
+    "metaTitle": "Download",
+    "metaDescription": "Download Freevobe for Windows, macOS or Linux, or the Android app for your phone. Installers are published on GitHub Releases.",
+    "title": "Download Freevobe",
+    "body": "Pick your platform — the button below already knows it. Freevobe runs offline and talks to the Ollama installation on your own machine.",
+    "signed": "Builds are signed by default where the platform allows it. Source is MIT licensed.",
+    "requirements": {
+      "title": "Before you install",
+      "ollama": "Ollama",
+      "ollamaDetail": "Running locally, with at least one model pulled",
+      "disk": "Disk",
+      "diskDetail": "~120 MB for the app, plus the space your models need",
+      "platforms": "Platforms",
+      "platformsDetail": "Windows 10+, macOS 12+ (Apple Silicon or Intel), Linux (AppImage, x86-64)",
+      "phone": "Phone",
+      "phoneDetail": "Android 8+ can install the APK directly. iOS needs a Mac and an Apple account."
+    },
+    "phone": {
+      "title": "The phone app",
+      "body": "Freevobe Mobile mirrors the desktop app: QR-pair once over your local network and then follow runs, diffs and approvals from the couch. Nothing leaves your Wi-Fi — the phone talks to the Freevobe agent running on your own machine.",
+      "step1": "Download the APK and open it. Android asks you to allow installs from this source — the file is not from Google Play.",
+      "step2": "Open the desktop app and show the pairing QR code. Point the phone at it.",
+      "step3": "Both devices need to be on the same network. Pairing works offline.",
+      "ios": "iOS builds are not published yet — they need a Mac and an Apple Developer account."
+    },
+    "learn": {
+      "eyebrow": "Freevobe Learn",
+      "title": "Learn How to Vobe — as an app, not a page",
+      "size": "1 file · ~0.34 MB",
+      "body": "Write a world, have it checked and play it. The lessons show the code that built the map. The app is a single HTML file: download it, open it and play — no server, no account, no model and no connection. Progress is saved in your own browser.",
+      "step1": "Download freevobe-learn.html from the release.",
+      "step2": "Open the file in any browser — it works from the folder you saved it in, even offline.",
+      "step3": "Move it to your desktop if you want it as its own app. It stays until you remove it.",
+      "download": "Download Freevobe Learn",
+      "allReleases": "See the file among all releases"
+    },
+    "notes": {
+      "title": "What changed in the last release",
+      "body": "Release notes come straight from the newest GitHub tag.",
+      "loading": "Fetching the latest release…",
+      "missingTitle": "No release published yet",
+      "missingBody": "Installers are published on GitHub Releases. Until the first tag is pushed, the buttons above lead to the releases page.",
+      "errorTitle": "Release notes unavailable",
+      "errorBody": "GitHub could not be reached from this browser (offline or rate limit). The release notes are always available on GitHub Releases.",
+      "empty": "This release has no notes. See the full history on GitHub Releases.",
+      "readFull": "Read the full release on GitHub"
+    },
+    "where": {
+      "title": "Where the files live",
+      "body": "Every build is attached to a tag on {repo}. Nothing is served from this site, and the badge above shows the newest tag as soon as one exists.",
+      "all": "All releases on GitHub",
+      "docs": "Read the docs"
+    },
+    "files": {
+      "title": "Every file in this release",
+      "checksums": "Checksums",
+      "releaseFile": "Release file",
+      "file": "file",
+      "files": "files",
+      "loading": "Fetching the file list…",
+      "error": "The file list could not be fetched because GitHub was unreachable from this browser. Every file is always attached to the release on GitHub.",
+      "empty": "This release has no files attached yet. They are uploaded by the release workflow straight after the tag is pushed — the",
+      "emptyLink": "release page",
+      "emptyAfter": "shows them as soon as they land.",
+      "download": "Download",
+      "noChecksum": "No checksum published",
+      "copy": "Copy",
+      "copied": "Copied",
+      "copyKey": "Ctrl+C",
+      "copyAria": "Copy the SHA-256 for {file}",
+      "copiedAria": "Copied the SHA-256 for {file}",
+      "selectedAria": "The SHA-256 for {file} is selected — press Ctrl or Cmd and C",
+      "noRelease": "No release published yet",
+      "allChecksums": "Every file has a published SHA-256.",
+      "someChecksums": "{have} of {total} files have a published SHA-256 — the rest were uploaded before checksums were added.",
+      "mismatch": "A mismatch means the file was altered in transit — do not install it. The same sums are in",
+      "mismatchAfter": ", the file that",
+      "mismatchReads": "reads.",
+      "platformMacLinux": "macOS/Linux",
+      "platformWindows": "Windows"
+    },
+    "button": {
+      "download": "Download",
+      "downloadFreevobe": "Download Freevobe",
+      "downloadFor": "Download for {platform}",
+      "releases": "Releases",
+      "viewReleases": "View releases"
+    },
+    "badge": {
+      "latest": "Latest release {version}",
+      "latestNoVersion": "Latest release",
+      "missing": "View releases"
+    },
+    "platform": {
+      "windows": "Windows",
+      "macAppleSilicon": "macOS",
+      "macIntel": "macOS Intel",
+      "linux": "Linux",
+      "android": "Android",
+      "unknown": "your platform",
+      "appleSilicon": "Apple Silicon",
+      "intel": "Intel"
+    },
+    "platformNote": "Freevobe is distributed through GitHub Releases.",
+    "platformNoteMissing": "Installers are published on GitHub Releases."
+  },
+  "legal": {
+    "lastUpdated": "Last updated {date}",
+    "footerQuestion": "Questions about this page? Ask in the community Discord linked in the footer.",
+    "privacy": {
+      "metaTitle": "Privacy",
+      "metaDescription": "Freevobe runs locally by default: your projects, prompts and files stay on your machine.",
+      "title": "Privacy",
+      "updated": "27 October 2026",
+      "intro": "Freevobe is local-first. This page describes what this website and the Freevobe desktop app do with your data.",
+      "sections": [
+        {
+          "title": "This website",
+          "paragraphs": [
+            "This site is a static page. It sets no analytics, no tracking pixels and no cookies of its own, and it makes no requests to third-party hosts — fonts and images are served from the same domain.",
+            "Your theme choice (dark or light) is stored in your browser's local storage so the page opens the way you left it. It never leaves your machine."
+          ]
+        },
+        {
+          "title": "Advertising and Gives Back",
+          "paragraphs": [
+            "Freevobe has no advertising: no ad slots, no ad scripts and no ad network. The website and the desktop app therefore set no advertising cookies or device identifiers, and no data is shared with a third party for marketing.",
+            "In place of an ad slot, the desktop app can show a voluntary reminder about a charity — Freevobe Gives Back. It is off until you turn it on. The reminder contains a link to the organisation's own website; Freevobe has no checkout, no account and no payment provider, and never receives or forwards a donation.",
+            "If you record a contribution in the app, the note stays in your local database and is labelled as self-reported. It is never sent to the organisation or to us, and you can delete it at any time."
+          ]
+        },
+        {
+          "title": "The desktop app",
+          "bullets": [
+            "Your code, prompts and files are processed on your own machine by a model you run yourself through Ollama. Nothing is uploaded by default.",
+            "Sessions, project indexes and memory are stored in a local SQLite database on your computer.",
+            "The app sends no telemetry. There is no account and no sign-in.",
+            "A cloud model is only contacted if you configure one yourself, and that connection is then governed by the provider you chose."
+          ]
+        },
+        {
+          "title": "Downloads",
+          "paragraphs": [
+            "Download links point to the project's release page. Your browser and the hosting provider of that page apply their own normal request logging."
+          ]
+        },
+        {
+          "title": "Changes",
+          "paragraphs": [
+            "If this policy changes, the date at the top of this page changes with it. Freevobe is open source, so this page and its history are reviewable in the public repository."
+          ]
+        }
+      ]
+    },
+    "terms": {
+      "metaTitle": "Terms",
+      "metaDescription": "Plain terms for using Freevobe and this website.",
+      "title": "Terms",
+      "updated": "27 October 2026",
+      "intro": "Short and plain: Freevobe is free software that runs on your hardware, and you are responsible for what you build with it.",
+      "sections": [
+        {
+          "title": "The app",
+          "bullets": [
+            "The core application is free to use with your own local Ollama models. There is no subscription, no token metering and no usage limit imposed by us.",
+            "The source code is released under the MIT licence. You may use, modify and redistribute it under that licence.",
+            "The app runs on your machine with your credentials and your files. You are responsible for the projects you point it at, the commands you approve and the changes you commit."
+          ]
+        },
+        {
+          "title": "No warranty",
+          "paragraphs": [
+            "Freevobe is provided “as is”, without warranty of any kind. Model output can be wrong, and generated code should be reviewed like any other contribution. Keep your work under version control and review diffs before approving them."
+          ]
+        },
+        {
+          "title": "Models and third-party services",
+          "paragraphs": [
+            "Models you run through Ollama, and any service you choose to connect, are governed by their own terms and licences. We do not control and are not responsible for them."
+          ]
+        },
+        {
+          "title": "This website",
+          "paragraphs": [
+            "Product information here is provided for orientation and may change as the app evolves. Material may be served by advertising partners in the future; see the privacy page for what that means for your data."
+          ]
+        }
+      ]
+    }
+  }
+}

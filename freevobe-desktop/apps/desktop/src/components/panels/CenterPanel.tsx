@@ -1,10 +1,12 @@
 import { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAppStore, type CenterTab } from '../../store/appStore';
 import { Button, EmptyState, Tabs } from '../ui';
 import { EditorPane } from './EditorPane';
-import { formatBytes, shortPath } from '../../lib/format';
+import { formatBytes, formatNumber, shortPath } from '../../lib/format';
 
 function FileTree() {
+  const { t } = useTranslation();
   const tree = useAppStore((state) => state.tree);
   const editorFile = useAppStore((state) => state.editorFile);
   const pinnedFiles = useAppStore((state) => state.pinnedFiles);
@@ -25,17 +27,22 @@ function FileTree() {
         <input
           value={filter}
           onChange={(event) => setFilter(event.target.value)}
-          placeholder="Filtrera filer…"
+          placeholder={t('center.filter')}
           className="w-full rounded border border-steel bg-anvil px-2 py-1 font-mono text-[11px] text-slate-200 placeholder:text-slate-600"
         />
         <p className="mt-1 text-[10px] text-slate-600">
-          {tree.length} filer indexerade · {filesInContext.length} i kontexten just nu
+          {t('center.indexed', {
+            files: formatNumber(tree.length),
+            context: formatNumber(filesInContext.length),
+          })}
         </p>
       </div>
 
       {pinnedFiles.length > 0 ? (
         <div className="border-b border-steel p-1.5">
-          <p className="mb-1 text-[10px] tracking-wide text-slate-500 uppercase">Pin:ade</p>
+          <p className="mb-1 text-[10px] tracking-wide text-slate-500 uppercase">
+            {t('center.pinned')}
+          </p>
           <div className="flex flex-wrap gap-1">
             {pinnedFiles.map((path) => (
               <span key={path} className="vf-chip">
@@ -61,7 +68,7 @@ function FileTree() {
 
       <div className="min-h-0 flex-1 overflow-y-auto">
         {visible.length === 0 ? (
-          <p className="p-3 text-[11px] text-slate-600">Inga filer matchar filtret.</p>
+          <p className="p-3 text-[11px] text-slate-600">{t('center.noMatch')}</p>
         ) : (
           visible.map((entry) => {
             const active = editorFile?.path === entry.path;
@@ -72,7 +79,7 @@ function FileTree() {
                 className={`group flex items-center gap-1 px-1.5 py-0.5 text-[11px] ${
                   active ? 'bg-steel/40' : 'hover:bg-steel/20'
                 }`}
-                title={`${entry.path}\n${entry.lines} rader · ${formatBytes(entry.size)} · ${entry.symbols.slice(0, 8).join(', ')}`}
+                title={`${entry.path}\n${t('center.lines', { count: entry.lines })} · ${formatBytes(entry.size)} · ${entry.symbols.slice(0, 8).join(', ')}`}
               >
                 <button
                   type="button"
@@ -81,7 +88,9 @@ function FileTree() {
                 >
                   {entry.path}
                 </button>
-                {inContext ? <span className="text-[9px] text-ember">kontext</span> : null}
+                {inContext ? (
+                  <span className="text-[9px] text-ember">{t('center.inContext')}</span>
+                ) : null}
                 <button
                   type="button"
                   onClick={() => togglePin(entry.path)}
@@ -90,7 +99,7 @@ function FileTree() {
                       ? 'text-spark'
                       : 'text-slate-600 opacity-0 group-hover:opacity-100'
                   }`}
-                  title="Pin:a filen så att agenten alltid läser den"
+                  title={t('center.pinTitle')}
                 >
                   ★
                 </button>
@@ -104,6 +113,7 @@ function FileTree() {
 }
 
 function SearchView() {
+  const { t } = useTranslation();
   const searchQuery = useAppStore((state) => state.searchQuery);
   const searchResults = useAppStore((state) => state.searchResults);
   const runSearch = useAppStore((state) => state.runSearch);
@@ -119,19 +129,16 @@ function SearchView() {
           onKeyDown={(event) => {
             if (event.key === 'Enter') void runSearch(query);
           }}
-          placeholder="Sök i projektet…"
+          placeholder={t('center.searchPlaceholder')}
           className="flex-1 rounded border border-steel bg-anvil px-2 py-1 text-xs text-slate-200 placeholder:text-slate-600"
         />
         <Button variant="primary" onClick={() => void runSearch(query)}>
-          Sök
+          {t('center.search')}
         </Button>
       </div>
       <div className="mt-2 min-h-0 flex-1 overflow-y-auto">
         {searchResults.length === 0 ? (
-          <EmptyState
-            title="Inga träffar"
-            hint="Sökningen matchar filnamn och projektindex. Agenten kan alltid läsa fler filer vid behov."
-          />
+          <EmptyState title={t('center.noHits')} hint={t('center.noHitsHint')} />
         ) : (
           <ul className="space-y-0.5">
             {searchResults.map((result) => {
@@ -156,6 +163,7 @@ function SearchView() {
 }
 
 function ContextView() {
+  const { t } = useTranslation();
   const contextFiles = useAppStore((state) => state.contextFiles);
   const contextChars = useAppStore((state) => state.contextChars);
   const settings = useAppStore((state) => state.settings);
@@ -165,8 +173,11 @@ function ContextView() {
     <div className="flex h-full min-h-0 flex-col p-2">
       <div className="vf-panel p-2">
         <p className="text-[11px] text-slate-400">
-          {contextFiles.length} filer · {contextChars.toLocaleString('sv-SE')} tecken av{' '}
-          {budget.toLocaleString('sv-SE')} i budget
+          {t('center.contextSummary', {
+            files: formatNumber(contextFiles.length),
+            chars: formatNumber(contextChars),
+            budget: formatNumber(budget),
+          })}
         </p>
         <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded bg-steel">
           <div
@@ -176,16 +187,11 @@ function ContextView() {
             }}
           />
         </div>
-        <p className="mt-1 text-[10px] text-slate-600">
-          Bara de filer som behövs skickas till modellen – aldrig hela repot.
-        </p>
+        <p className="mt-1 text-[10px] text-slate-600">{t('center.contextHint')}</p>
       </div>
       <div className="mt-2 min-h-0 flex-1 overflow-y-auto">
         {contextFiles.length === 0 ? (
-          <EmptyState
-            title="Ingen kontext byggd än"
-            hint="Skicka en prompt så visas exakt vilka filer agenten läste."
-          />
+          <EmptyState title={t('center.contextEmpty')} hint={t('center.contextEmptyHint')} />
         ) : (
           <ul className="space-y-0.5">
             {contextFiles.map((file) => (
@@ -197,7 +203,8 @@ function ContextView() {
                   {file.path}
                 </span>
                 <span className="ml-auto shrink-0 text-[10px] text-slate-600">
-                  {file.reason} · {file.chars} tecken{file.truncated ? ' · kapad' : ''}
+                  {file.reason} · {t('center.chars', { count: file.chars })}
+                  {file.truncated ? ` · ${t('center.truncated')}` : ''}
                 </span>
               </li>
             ))}
@@ -209,6 +216,7 @@ function ContextView() {
 }
 
 export function CenterPanel() {
+  const { t } = useTranslation();
   const centerTab = useAppStore((state) => state.centerTab);
   const setCenterTab = useAppStore((state) => state.setCenterTab);
   const editorFile = useAppStore((state) => state.editorFile);
@@ -227,19 +235,15 @@ export function CenterPanel() {
         <header className="flex items-center gap-2 border-b border-steel px-2">
           <Tabs<CenterTab>
             tabs={[
-              { id: 'editor', label: 'Editor' },
-              { id: 'preview', label: 'Förhandsvisning' },
-              { id: 'search', label: 'Sök' },
-              { id: 'context', label: 'Kontext' },
+              { id: 'editor', label: t('center.tabEditor') },
+              { id: 'preview', label: t('center.tabPreview') },
+              { id: 'search', label: t('center.tabSearch') },
+              { id: 'context', label: t('center.tabContext') },
             ]}
             active={centerTab}
             onChange={setCenterTab}
           />
-          <Button
-            className="ml-auto mb-1"
-            onClick={toggleTree}
-            title="Visa/dölj filträdet (Ctrl/Cmd+B)"
-          >
+          <Button className="ml-auto mb-1" onClick={toggleTree} title={t('center.treeToggle')}>
             {treeOpen ? '◧' : '▣'}
           </Button>
         </header>
@@ -254,17 +258,14 @@ export function CenterPanel() {
             editorFile ? (
               <div data-testid="preview" className="h-full overflow-auto bg-anvil p-4">
                 <p className="mb-2 font-mono text-[11px] text-slate-500">
-                  {editorFile.path} (oföränderlig vy)
+                  {editorFile.path} ({t('center.previewNote')})
                 </p>
                 <pre className="font-mono text-[12px] whitespace-pre-wrap text-slate-300">
                   {editorFile.content}
                 </pre>
               </div>
             ) : (
-              <EmptyState
-                title="Ingen fil vald"
-                hint="Välj en fil i filträdet för att förhandsvisa den."
-              />
+              <EmptyState title={t('center.noFile')} hint={t('center.noFileHint')} />
             )
           ) : null}
           {centerTab === 'editor' ? <EditorPane /> : null}

@@ -2,12 +2,14 @@
 
 import { AnimatePresence, motion } from 'framer-motion';
 import { Menu, X } from 'lucide-react';
+import { useLocale, useTranslations } from 'next-intl';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { DownloadButton } from '@/components/download/download-button';
 import { Button } from '@/components/ui/button';
+import { LanguageSwitcher } from '@/components/site/language-switcher';
 import { ThemeToggle } from '@/components/theme-toggle';
-import { nav } from '@/lib/site';
+import { site } from '@/lib/site';
 import { cn } from '@/lib/utils';
 
 export function Logo({ className }: { className?: string }) {
@@ -51,12 +53,27 @@ export function Logo({ className }: { className?: string }) {
 }
 
 export function Navbar() {
+  const t = useTranslations();
+  const locale = useLocale();
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
-  const onHome = pathname === '/' || pathname === '';
-  // Sektionslänkarna hör till startsidan. Från /download/ ska de gå dit, inte bli döda.
-  const sectionHref = (href: string) => (href.startsWith('#') && !onHome ? `/${href}` : href);
+
+  // Sökvägen innehåller språkprefixet (/sv/download/), så startsidan jämförs utan det.
+  const subPath = pathname.replace(/^\/[^/]+/, '') || '/';
+  const onHome = subPath === '/';
+  const sectionHref = (href: string) =>
+    href.startsWith('#') && !onHome ? `/${locale}/${href}` : href;
+
+  const nav = [
+    { href: '#features', label: t('nav.features') },
+    { href: '#how-it-works', label: t('nav.howItWorks') },
+    { href: '#skills', label: t('nav.skills') },
+    { href: '#gives-back', label: t('nav.givesBack') },
+    { href: '#faq', label: t('nav.faq') },
+    { href: '/download/#learn', label: t('nav.learn') },
+    { href: site.github, label: t('nav.github'), external: true },
+  ];
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 12);
@@ -74,8 +91,12 @@ export function Navbar() {
           : 'border-transparent bg-transparent backdrop-blur-sm',
       )}
     >
-      <nav className="vf-shell flex h-16 items-center gap-6" aria-label="Main">
-        <a href={onHome ? '#top' : '/'} className="rounded-lg" aria-label="Freevobe home">
+      <nav className="vf-shell flex h-16 items-center gap-6" aria-label={t('common.mainNav')}>
+        <a
+          href={onHome ? '#top' : `/${locale}/`}
+          className="rounded-lg"
+          aria-label={t('common.home')}
+        >
           <Logo />
         </a>
 
@@ -96,6 +117,7 @@ export function Navbar() {
         </ul>
 
         <div className="ml-auto flex items-center gap-2.5">
+          <LanguageSwitcher />
           <ThemeToggle />
           <DownloadButton size="sm" label="short" className="hidden sm:inline-flex" />
           <button
@@ -103,7 +125,7 @@ export function Navbar() {
             onClick={() => setOpen((value) => !value)}
             aria-expanded={open}
             aria-controls="mobile-nav"
-            aria-label={open ? 'Close menu' : 'Open menu'}
+            aria-label={open ? t('common.closeMenu') : t('common.openMenu')}
             className="flex size-9 cursor-pointer items-center justify-center rounded-lg border border-line bg-card text-muted lg:hidden"
           >
             {open ? <X className="size-4" /> : <Menu className="size-4" />}
@@ -138,8 +160,8 @@ export function Navbar() {
               </li>
               <li>
                 <Button asChild variant="secondary" className="mt-2 w-full">
-                  <a href="/download/" onClick={() => setOpen(false)}>
-                    All platforms &amp; release notes
+                  <a href={`/${locale}/download/`} onClick={() => setOpen(false)}>
+                    {t('common.allPlatforms')}
                   </a>
                 </Button>
               </li>

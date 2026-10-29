@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAppStore } from '../../store/appStore';
 import { Button, EmptyState } from '../ui';
 import { shortPath } from '../../lib/format';
@@ -19,6 +20,7 @@ type MonacoEditorComponent = (props: {
 }) => JSX.Element;
 
 export function EditorPane() {
+  const { t } = useTranslation();
   const editorFile = useAppStore((state) => state.editorFile);
   const updateEditorContent = useAppStore((state) => state.updateEditorContent);
   const saveEditorFile = useAppStore((state) => state.saveEditorFile);
@@ -62,12 +64,7 @@ export function EditorPane() {
   }, [editorFile?.path]);
 
   if (!editorFile) {
-    return (
-      <EmptyState
-        title="Ingen fil öppen"
-        hint="Välj en fil i filträdet till vänster. Agentens ändringar dyker alltid upp här som diff först."
-      />
-    );
+    return <EmptyState title={t('editor.empty.title')} hint={t('editor.empty.hint')} />;
   }
 
   return (
@@ -76,15 +73,17 @@ export function EditorPane() {
         <span className="truncate font-mono text-xs text-slate-300" title={editorFile.path}>
           {shortPath(editorFile.path, 60)}
         </span>
-        {editorFile.dirty ? <span className="text-[10px] text-spark">• osparad</span> : null}
+        {editorFile.dirty ? (
+          <span className="text-[10px] text-spark">{t('editor.dirty')}</span>
+        ) : null}
         <span className="ml-auto text-[10px] text-slate-600">{language}</span>
         <Button
           variant="primary"
           onClick={() => void saveEditorFile()}
           disabled={!editorFile.dirty}
-          title="Spara filen (Ctrl/Cmd+S)"
+          title={t('editor.saveTitle')}
         >
-          Spara
+          {t('editor.save')}
         </Button>
       </header>
       <div className="min-h-0 flex-1">

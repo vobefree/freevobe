@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   AUTO_APPROVE_LABELS,
   PERMISSION_DESCRIPTIONS,
@@ -7,6 +8,8 @@ import {
 } from '../lib/format';
 import { useAppStore } from '../store/appStore';
 import { AutoApproveSettings } from './AutoApproveSettings';
+import { ConnectorsSection } from './ConnectorsSection';
+import { LanguageSelect } from './LanguageSelect';
 import { Button, Chip, Field, Modal, Toggle } from './ui';
 import {
   GIVES_BACK_CAUSES,
@@ -18,6 +21,7 @@ import {
 } from '@freevobe/protocol';
 
 export function SettingsDialog() {
+  const { t } = useTranslation();
   const settings = useAppStore((state) => state.settings);
   const updateSettings = useAppStore((state) => state.updateSettings);
   const setSettingsOpen = useAppStore((state) => state.setSettingsOpen);
@@ -51,25 +55,42 @@ export function SettingsDialog() {
   };
 
   return (
-    <Modal title="Inställningar" onClose={() => setSettingsOpen(false)} width="max-w-3xl">
+    <Modal title={t('settings.title')} onClose={() => setSettingsOpen(false)} width="max-w-3xl">
       <div className="space-y-5">
         <section className="space-y-2">
-          <h3 className="text-xs font-semibold tracking-wide text-slate-400 uppercase">Ollama</h3>
+          <h3 className="text-xs font-semibold tracking-wide text-slate-400 uppercase">
+            {t('settings.language.section')}
+          </h3>
+          <Field label={t('language.label')} hint={t('language.hint')}>
+            <LanguageSelect testId="settings-language" />
+          </Field>
+        </section>
+
+        <section className="space-y-2">
+          <h3 className="text-xs font-semibold tracking-wide text-slate-400 uppercase">
+            {t('settings.ollama.section')}
+          </h3>
           <div className="grid grid-cols-2 gap-3">
-            <Field label="Bas-URL" hint="OpenAI-kompatibelt API, t.ex. http://localhost:11434">
+            <Field label={t('settings.ollama.baseUrl')} hint={t('settings.ollama.baseUrlHint')}>
               <input
                 defaultValue={settings.ollamaBaseUrl}
                 onBlur={(event) =>
-                  void save({ ollamaBaseUrl: event.target.value }, 'Bas-URL sparad.')
+                  void save(
+                    { ollamaBaseUrl: event.target.value },
+                    t('settings.ollama.baseUrlSaved'),
+                  )
                 }
                 className="w-full rounded border border-steel bg-anvil px-2 py-1.5 font-mono text-xs text-slate-200"
               />
             </Field>
-            <Field label="Standardmodell">
+            <Field label={t('settings.ollama.defaultModel')}>
               <select
                 value={settings.defaultModel}
                 onChange={(event) =>
-                  void save({ defaultModel: event.target.value }, 'Standardmodell sparad.')
+                  void save(
+                    { defaultModel: event.target.value },
+                    t('settings.ollama.defaultModelSaved'),
+                  )
                 }
                 className="w-full rounded border border-steel bg-anvil px-2 py-1.5 text-xs text-slate-200"
               >
@@ -86,12 +107,15 @@ export function SettingsDialog() {
           </div>
           <div className="flex items-center gap-2">
             <Button onClick={() => void refreshOllama(settings.ollamaBaseUrl)}>
-              Upptäck modeller igen
+              {t('settings.ollama.rediscover')}
             </Button>
             <span className="text-[11px] text-slate-500">
               {ollama?.available
-                ? `${models.length} modeller · ${models.filter((model) => model.supportsTools).length} med tool calling`
-                : 'Ollama svarar inte'}
+                ? t('settings.ollama.modelsCount', {
+                    count: models.length,
+                    tools: models.filter((model) => model.supportsTools).length,
+                  })
+                : t('settings.ollama.down')}
             </span>
           </div>
           {models.length > 0 ? (
@@ -105,12 +129,14 @@ export function SettingsDialog() {
                   <span className="ml-auto shrink-0">{formatBytes(model.sizeBytes)}</span>
                   <span className="shrink-0">{model.parameterSize}</span>
                   <span className="shrink-0">
-                    {model.contextLength.toLocaleString('sv-SE')} tkn
+                    {t('settings.ollama.tokens', {
+                      count: model.contextLength,
+                    })}
                   </span>
                   {model.supportsTools ? (
-                    <Chip tone="mint">verktyg</Chip>
+                    <Chip tone="mint">{t('settings.ollama.tools')}</Chip>
                   ) : (
-                    <Chip tone="alert">inget verktyg</Chip>
+                    <Chip tone="alert">{t('settings.ollama.noTools')}</Chip>
                   )}
                 </li>
               ))}
@@ -120,15 +146,18 @@ export function SettingsDialog() {
 
         <section className="space-y-2">
           <h3 className="text-xs font-semibold tracking-wide text-slate-400 uppercase">
-            Agent och säkerhet
+            {t('settings.agent.section')}
           </h3>
-          <Field label="Behörighetsläge" hint={PERMISSION_DESCRIPTIONS[settings.permissionMode]}>
+          <Field
+            label={t('settings.agent.permissionMode')}
+            hint={PERMISSION_DESCRIPTIONS[settings.permissionMode]}
+          >
             <select
               value={settings.permissionMode}
               onChange={(event) =>
                 void save(
                   { permissionMode: event.target.value as never },
-                  'Behörighetsläge sparat.',
+                  t('settings.agent.permissionSaved'),
                 )
               }
               className="w-full rounded border border-steel bg-anvil px-2 py-1.5 text-xs text-slate-200"
@@ -142,8 +171,8 @@ export function SettingsDialog() {
           </Field>
           <div className="grid grid-cols-2 gap-3">
             <Field
-              label="Kontextbudget (tecken)"
-              hint="Hur mycket kod som får skickas till modellen per anrop."
+              label={t('settings.agent.contextBudget')}
+              hint={t('settings.agent.contextBudgetHint')}
             >
               <input
                 type="number"
@@ -151,18 +180,21 @@ export function SettingsDialog() {
                 onBlur={(event) =>
                   void save(
                     { contextBudgetChars: Number(event.target.value) },
-                    'Kontextbudget sparad.',
+                    t('settings.agent.contextBudgetSaved'),
                   )
                 }
                 className="w-full rounded border border-steel bg-anvil px-2 py-1.5 text-xs text-slate-200"
               />
             </Field>
-            <Field label="Max varv i agent-loopen">
+            <Field label={t('settings.agent.maxIterations')}>
               <input
                 type="number"
                 defaultValue={settings.maxIterations}
                 onBlur={(event) =>
-                  void save({ maxIterations: Number(event.target.value) }, 'Varvgräns sparad.')
+                  void save(
+                    { maxIterations: Number(event.target.value) },
+                    t('settings.agent.maxIterationsSaved'),
+                  )
                 }
                 className="w-full rounded border border-steel bg-anvil px-2 py-1.5 text-xs text-slate-200"
               />
@@ -174,8 +206,12 @@ export function SettingsDialog() {
               void save(
                 { autoApprove: { ...settings.autoApprove, [category]: enabled } },
                 enabled
-                  ? `Auto-godkännande på för ${AUTO_APPROVE_LABELS[category]}.`
-                  : `Auto-godkännande av för ${AUTO_APPROVE_LABELS[category]}.`,
+                  ? t('settings.agent.autoApproveOn', {
+                      category: AUTO_APPROVE_LABELS[category],
+                    })
+                  : t('settings.agent.autoApproveOff', {
+                      category: AUTO_APPROVE_LABELS[category],
+                    }),
               )
             }
           />
@@ -184,37 +220,40 @@ export function SettingsDialog() {
             onChange={(value) =>
               void save(
                 { verifyAfterRun: value },
-                value
-                  ? 'Verifiering efter körningar påslagen (typkontroll, lint, tester).'
-                  : 'Verifiering efter körningar avstängd.',
+                value ? t('settings.agent.verifyOn') : t('settings.agent.verifyOff'),
               )
             }
-            label="Verifiera automatiskt efter en körning som ändrat filer (typkontroll, lint, tester)"
+            label={t('settings.agent.verifyLabel')}
           />
           <Toggle
             checked={settings.browserAutomationEnabled}
             onChange={(value) =>
-              void save({ browserAutomationEnabled: value }, 'Webbläsarautomation uppdaterad.')
+              void save({ browserAutomationEnabled: value }, t('settings.agent.browserSaved'))
             }
-            label="Tillåt webbläsarautomation (Playwright) – kräver alltid godkännande per åtgärd"
+            label={t('settings.agent.browserLabel')}
           />
           <Toggle
             checked={settings.allowCloudServices}
             onChange={(value) =>
-              void save({ allowCloudServices: value }, 'Molntjänster uppdaterade.')
+              void save({ allowCloudServices: value }, t('settings.agent.cloudSaved'))
             }
-            label="Tillåt att agenten använder molntjänster (avstängt = allt körs lokalt)"
+            label={t('settings.agent.cloudLabel')}
           />
           <p className="rounded border border-steel p-2 text-[11px] text-slate-500">
-            Telemetri är permanent avstängt i den här versionen (<code>telemetry: false</code>) och
-            kan inte slås på från gränssnittet. Inga prompts, filer eller personuppgifter lämnar
-            datorn utan ditt uttryckliga samtycke.
+            {t('settings.agent.telemetry')}
           </p>
         </section>
 
         <section className="space-y-2">
           <h3 className="text-xs font-semibold tracking-wide text-slate-400 uppercase">
-            Gives Back – frivillig välgörenhet i chatten
+            {t('connectors.title')}
+          </h3>
+          <ConnectorsSection />
+        </section>
+
+        <section className="space-y-2">
+          <h3 className="text-xs font-semibold tracking-wide text-slate-400 uppercase">
+            {t('settings.gives.section')}
           </h3>
           <Toggle
             checked={givesBack.enabled}
@@ -224,11 +263,11 @@ export function SettingsDialog() {
                 ...(value ? { consentedAt: Date.now() } : {}),
               })
             }
-            label="Visa en påminnelse om Gives Back i chatten"
+            label={t('settings.gives.enable')}
           />
           <Field
-            label="Visa efter var N:te prompt"
-            hint={`Standard är ${GIVES_BACK_INTERVAL_PROMPTS}.`}
+            label={t('settings.gives.interval')}
+            hint={t('settings.gives.intervalHint', { count: GIVES_BACK_INTERVAL_PROMPTS })}
           >
             <input
               type="number"
@@ -246,8 +285,10 @@ export function SettingsDialog() {
 
           <div className="space-y-1.5">
             <p className="text-[11px] text-slate-500">
-              Ändamål i rotationen ({selectedCauses.length} av {GIVES_BACK_CAUSES.length}). Inget
-              val betyder alla.
+              {t('settings.gives.rotation', {
+                selected: selectedCauses.length,
+                total: GIVES_BACK_CAUSES.length,
+              })}
             </p>
             <div className="flex flex-wrap gap-1.5">
               {GIVES_BACK_CAUSES.map((cause) => {
@@ -272,15 +313,13 @@ export function SettingsDialog() {
           </div>
 
           <p className="rounded border border-steel p-2 text-[11px] text-slate-500">
-            Freevobe tar inte emot pengar, förmedlar inga bidrag och har ingen betalningsfunktion.
-            Länken öppnar organisationens egen sida. Det du själv registrerar sparas bara lokalt och
-            är märkt som egen rapportering. Platsen får bara ett tal som indata (antal prompter) och
-            har ingen åtkomst till chattinnehåll.
+            {t('settings.gives.privacy')}
           </p>
           <p className="text-[11px] text-slate-600">
-            Din lokala logg: {contributionsSummary.count} stöd ·{' '}
-            {formatSek(contributionsSummary.totalSek)} enligt dina egna uppgifter. Panelen Gives
-            Back visar och raderar posterna.
+            {t('settings.gives.localLog', {
+              count: contributionsSummary.count,
+              amount: formatSek(contributionsSummary.totalSek),
+            })}
           </p>
         </section>
 
@@ -288,7 +327,7 @@ export function SettingsDialog() {
       </div>
       <footer className="mt-4 flex justify-end">
         <Button variant="primary" onClick={() => setSettingsOpen(false)}>
-          Stäng
+          {t('settings.close')}
         </Button>
       </footer>
     </Modal>

@@ -48,9 +48,9 @@ export function diffSummary(diff: Pick<FileDiff, 'additions' | 'deletions' | 'pa
 /** Ungefärlig läsbar storlek på ändringen, används för att varna om stora diffar. */
 export function diffWeight(
   diff: Pick<FileDiff, 'additions' | 'deletions'>,
-): 'liten' | 'medel' | 'stor' {
+): 'small' | 'medium' | 'large' {
   const total = diff.additions + diff.deletions;
-  if (total <= 40) return 'liten';
-  if (total <= 400) return 'medel';
-  return 'stor';
+  if (total <= 40) return 'small';
+  if (total <= 400) return 'medium';
+  return 'large';
 }

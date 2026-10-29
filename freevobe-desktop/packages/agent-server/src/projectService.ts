@@ -11,6 +11,8 @@ import type {
 import {
   CheckpointService,
   McpManager,
+  connectorTools,
+  type ConnectorService,
   ProjectIndexer,
   ProjectMemory,
   SkillStore,
@@ -44,6 +46,10 @@ export interface ProjectWorkspaceOptions {
   fetchImpl?: typeof fetch;
   ollamaBaseUrl?: string;
   onMcpStatus?: (status: McpServerStatus) => void;
+  /** Connector-registret. Utan det registreras inga connectorverktyg i projektet. */
+  connectors?: ConnectorService;
+  /** Endast för tester: pekar Vercel-verktygen mot en lokal fejkserver. */
+  vercelApiBaseUrl?: string;
 }
 
 /**
@@ -96,7 +102,26 @@ export class ProjectWorkspace {
     const workspace = new ProjectWorkspace(options, rules);
     await workspace.reloadSkills();
     await workspace.mcp.connectEnabled(rules.mcpServers);
+    workspace.syncConnectorTools();
     return workspace;
+  }
+
+  /**
+   * Registrerar om connectorverktygen efter att en connector anslutits, stängts av eller tagits
+   * bort. Körs också före varje agentkörning, så att registret aldrig kan bli inaktuellt.
+   */
+  syncConnectorTools(): number {
+    this.registry.removeWhere((spec) => spec.source === 'connector');
+    if (!this.options.connectors) return 0;
+    const tools = connectorTools({
+      projectId: this.project.id,
+      projectRoot: this.project.path,
+      service: this.options.connectors,
+      ...(this.options.fetchImpl ? { fetchImpl: this.options.fetchImpl } : {}),
+      ...(this.options.vercelApiBaseUrl ? { vercelApiBaseUrl: this.options.vercelApiBaseUrl } : {}),
+    });
+    this.registry.registerAll(tools);
+    return tools.length;
   }
 
   get root(): string {

@@ -65,8 +65,8 @@ describe('diffSammanfattning', () => {
   });
 
   it('klassar storleken så att användaren kan varna för stora diffar', () => {
-    expect(diffWeight({ additions: 10, deletions: 5 })).toBe('liten');
-    expect(diffWeight({ additions: 200, deletions: 100 })).toBe('medel');
-    expect(diffWeight({ additions: 900, deletions: 100 })).toBe('stor');
+    expect(diffWeight({ additions: 10, deletions: 5 })).toBe('small');
+    expect(diffWeight({ additions: 200, deletions: 100 })).toBe('medium');
+    expect(diffWeight({ additions: 900, deletions: 100 })).toBe('large');
   });
 });

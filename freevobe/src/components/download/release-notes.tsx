@@ -1,6 +1,7 @@
 'use client';
 
 import { CalendarDays, FileText, Loader2 } from 'lucide-react';
+import { useLocale, useTranslations } from 'next-intl';
 import { parseMarkdown, tokenizeInline } from '@/lib/markdown';
 import { stripChecksums } from '@/lib/release';
 import { useRelease } from './use-release';
@@ -46,21 +47,24 @@ function RichText({ text }: { text: string }) {
   );
 }
 
-function formatDate(value: string): string {
-  if (!value) return '';
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return '';
-  return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
-}
-
 export function ReleaseNotes() {
+  const t = useTranslations('download.notes');
+  const locale = useLocale();
   const release = useRelease();
+
+  function formatDate(value: string): string {
+    if (!value) return '';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return '';
+    // Datumet skrivs på besökarens språk – "27 okt. 2026" på svenska, "Oct 27, 2026" på engelska.
+    return date.toLocaleDateString(locale, { day: 'numeric', month: 'short', year: 'numeric' });
+  }
 
   if (release.status === 'loading') {
     return (
       <div className="vf-panel flex items-center gap-2 p-5 text-sm text-muted">
         <Loader2 className="size-4 animate-spin" />
-        Fetching the latest release…
+        {t('loading')}
       </div>
     );
   }
@@ -70,12 +74,9 @@ export function ReleaseNotes() {
       <div className="vf-panel p-5">
         <p className="flex items-center gap-2 text-sm font-medium text-fg">
           <FileText className="size-4 text-accent-soft" />
-          No release published yet
+          {t('missingTitle')}
         </p>
-        <p className="mt-2 text-sm leading-relaxed text-muted">
-          Installers are published on GitHub Releases. Until the first tag is pushed, the buttons
-          above lead to the releases page.
-        </p>
+        <p className="mt-2 text-sm leading-relaxed text-muted">{t('missingBody')}</p>
       </div>
     );
   }
@@ -83,11 +84,8 @@ export function ReleaseNotes() {
   if (release.status === 'error') {
     return (
       <div className="vf-panel p-5">
-        <p className="text-sm font-medium text-fg">Release notes unavailable</p>
-        <p className="mt-2 text-sm leading-relaxed text-muted">
-          GitHub could not be reached from this browser (offline or rate limit). The release notes
-          are always available on GitHub Releases.
-        </p>
+        <p className="text-sm font-medium text-fg">{t('errorTitle')}</p>
+        <p className="mt-2 text-sm leading-relaxed text-muted">{t('errorBody')}</p>
       </div>
     );
   }
@@ -116,9 +114,7 @@ export function ReleaseNotes() {
 
       <div className="px-5 py-4">
         {blocks.length === 0 ? (
-          <p className="text-sm text-muted">
-            This release has no notes. See the full history on GitHub Releases.
-          </p>
+          <p className="text-sm text-muted">{t('empty')}</p>
         ) : (
           <div className="space-y-2.5">
             {blocks.map((block, index) =>
@@ -150,7 +146,7 @@ export function ReleaseNotes() {
           rel="noreferrer noopener"
           className="text-[12.5px] text-accent-soft underline underline-offset-2"
         >
-          Read the full release on GitHub
+          {t('readFull')}
         </a>
       </footer>
     </div>

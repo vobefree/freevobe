@@ -1,12 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { ChatMessage } from '@freevobe/protocol';
 import { useAppStore } from '../../store/appStore';
 import { Button, Chip, EmptyState } from '../ui';
 import { GivesBackCard } from '../gives-back/GivesBackCard';
 import { PlanCard } from './PlanCard';
-import { PHASE_LABELS, clockTime } from '../../lib/format';
+import { PHASE_LABELS, clockTime, formatNumber } from '../../lib/format';
 
 function MessageBubble({ message }: { message: ChatMessage }) {
+  const { t } = useTranslation();
   const [showReasoning, setShowReasoning] = useState(false);
   const isUser = message.role === 'user';
   const isTool = message.role === 'tool';
@@ -15,7 +17,7 @@ function MessageBubble({ message }: { message: ChatMessage }) {
     return (
       <details className="rounded border border-steel/60 bg-forge/40 px-3 py-1.5 text-xs text-slate-500">
         <summary className="cursor-pointer select-none">
-          Verktygssvar · {message.content.slice(0, 80)}…
+          {t('chat.toolResponse')} · {message.content.slice(0, 80)}…
         </summary>
         <pre className="mt-1.5 overflow-x-auto whitespace-pre-wrap font-mono text-[11px] text-slate-400">
           {message.content}
@@ -33,7 +35,7 @@ function MessageBubble({ message }: { message: ChatMessage }) {
         <span
           className={`text-[11px] font-semibold tracking-wide uppercase ${isUser ? 'text-sky' : 'text-ember'}`}
         >
-          {isUser ? 'Du' : 'Freevobe'}
+          {isUser ? t('chat.you') : 'Freevobe'}
         </span>
         <span className="text-[10px] text-slate-600">{clockTime(message.createdAt)}</span>
         {message.model && !isUser ? <Chip>{message.model}</Chip> : null}
@@ -43,7 +45,7 @@ function MessageBubble({ message }: { message: ChatMessage }) {
             className="cursor-pointer text-[10px] text-slate-500 underline decoration-dotted"
             onClick={() => setShowReasoning((value) => !value)}
           >
-            {showReasoning ? 'dölj tankegång' : 'visa tankegång'}
+            {showReasoning ? t('chat.hideReasoning') : t('chat.showReasoning')}
           </button>
         ) : null}
       </header>
@@ -60,6 +62,7 @@ function MessageBubble({ message }: { message: ChatMessage }) {
 }
 
 export function ChatView() {
+  const { t } = useTranslation();
   const messages = useAppStore((state) => state.messages);
   const streamingText = useAppStore((state) => state.streamingText);
   const reasoningText = useAppStore((state) => state.reasoningText);
@@ -100,12 +103,7 @@ export function ChatView() {
   };
 
   if (!sessionId) {
-    return (
-      <EmptyState
-        title="Ingen chatt vald"
-        hint="Skapa en ny chatt i vänsterpanelen för att börja smida."
-      />
-    );
+    return <EmptyState title={t('chat.noChat')} hint={t('chat.noChatHint')} />;
   }
 
   return (
@@ -113,17 +111,10 @@ export function ChatView() {
       <div className="min-h-0 flex-1 space-y-3 overflow-y-auto p-4">
         {messages.length === 0 && !streamingText ? (
           <div className="mx-auto mt-8 max-w-xl space-y-3 text-center">
-            <h2 className="text-lg font-semibold text-slate-200">Vad ska vi smida idag?</h2>
-            <p className="text-xs text-slate-500">
-              Beskriv uppgiften på vanlig svenska. Freevobe läser koden, föreslår ändringar som
-              diffar och kör tester – allt lokalt på din dator.
-            </p>
+            <h2 className="text-lg font-semibold text-slate-200">{t('chat.emptyTitle')}</h2>
+            <p className="text-xs text-slate-500">{t('chat.emptyBody')}</p>
             <div className="flex flex-wrap justify-center gap-2 pt-2">
-              {[
-                'Förklara hur agent-loopen fungerar i det här projektet',
-                'Lägg till ett test för diff-motorn',
-                'Granska mina senaste ändringar och hitta risker',
-              ].map((example) => (
+              {[t('chat.example1'), t('chat.example2'), t('chat.example3')].map((example) => (
                 <button
                   key={example}
                   type="button"
@@ -172,7 +163,7 @@ export function ChatView() {
             {reasoningText ? (
               <details className="mt-2 text-[11px] text-slate-500">
                 <summary className="cursor-pointer">
-                  Tankegång ({reasoningText.length} tecken)
+                  {t('chat.reasoning', { chars: formatNumber(reasoningText.length) })}
                 </summary>
                 <pre className="mt-1 max-h-40 overflow-auto font-mono whitespace-pre-wrap">
                   {reasoningText}
@@ -202,7 +193,7 @@ export function ChatView() {
               }
             }}
             rows={3}
-            placeholder="Beskriv vad du vill bygga… (Ctrl/Cmd+Enter skickar)"
+            placeholder={t('chat.placeholder')}
             className="min-h-[64px] flex-1 resize-y rounded border border-steel bg-anvil px-3 py-2 text-sm text-slate-100 placeholder:text-slate-600"
           />
           <div className="flex flex-col gap-1.5">
@@ -210,21 +201,26 @@ export function ChatView() {
               <Button
                 variant="danger"
                 onClick={() => void useAppStore.getState().abort()}
-                title="Avbryt körningen"
+                title={t('chat.abortTitle')}
               >
-                Avbryt
+                {t('chat.abort')}
               </Button>
             ) : (
-              <Button variant="primary" onClick={submit} title="Skicka (Ctrl/Cmd+Enter)">
-                Skicka
+              <Button variant="primary" onClick={submit} title={t('chat.sendTitle')}>
+                {t('chat.send')}
               </Button>
             )}
-            <span className="text-center text-[10px] text-slate-600">{promptCount} prompter</span>
+            <span className="text-center text-[10px] text-slate-600">
+              {t('chat.prompts', { count: promptCount })}
+            </span>
           </div>
         </div>
         <p className="mt-1.5 text-[10px] text-slate-600">
-          Gives Back: {givesBack?.enabled ? `var ${givesBackInterval}:e prompt` : 'av'} · inga
-          uppgifter lämnar datorn
+          {t('chat.givesBack', {
+            status: givesBack?.enabled
+              ? t('chat.givesBackEvery', { count: givesBackInterval })
+              : t('chat.givesBackOff'),
+          })}
         </p>
       </footer>
     </div>

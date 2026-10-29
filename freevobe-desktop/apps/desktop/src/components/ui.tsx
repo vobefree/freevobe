@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 
 export function Button({
   children,
@@ -132,6 +133,7 @@ export function Modal({
   footer?: ReactNode;
   width?: string;
 }) {
+  const { t } = useTranslation();
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -152,7 +154,7 @@ export function Modal({
       <div ref={ref} className={`w-full ${width} vf-panel flex max-h-[80vh] flex-col shadow-2xl`}>
         <header className="flex items-center justify-between border-b border-steel px-4 py-2.5">
           <h2 className="text-sm font-semibold">{title}</h2>
-          <Button variant="ghost" onClick={onClose} title="Stäng">
+          <Button variant="ghost" onClick={onClose} title={t('common.close')}>
             ✕
           </Button>
         </header>

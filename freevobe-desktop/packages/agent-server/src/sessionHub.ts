@@ -39,6 +39,8 @@ import {
   loadProjectRules,
   resolveFreevobeHome,
   runDoctor,
+  ConnectorSecretStore,
+  ConnectorService,
   FreevobeDatabase,
   buildCommitMessagePrompt,
   detectVerificationCommands,
@@ -58,6 +60,8 @@ export interface HubOptions {
   fetchImpl?: typeof fetch;
   /** Injicerbar webbläsardrivrutin (Playwright i produktion, fejk i tester). */
   createBrowserDriver?: () => BrowserDriver | undefined;
+  /** Endast för tester: pekar Vercel-verktygen mot en lokal fejkserver. */
+  vercelApiBaseUrl?: string;
 }
 
 export type RunSubscriber = (event: AgentEvent) => void;
@@ -94,6 +98,8 @@ export class AgentSessionHub {
   readonly db: FreevobeDatabase;
   readonly repositories: Repositories;
   readonly home: string;
+  /** Connector-registret. Token ligger krypterat i Freevobe-home, aldrig i databasen. */
+  readonly connectors: ConnectorService;
 
   private readonly options: HubOptions;
   private readonly workspaces = new Map<string, ProjectWorkspace>();
@@ -112,6 +118,10 @@ export class AgentSessionHub {
     this.home = resolveFreevobeHome(options.home);
     this.db = new FreevobeDatabase({ file: options.dbFile ?? databasePath(this.home) });
     this.repositories = createRepositories(this.db);
+    this.connectors = new ConnectorService({
+      repositories: this.repositories,
+      secrets: new ConnectorSecretStore(this.home),
+    });
   }
 
   /**
@@ -174,6 +184,8 @@ export class AgentSessionHub {
       home: this.home,
       ...(this.options.fetchImpl ? { fetchImpl: this.options.fetchImpl } : {}),
       ...(this.options.ollamaBaseUrl ? { ollamaBaseUrl: this.options.ollamaBaseUrl } : {}),
+      connectors: this.connectors,
+      ...(this.options.vercelApiBaseUrl ? { vercelApiBaseUrl: this.options.vercelApiBaseUrl } : {}),
       onMcpStatus: (status) =>
         this.broadcastAll({
           type: 'status',
@@ -410,6 +422,8 @@ export class AgentSessionHub {
     if (!session) throw new Error(`Sessionen ${input.sessionId} finns inte.`);
 
     const workspace = this.requireWorkspace(session.projectId);
+    // Connectorverktygen speglar valvet och projektets val just nu – inte när projektet öppnades.
+    workspace.syncConnectorTools();
     const runId = `run_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
     const run: ActiveRun = {
       runId,

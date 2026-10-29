@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAppStore, type RightTab } from '../../store/appStore';
 import { Button, Chip, EmptyState, Tabs } from '../ui';
 import { DiffPane } from './DiffPane';
@@ -10,13 +11,14 @@ import { GivesBackPane } from '../gives-back/GivesBackPane';
 import { clockTime } from '../../lib/format';
 
 function LogsPane() {
+  const { t } = useTranslation();
   const logs = useAppStore((state) => state.logs);
   return (
     <div className="h-full overflow-y-auto p-2 font-mono text-[11px]">
       {logs.length === 0 ? (
         <EmptyState
-          title="Ingen aktivitet loggad"
-          hint="Varje verktygsanrop, godkännande och hook hamnar här."
+          title={t('rightPanel.logs.empty.title')}
+          hint={t('rightPanel.logs.empty.hint')}
         />
       ) : (
         logs
@@ -44,6 +46,7 @@ function LogsPane() {
 }
 
 function TestsPane() {
+  const { t } = useTranslation();
   const testResult = useAppStore((state) => state.testResult);
   const runTests = useAppStore((state) => state.runTests);
   const isRunning = useAppStore((state) => state.isRunning);
@@ -52,14 +55,16 @@ function TestsPane() {
     <div className="flex h-full min-h-0 flex-col">
       <div className="flex items-center gap-2 border-b border-steel p-2">
         <Button variant="primary" disabled={isRunning} onClick={() => void runTests()}>
-          Kör tester via agenten
+          {t('rightPanel.tests.run')}
         </Button>
         {testResult ? (
           <span className="text-[11px]">
-            <span className="text-mint">{testResult.passed} gröna</span>
+            <span className="text-mint">
+              {t('rightPanel.tests.passed', { count: testResult.passed })}
+            </span>
             {' · '}
             <span className={testResult.failed > 0 ? 'text-alert' : 'text-slate-500'}>
-              {testResult.failed} röda
+              {t('rightPanel.tests.failed', { count: testResult.failed })}
             </span>
           </span>
         ) : null}
@@ -74,8 +79,8 @@ function TestsPane() {
           </>
         ) : (
           <EmptyState
-            title="Inga testresultat än"
-            hint="Be agenten köra testerna – den läser felutdatan, föreslår en fix och visar diffen först."
+            title={t('rightPanel.tests.empty.title')}
+            hint={t('rightPanel.tests.empty.hint')}
           />
         )}
       </div>
@@ -84,6 +89,7 @@ function TestsPane() {
 }
 
 function McpPane() {
+  const { t } = useTranslation();
   const mcpServers = useAppStore((state) => state.mcpServers);
   const mcpStatuses = useAppStore((state) => state.mcpStatuses);
   const connectMcp = useAppStore((state) => state.connectMcp);
@@ -94,9 +100,9 @@ function McpPane() {
   if (mcpServers.length === 0) {
     return (
       <div className="flex h-full flex-col items-center justify-center gap-2 p-4 text-center">
-        <p className="text-sm text-slate-400">Inga MCP-servrar konfigurerade</p>
+        <p className="text-sm text-slate-400">{t('rightPanel.mcp.empty')}</p>
         <Button variant="primary" onClick={() => setMcpOpen(true)}>
-          Lägg till MCP-server
+          {t('rightPanel.mcp.add')}
         </Button>
       </div>
     );
@@ -111,10 +117,14 @@ function McpPane() {
             <header className="flex items-center gap-2">
               <span className="text-xs font-semibold text-slate-200">{server.name}</span>
               <Chip tone={status?.connected ? 'mint' : 'neutral'}>
-                {status?.connected ? 'ansluten' : 'från'}
+                {status?.connected
+                  ? t('rightPanel.mcp.connected')
+                  : t('rightPanel.mcp.disconnected')}
               </Chip>
               <Chip>{server.transport}</Chip>
-              {server.requireApproval ? <Chip tone="ember">kräver godkännande</Chip> : null}
+              {server.requireApproval ? (
+                <Chip tone="ember">{t('rightPanel.mcp.requiresApproval')}</Chip>
+              ) : null}
             </header>
             <p className="mt-1 font-mono text-[10.5px] text-slate-500">
               {server.transport === 'stdio'
@@ -123,8 +133,11 @@ function McpPane() {
             </p>
             {status?.connected ? (
               <p className="mt-0.5 text-[10.5px] text-slate-600">
-                {status.toolCount} verktyg · {status.resourceCount} resurser · {status.promptCount}{' '}
-                prompts
+                {t('rightPanel.mcp.stats', {
+                  tools: status.toolCount,
+                  resources: status.resourceCount,
+                  prompts: status.promptCount,
+                })}
                 {status.serverName ? ` · ${status.serverName} ${status.serverVersion ?? ''}` : ''}
               </p>
             ) : null}
@@ -149,7 +162,7 @@ function McpPane() {
                     setBusy(null);
                   }}
                 >
-                  Koppla från
+                  {t('rightPanel.mcp.disconnect')}
                 </Button>
               ) : (
                 <Button
@@ -161,10 +174,10 @@ function McpPane() {
                     setBusy(null);
                   }}
                 >
-                  Anslut
+                  {t('rightPanel.mcp.connect')}
                 </Button>
               )}
-              <Button onClick={() => setMcpOpen(true)}>Hantera</Button>
+              <Button onClick={() => setMcpOpen(true)}>{t('rightPanel.mcp.manage')}</Button>
             </footer>
           </article>
         );
@@ -174,6 +187,7 @@ function McpPane() {
 }
 
 export function RightPanel() {
+  const { t } = useTranslation();
   const rightTab = useAppStore((state) => state.rightTab);
   const setRightTab = useAppStore((state) => state.setRightTab);
   const approvals = useAppStore((state) => state.approvals);
@@ -190,19 +204,23 @@ export function RightPanel() {
       <header className="flex min-w-0 items-center border-b border-steel px-2">
         <Tabs<RightTab>
           tabs={[
-            { id: 'diff', label: 'Diff', badge: diffs.length },
-            { id: 'terminal', label: 'Terminal' },
-            { id: 'logs', label: 'Loggar' },
-            { id: 'tests', label: 'Tester', badge: testResult?.failed ?? 0 },
+            { id: 'diff', label: t('rightPanel.tab.diff'), badge: diffs.length },
+            { id: 'terminal', label: t('rightPanel.tab.terminal') },
+            { id: 'logs', label: t('rightPanel.tab.logs') },
+            {
+              id: 'tests',
+              label: t('rightPanel.tab.tests'),
+              badge: testResult?.failed ?? 0,
+            },
             {
               id: 'verify',
-              label: 'Verifiering',
+              label: t('rightPanel.tab.verify'),
               badge: verification?.checks.filter((check) => check.status === 'failed').length ?? 0,
             },
-            { id: 'approvals', label: 'Godkänn', badge: approvals.length },
-            { id: 'checkpoints', label: 'Checkpoints', badge: openCheckpoints },
-            { id: 'mcp', label: 'MCP', badge: mcpServers.length },
-            { id: 'gives', label: 'Gives Back' },
+            { id: 'approvals', label: t('rightPanel.tab.approvals'), badge: approvals.length },
+            { id: 'checkpoints', label: t('rightPanel.tab.checkpoints'), badge: openCheckpoints },
+            { id: 'mcp', label: t('rightPanel.tab.mcp'), badge: mcpServers.length },
+            { id: 'gives', label: t('rightPanel.tab.gives') },
           ]}
           active={rightTab}
           onChange={setRightTab}

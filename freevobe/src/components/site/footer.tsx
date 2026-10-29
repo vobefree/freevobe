@@ -1,61 +1,63 @@
 import { Github, MessageCircle, Twitter } from 'lucide-react';
+import { useLocale, useTranslations } from 'next-intl';
 import { Logo } from '@/components/site/navbar';
 import { site } from '@/lib/site';
 
-const columns = [
-  {
-    title: 'Product',
-    links: [
-      { label: 'Features', href: '/#features' },
-      { label: 'How it works', href: '/#how-it-works' },
-      { label: 'Skills', href: '/#skills' },
-      { label: 'Gives Back', href: '/#gives-back' },
-      { label: 'Learn How to Vobe', href: '/download/#learn' },
-      { label: 'Download', href: '/download/' },
-    ],
-  },
-  {
-    title: 'Resources',
-    links: [
-      { label: 'Documentation', href: site.docs },
-      { label: 'GitHub', href: site.github },
-      { label: 'Discord', href: site.discord },
-      { label: 'FAQ', href: '/#faq' },
-    ],
-  },
-  {
-    title: 'Legal',
-    links: [
-      { label: 'Privacy', href: '/privacy/' },
-      { label: 'Terms', href: '/terms/' },
-      { label: 'License (MIT)', href: `${site.github}/blob/main/LICENSE` },
-    ],
-  },
-] as const;
-
 const socials = [
-  { label: 'GitHub', href: site.github, icon: Github },
-  { label: 'Discord', href: site.discord, icon: MessageCircle },
-  { label: 'X', href: site.x, icon: Twitter },
+  { labelKey: 'socialGithub', href: site.github, icon: Github },
+  { labelKey: 'socialDiscord', href: site.discord, icon: MessageCircle },
+  { labelKey: 'socialX', href: site.x, icon: Twitter },
 ] as const;
 
 export function Footer() {
+  const t = useTranslations('footer');
+  const locale = useLocale();
+
+  const columns = [
+    {
+      title: t('product'),
+      links: [
+        { label: t('features'), href: `/${locale}/#features` },
+        { label: t('howItWorks'), href: `/${locale}/#how-it-works` },
+        { label: t('skills'), href: `/${locale}/#skills` },
+        { label: t('givesBack'), href: `/${locale}/#gives-back` },
+        { label: t('learn'), href: `/${locale}/download/#learn` },
+        { label: t('download'), href: `/${locale}/download/` },
+      ],
+    },
+    {
+      title: t('resources'),
+      links: [
+        { label: t('documentation'), href: site.docs },
+        { label: t('github'), href: site.github },
+        { label: t('discord'), href: site.discord },
+        { label: t('faq'), href: `/${locale}/#faq` },
+      ],
+    },
+    {
+      title: t('legal'),
+      links: [
+        { label: t('privacy'), href: `/${locale}/privacy/` },
+        { label: t('terms'), href: `/${locale}/terms/` },
+        { label: t('licenseLink'), href: `${site.github}/blob/main/LICENSE` },
+      ],
+    },
+  ];
+
   return (
     <footer className="border-t border-line bg-bg-soft/60">
       <div className="vf-shell grid gap-10 py-14 lg:grid-cols-[minmax(0,1.4fr)_repeat(3,minmax(0,1fr))]">
         <div>
           <Logo />
-          <p className="mt-4 max-w-xs text-sm leading-relaxed text-muted">
-            Local-first vibecoding with Ollama. Vobe without counting tokens.
-          </p>
+          <p className="mt-4 max-w-xs text-sm leading-relaxed text-muted">{t('tagline')}</p>
           <div className="mt-5 flex items-center gap-2.5">
             {socials.map((social) => (
               <a
-                key={social.label}
+                key={social.labelKey}
                 href={social.href}
                 target="_blank"
                 rel="noreferrer noopener"
-                aria-label={social.label}
+                aria-label={t(social.labelKey)}
                 className="flex size-9 items-center justify-center rounded-lg border border-line bg-card text-muted transition-colors hover:border-accent/50 hover:text-fg"
               >
                 <social.icon className="size-4" />
@@ -90,8 +92,8 @@ export function Footer() {
 
       <div className="border-t border-line">
         <div className="vf-shell flex flex-col items-center justify-between gap-2 py-6 text-xs text-muted sm:flex-row">
-          <p>© 2026 Freevobe.</p>
-          <p>Built for the vibe coding community.</p>
+          <p>{t('copyright')}</p>
+          <p>{t('builtFor')}</p>
         </div>
       </div>
     </footer>

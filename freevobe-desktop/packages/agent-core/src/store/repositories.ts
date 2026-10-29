@@ -805,9 +805,8 @@ export class GivesBackRepository {
   }
 
   get(id: string): Contribution | null {
-    const row = this.db.db
-      .prepare('SELECT * FROM gives_back_entries WHERE id = ?')
-      .get(id) as GivesBackRow | undefined;
+    const row = this.db.db.prepare('SELECT * FROM gives_back_entries WHERE id = ?').get(id) as
+      GivesBackRow | undefined;
     return row ? mapContribution(row) : null;
   }
 
@@ -882,6 +881,92 @@ function mapContribution(row: GivesBackRow): Contribution {
   };
 }
 
+/** Ett projekts val för en connector. Token ligger inte här – bara läget och en felorsak. */
+export interface ConnectorProjectState {
+  connectorId: string;
+  enabled: boolean;
+  accountLabel?: string;
+  lastError?: string;
+  updatedAt: number;
+}
+
+interface ConnectorRow {
+  project_id: string;
+  connector_id: string;
+  enabled: number;
+  account_label: string | null;
+  last_error: string | null;
+  updated_at: number;
+}
+
+export class ConnectorRepository {
+  private readonly db: FreevobeDatabase;
+
+  constructor(db: FreevobeDatabase) {
+    this.db = db;
+  }
+
+  list(projectId: string): ConnectorProjectState[] {
+    const rows = this.db.db
+      .prepare('SELECT * FROM connectors WHERE project_id = ? ORDER BY connector_id')
+      .all(projectId) as unknown as ConnectorRow[];
+    return rows.map(mapConnectorRow);
+  }
+
+  get(projectId: string, connectorId: string): ConnectorProjectState | null {
+    const row = this.db.db
+      .prepare('SELECT * FROM connectors WHERE project_id = ? AND connector_id = ?')
+      .get(projectId, connectorId) as ConnectorRow | undefined;
+    return row ? mapConnectorRow(row) : null;
+  }
+
+  upsert(
+    projectId: string,
+    input: {
+      connectorId: string;
+      enabled?: boolean;
+      accountLabel?: string | null;
+      lastError?: string | null;
+    },
+  ): ConnectorProjectState {
+    const previous = this.get(projectId, input.connectorId);
+    const enabled = input.enabled ?? previous?.enabled ?? true;
+    const accountLabel =
+      input.accountLabel === undefined ? (previous?.accountLabel ?? null) : input.accountLabel;
+    const lastError =
+      input.lastError === undefined ? (previous?.lastError ?? null) : input.lastError;
+    this.db.db
+      .prepare(
+        `INSERT INTO connectors (project_id, connector_id, enabled, account_label, last_error, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?)
+         ON CONFLICT(project_id, connector_id) DO UPDATE SET
+           enabled = excluded.enabled,
+           account_label = excluded.account_label,
+           last_error = excluded.last_error,
+           updated_at = excluded.updated_at`,
+      )
+      .run(projectId, input.connectorId, enabled ? 1 : 0, accountLabel, lastError, Date.now());
+    return this.get(projectId, input.connectorId) as ConnectorProjectState;
+  }
+
+  remove(projectId: string, connectorId: string): boolean {
+    const result = this.db.db
+      .prepare('DELETE FROM connectors WHERE project_id = ? AND connector_id = ?')
+      .run(projectId, connectorId);
+    return Number(result.changes) > 0;
+  }
+}
+
+function mapConnectorRow(row: ConnectorRow): ConnectorProjectState {
+  return {
+    connectorId: row.connector_id,
+    enabled: row.enabled === 1,
+    ...(row.account_label ? { accountLabel: row.account_label } : {}),
+    ...(row.last_error ? { lastError: row.last_error } : {}),
+    updatedAt: row.updated_at,
+  };
+}
+
 export interface Repositories {
   projects: ProjectRepository;
   sessions: SessionRepository;
@@ -893,6 +978,7 @@ export interface Repositories {
   plans: PlanRepository;
   verifications: VerificationRepository;
   givesBack: GivesBackRepository;
+  connectors: ConnectorRepository;
 }
 
 export function createRepositories(db: FreevobeDatabase): Repositories {
@@ -907,5 +993,6 @@ export function createRepositories(db: FreevobeDatabase): Repositories {
     plans: new PlanRepository(db),
     verifications: new VerificationRepository(db),
     givesBack: new GivesBackRepository(db),
+    connectors: new ConnectorRepository(db),
   };
 }

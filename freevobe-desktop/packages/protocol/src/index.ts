@@ -8,6 +8,7 @@ export * from './checkpoints.js';
 export * from './plans.js';
 export * from './verification.js';
 export * from './gives-back.js';
+export * from './connectors.js';
 
 /** Protokollversion för agent-server <-> UI. Ökas vid brytande ändringar. */
 export const FREEVOBE_PROTOCOL_VERSION = 1 as const;

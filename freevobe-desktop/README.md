@@ -23,12 +23,14 @@ styra en webbläsare – allt på din egen dator.
 5. [Arkitektur](#arkitektur)
 6. [Skills, regler och minne](#skills-regler-och-minne)
 7. [MCP, subagents och hooks](#mcp-subagents-och-hooks)
-8. [Gives Back i stället för annonser](#gives-back-i-stället-för-annonser)
-9. [Projektstruktur](#projektstruktur)
-10. [Kommandon](#kommandon)
-11. [Testning](#testning)
-12. [Bygga appen](#bygga-appen)
-13. [Begränsningar och TODO](#begränsningar-och-todo)
+8. [Connectors (opt-in)](#connectors-opt-in)
+9. [Checkpoints och ångra](#checkpoints-och-ångra)
+10. [Gives Back i stället för annonser](#gives-back-i-stället-för-annonser)
+11. [Projektstruktur](#projektstruktur)
+12. [Kommandon](#kommandon)
+13. [Testning](#testning)
+14. [Bygga appen](#bygga-appen)
+15. [Begränsningar och TODO](#begränsningar-och-todo)
 
 ---
 
@@ -45,7 +47,7 @@ styra en webbläsare – allt på din egen dator.
 | **Plan/Act**     | En plan läggs fram i Plan-läget, godkänns av dig och blir ett kontrakt: filer utanför planen kräver alltid ett personligt ja. Mer i [Plan/Act](docs/plan-act.md).                                                                                                                                                              |
 | **Checkpoints**  | Filens tidigare innehåll sparas före varje ändring. Backa till valfri punkt i tidslinjen, eller committa checkpointen till Git – helt utanför Git-historiken. Mer i [Checkpoints](docs/checkpoints.md).                                                                                                                        |
 | **Verifiering**  | Efter en körning som ändrat filer körs projektets egna typkontroll, lint och tester – med en rapport per steg i stället för ett påstående om att allt fungerar. Mer i [Verifiering](docs/verification.md).                                                                                                                     |
-| **Utbyggnad**    | Skills (Markdown i `.freevobe/skills/`), projektregler (`AGENTS.md`, `.freevobe/rules.md`), projektminne (`.freevobe/memory.md`), hooks och MCP (stdio, HTTP, SSE).                                                                                                                                                         |
+| **Utbyggnad**    | Skills (Markdown i `.freevobe/skills/`), projektregler (`AGENTS.md`, `.freevobe/rules.md`), projektminne (`.freevobe/memory.md`), hooks och MCP (stdio, HTTP, SSE).                                                                                                                                                            |
 | **Subagents**    | Explorer, Implementer, Tester, Reviewer och Documenter med isolerad kontext och korta sammanfattningar tillbaka.                                                                                                                                                                                                               |
 | **Git**          | Status, branch, diff, commit med AI-genererat meddelande och ett code review-läge.                                                                                                                                                                                                                                             |
 | **Distribution** | Windows `.exe` (NSIS), macOS `.dmg`, Linux `.AppImage`/`.deb`, Doctor-läge, onboarding och en publik webbplats.                                                                                                                                                                                                                |
@@ -161,6 +163,27 @@ Redigera allt i appen (Skills-, Minne- och Inställningsdialogerna) eller direkt
 - **Hooks**: kör kommandon vid `on_session_start`, `before/after_file_edit`, `before/after_terminal_command`,
   `before/after_test_run` och `before/after_commit` – t.ex. ESLint efter varje ändring eller tester före commit.
 
+## Connectors (opt-in)
+
+Freevobe kan kopplas till tjänsterna du redan använder – GitHub, Vercel, Supabase och några till – men bara när du
+själv ansluter dem. Katalogen ligger i **Inställningar → Connectors**: ett kort per tjänst med status, antal verktyg och
+en knapp som visar **exakt vilka behörigheter** som begärs innan du klistrar in något.
+
+- Token sparas **krypterat** (AES-256-GCM) i din Freevobe-home med rättigheten 0600 – aldrig i databasen, aldrig i
+  projektet och aldrig i modellens kontext. Servern lämnar bara ut en maskerad ledtråd.
+- Token är global för maskinen, men **valet att använda connectorn är per projekt**. Ett projekt kan köra helt lokalt
+  medan ett annat deployar.
+- **Koppla bort** raderar token lokalt och visar vilka behörigheter som därmed inte längre används. Vill du
+  ogiltigförklara den helt återkallar du den även hos leverantören.
+- `git` är inbyggd och kräver ingen nyckel. Tjänster som ännu inte är klara (Netlify, Railway, Stripe, Resend,
+  Cloudflare, Neon) syns som **kommer snart** – de går inte att ansluta av misstag.
+- **Vercel har verktyg**: projekt, preview-deploy, byggloggar, miljövariabler och domäner. Deploy går till preview
+  först; **produktion kräver ett extra ja** utöver det vanliga godkännandet, och env-värden kan läsas från en fil i
+  projektet så att hemligheter aldrig hamnar i chatten.
+- Saknas din tjänst? Koppla in vilken MCP-server som helst i stället.
+
+Mer i [Connectors](docs/connectors.md).
+
 ## Checkpoints och ångra
 
 Varje filagenten ändrar får en checkpoint med innehållet den hade innan. Tidslinjen i högerpanelen visar tid,
@@ -222,7 +245,7 @@ freevobe-desktop/
 │  └─ agent-server/       HTTP + SSE på 127.0.0.1
 ├─ e2e/                   Playwright: vertikal skiva över HTTP och i gränssnittet
 ├─ scripts/               Ikoner, sidecar-bygge, TypeScript-hook
-└─ docs/                  Arkitektur, säkerhet, skills, MCP, checkpoints, verifiering, release
+└─ docs/                  Arkitektur, säkerhet, skills, MCP, connectors, checkpoints, verifiering, release
 ```
 
 ## Kommandon
@@ -282,6 +305,11 @@ signeringsnycklar finns. Se [Release](docs/releasing.md).
 - [ ] **Release-server**: GitHub Releases används som standard; egen server om du vill ha kanaler (beta/stable).
 - [ ] **Telemetri**: medvetet avstängt (`telemetry: false`) och kan inte slås på från gränssnittet.
 - [ ] **Pro-funktioner**: delade skills mellan projekt, team-minne och fjärrstyrda agenter bakom en betald licens.
+- [ ] **Connectors – OS-keychain**: token krypteras i dag med en lokal 0600-nyckel. Att binda nyckeln till macOS
+      Keychain / Windows Credential Manager / libsecret är nästa härdning (samma gränssnitt: `get`/`set`/`delete`/`hint`).
+- [ ] **Connectors – API-verifiering**: anslutningen sparas utan att token prövas direkt. Först när ett
+      connectorverktyg körs (t.ex. `vercel_list_projects`) märks en ogiltig token, och felet visas då på kortet.
+      Nästa steg är att verifiera vid anslutning; Supabase och GitHub får verktyg i steg 3–4.
 - [ ] **Fler modeller**: en molntransport (OpenAI/Anthropic) bakom samma `ChatTransport`-gränssnitt – kräver uttryckligt
       samtycke per projekt.
 - [ ] **Embeddings**: en riktig vektormodell i stället för den lokala hash-baserade vektorn.

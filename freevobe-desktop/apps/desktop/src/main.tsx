@@ -1,10 +1,11 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { App } from './App';
+import './i18n';
 import './styles.css';
 
 const container = document.getElementById('root');
-if (!container) throw new Error('Rotnoden #root saknas i index.html.');
+if (!container) throw new Error('The #root node is missing in index.html.');
 
 createRoot(container).render(
   <StrictMode>

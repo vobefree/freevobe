@@ -1,6 +1,6 @@
 {
   "name": "freevobe",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "description": "Freevobe – lokal-first vibecoding desktop app med Ollama, agent-loop, skills, MCP och subagents.",
   "license": "MIT",
@@ -30,9 +30,10 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "doctor": "node packages/agent-core/bin/freevobe-doctor.mjs",
+    "i18n:check": "node scripts/i18n-check.mjs",
     "icons": "node scripts/generate-icons.mjs",
     "sidecar:build": "npm run build --workspace @freevobe/agent-server && node scripts/build-sidecar.mjs",
-    "verify": "npm run typecheck && npm run lint && npm run test"
+    "verify": "npm run typecheck && npm run lint && npm run i18n:check && npm run test"
   },
   "devDependencies": {
     "@eslint/js": "^9.30.0",

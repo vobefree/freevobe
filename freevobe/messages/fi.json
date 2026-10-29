@@ -1,0 +1,498 @@
+{
+  "common": {
+    "skipToContent": "Siirry sisältöön",
+    "mainNav": "Päävalikko",
+    "home": "Freevobe – etusivu",
+    "openMenu": "Avaa valikko",
+    "closeMenu": "Sulje valikko",
+    "switchToLight": "Vaihda vaaleaan teemaan",
+    "switchToDark": "Vaihda tummaan teemaan",
+    "allPlatforms": "Kaikki alustat ja julkaisutiedot",
+    "language": "Kieli",
+    "changeLanguage": "Vaihda kieli"
+  },
+  "nav": {
+    "features": "Ominaisuudet",
+    "howItWorks": "Näin se toimii",
+    "skills": "Skillit",
+    "givesBack": "Gives Back",
+    "faq": "Usein kysytyt",
+    "learn": "Learn",
+    "github": "GitHub"
+  },
+  "meta": {
+    "title": "Freevobe – vobea Ollaman kanssa, paikallisesti ja ilman tokenrajoja",
+    "titleTemplate": "%s · Freevobe",
+    "description": "Freevobe on paikallinen vibekoodausagenttisi. Asenna, yhdistä Ollama ja rakenna ohjelmistoja keskustelemalla suomeksi – ei API-avaimia, ei tokenlaskentaa, ei riippuvuutta pilveen.",
+    "shortDescription": "Paikallinen AI-koodausagentti Ollamalle. Ei tokeneita, ei rajoja, ei pilviriippuvuutta.",
+    "ogTitle": "Freevobe – vobea Ollaman kanssa",
+    "keywords": "Ollama, paikallinen AI-koodausagentti, vibekoodaus, vibe coding, local-first, Qwen coder, MCP, avoimen lähdekoodin koodausagentti",
+    "featureList": "Paikallinen Ollama-yhteys;Claude-tyylinen työtila chatilla, diffillä ja terminaalilla;Diffien tarkistus ja komentojen hyväksyntä;Markdown-skillit ja mallipohjat;Git- ja terminaali-integraatio;MCP-integraatiot",
+    "category": "kehittäjätyökalut"
+  },
+  "hero": {
+    "badge": "Paikallinen AI-koodausagentti",
+    "title": "Vobea Ollaman kanssa.",
+    "body": "Freevobe on paikallinen vibekoodausagenttisi. Asenna, yhdistä Ollama ja rakenna ohjelmistoja keskustelemalla suomeksi – ei API-avaimia, ei tokenlaskentaa, ei pilviriippuvuutta.",
+    "secondary": "Katso miten se toimii",
+    "footnote": "Ei tokeneita. Ei rajoja. Vain vibejä.",
+    "mockupCaption": "Koko silmukka omalla koneellasi – suunnitelma, diff, terminaali ja testit yhdessä työtilassa."
+  },
+  "socialProof": {
+    "aria": "Rakennettu yhteisölle",
+    "heading": "Rakennettu AI- ja vibekoodausyhteisölle",
+    "badges": "Paikallinen;Ollaman voimalla;Ei API-avainta;Avoimet skillit;Yksityinen oletuksena"
+  },
+  "problem": {
+    "heading": "Tokenrajat eivät saa pysäyttää työtäsi.",
+    "body": "Pilviagentit veloittavat ajattelusta. Freevobe ajaa mallia, joka sinulla jo on, joten mittari ei koskaan käynnisty.",
+    "items": [
+      {
+        "problem": "Käyttörajat",
+        "solution": "Aja paikallisesti Ollamalla.",
+        "detail": "Näytönohjaimesi tekee työn. Ei nopeusrajoja, ei viikkokattoja eikä keskiyön nollauksen odottelua."
+      },
+      {
+        "problem": "API-kulut",
+        "solution": "Ei tokenkohtaista laskutusta.",
+        "detail": "Yksi paikallinen malli, rajattomasti kehotteita. Ainoa kulu on sähkö, josta maksat jo."
+      },
+      {
+        "problem": "Pilvi ja yksityisyys",
+        "solution": "Koodisi pysyy koneellasi.",
+        "detail": "Tiedostot, kehotteet ja diffit eivät koskaan poistu tietokoneeltasi, ellet itse yhdistä pilvimallia."
+      }
+    ]
+  },
+  "features": {
+    "eyebrow": "Ominaisuudet",
+    "heading": "Kaikki mitä tarvitset vobeamiseen.",
+    "items": [
+      {
+        "icon": "plug",
+        "title": "Paikallinen Ollama-yhteys",
+        "body": "Yhdistä paikallisiin malleihisi yhdellä klikkauksella."
+      },
+      {
+        "icon": "layout",
+        "title": "Claude-tyylinen työtila",
+        "body": "Keskustele, suunnittele, muokkaa, tarkista diffit ja aja – yhdessä siistissä työtilassa."
+      },
+      {
+        "icon": "shield",
+        "title": "Turvalliset agenttitoimet",
+        "body": "Tarkista diffit ja hyväksy komennot ennen kuin mitään muutetaan."
+      },
+      {
+        "icon": "sparkles",
+        "title": "Skillit ja mallipohjat",
+        "body": "Opeta Freevobelle työtapasi Markdown-skilleillä."
+      },
+      {
+        "icon": "git",
+        "title": "Git ja terminaali",
+        "body": "Luo haaroja, commitoi muutokset ja aja testit poistumatta sovelluksesta."
+      },
+      {
+        "icon": "blocks",
+        "title": "MCP-integraatiot",
+        "body": "Yhdistä ulkoisia työkaluja Model Context Protocolin kautta."
+      }
+    ]
+  },
+  "howItWorks": {
+    "eyebrow": "Näin se toimii",
+    "heading": "Kolme askelta ensimmäiseen julkaisuusi.",
+    "steps": [
+      {
+        "title": "Lataa Freevobe",
+        "body": "Hae natiivisovellus Windowsille, macOS:lle tai Linuxille. Muuta ei tarvitse asentaa – agentti tulee mukana."
+      },
+      {
+        "title": "Yhdistä Ollama",
+        "body": "Freevobe löytää localhost:11434, listaa mallisi ja näyttää, mitkä tukevat työkalukutsuja."
+      },
+      {
+        "title": "Aloita vobeaminen",
+        "body": "Kuvaile haluamasi sovellus. Tarkista jokainen diff, hyväksy komennot ja anna agentin commitoida."
+      }
+    ],
+    "flow": [
+      { "step": "Asenna", "detail": "Natiivisovellus käyttöjärjestelmällesi" },
+      { "step": "Yhdistä Ollama", "detail": "Yksi klikkaus kohti localhost:11434" },
+      { "step": "Valitse malli", "detail": "Mikä tahansa lataamasi malli" },
+      { "step": "Kehote", "detail": "Kuvaile mitä rakennetaan" },
+      { "step": "Tarkista diff", "detail": "Hyväksy jokainen muutos" },
+      { "step": "Julkaise", "detail": "Commitoi ja aja testit" }
+    ]
+  },
+  "skills": {
+    "eyebrow": "Skillit ja mallipohjat",
+    "heading": "Opeta Freevobelle, miten rakennat.",
+    "body": "Skillit ovat tavallisia Markdown-tiedostoja, joissa on YAML-frontmatter. Pudota ne projektiisi, niin agentti poimii ne – ei liitännäisiä, ei uudelleenrakennusta.",
+    "badge": "skill",
+    "items": [
+      {
+        "name": "React-komponentti",
+        "description": "Luo tyypitetyn komponentin testeineen ja storyineen.",
+        "body": "export function {{name}}(props: {{name}}Props) {}"
+      },
+      {
+        "name": "Next.js-sivu",
+        "description": "App Router -sivu metatiedoilla ja lataustilalla.",
+        "body": "export default async function Page() {}"
+      },
+      {
+        "name": "API-päätepiste",
+        "description": "Route handler validoinnilla ja tyypitetyillä vastauksilla.",
+        "body": "export async function POST(request: Request) {}"
+      },
+      {
+        "name": "Virheenkorjaus",
+        "description": "Toista, eristä, korjaa – ja todista se testillä.",
+        "body": "failing test → smallest fix → green suite"
+      },
+      {
+        "name": "Kirjoita testit",
+        "description": "Taulukkopohjaiset testit juuri muuttamasi koodin ympärille.",
+        "body": "describe(\"{{module}}\", () => { it(...) })"
+      },
+      {
+        "name": "Koodikatselmointi",
+        "description": "Käy diffin läpi virheiden, reunatapausten ja kuolleen koodin varalta.",
+        "body": "read diff → list findings → suggest patch"
+      }
+    ]
+  },
+  "givesBack": {
+    "eyebrow": "Gives Back",
+    "heading": "Ei mainoksia. Valinta antaa takaisin.",
+    "body": "Freevobe ei myy huomiotasi. Mainospaikan sijaan sovellus voi näyttää vapaaehtoisen muistutuksen itse valitsemastasi kohteesta. Annat suoraan järjestölle – Freevobe ei koskaan käsittele rahaa.",
+    "badge": "Ei mainosverkkoa, ei seurantaa, ei kassaa sovelluksessa.",
+    "principles": [
+      {
+        "title": "Ei mainontaa",
+        "body": "Freevobe toimitetaan ilman mainospaikkoja, mainoskomentosarjoja ja mainosverkkoja. Mikään sovelluksessa ei ole myytävänä."
+      },
+      {
+        "title": "Ei rahaa Freevoben kautta",
+        "body": "Sovelluksessa ei ole kassaa, tiliä eikä maksupalveluntarjoajaa. Jokainen linkki avaa järjestön oman sivun."
+      },
+      {
+        "title": "Oletuksena pois",
+        "body": "Chatin muistutus on vapaaehtoinen, näkyy omassa lohkossaan eikä kosketa agentin kontekstia."
+      },
+      {
+        "title": "Lokisi pysyy paikallisena",
+        "body": "Jos kirjaat lahjoituksen, se merkitään itse ilmoitetuksi ja tallennetaan vain paikalliseen tietokantaasi."
+      }
+    ],
+    "causes": [
+      {
+        "id": "lakare-utan-granser",
+        "name": "Lääkärit Ilman Rajoja",
+        "tagline": "Terveydenhuoltoa siellä, missä tarve on suurin, syntymäpaikasta riippumatta.",
+        "description": "Lääketieteellistä apua sodissa, katastrofeissa ja alueilla, joilla ei ole toimivaa terveydenhuoltoa. Riippumaton valtioista ja konfliktien osapuolista.",
+        "url": "https://laakaritilmanrajoja.fi"
+      },
+      {
+        "id": "radda-barnen",
+        "name": "Pelastakaa Lapset",
+        "tagline": "Lasten oikeus suojeluun, kouluun ja turvalliseen kasvuun.",
+        "description": "Työskentelee lasten oikeuksien puolesta Suomessa ja kansainvälisesti: suojelu väkivallalta, koulutus ja tuki katastrofien jälkeen.",
+        "url": "https://www.pelastakaalapset.fi"
+      },
+      {
+        "id": "unicef",
+        "name": "UNICEF",
+        "tagline": "Puhdasta vettä, rokotteita ja koulua lapsille kaikkialla maailmassa.",
+        "description": "YK:n lastenrahasto työskentelee rokotteiden, ravitsemuksen, puhtaan veden ja koulunkäynnin parissa yli 190 maassa.",
+        "url": "https://www.unicef.fi"
+      },
+      {
+        "id": "wwf",
+        "name": "WWF",
+        "tagline": "Metsät, meret ja lajit, joiden on säilyttävä.",
+        "description": "Suojelee luontoalueita, uhanalaisia lajeja ja pyrkii vähentämään ilmastovaikutuksia.",
+        "url": "https://wwf.fi"
+      },
+      {
+        "id": "wikimedia",
+        "name": "Wikimedia Foundation",
+        "tagline": "Avoin tieto, jota kaikki voivat lukea ja jatkaa.",
+        "description": "Ylläpitää Wikipediaa ja vapaita tietohankkeita. Sisällön kirjoittavat vapaaehtoiset, ja kaikki saavat lukea sitä ilmaiseksi.",
+        "url": "https://donate.wikimedia.org"
+      },
+      {
+        "id": "kiva",
+        "name": "Kiva",
+        "tagline": "Pienlainat, joiden avulla ihmiset voivat rakentaa omaansa.",
+        "description": "Välittää mikrolainoja yrittäjille, jotka eivät muuten saa pankkilainaa. Lainat maksetaan takaisin ja ne voidaan lainata uudelleen.",
+        "url": "https://www.kiva.org"
+      }
+    ],
+    "causeFooter": "Avautuu {host} · tarkistettu {date}",
+    "footnote": "Luettelo on toimituksellinen ja linkit osoittavat kunkin järjestön omalle etusivulle kassan sijaan, jotta muuttunut maksuvirta ei koskaan muutu rikotuksi lupaukseksi. Freevobella ei ole kumppanuutta, provisiota tai suositusopimusta minkään tässä luetellun järjestön kanssa. Lue koko kuvaus tiedostosta",
+    "footnoteLink": "docs/gives-back.md"
+  },
+  "privacy": {
+    "eyebrow": "Yksityisyys",
+    "heading": "Koodisi pysyy sinun.",
+    "body": "Freevobe toimii paikallisesti oletuksena. Yhdistä Ollama omalla koneellasi ja pidä projektit, kehotteet ja tiedostot yksityisinä.",
+    "bullets": "Ei tiliä eikä kirjautumista.;Ei telemetriaa, joka poistuu sovelluksesta.;Diff ja hyväksyntä ennen jokaista kirjoitusta.",
+    "dataPath": "Tietopolku",
+    "path": "Koneesi;Ollama;Freevobe;Projektisi",
+    "note": "Kaikki tuossa silmukassa toimii laitteella, joka sinulla jo on. Mitään ei ladata, ellet itse yhdistä pilvimallia."
+  },
+  "faq": {
+    "eyebrow": "Usein kysytyt",
+    "heading": "Kysymyksiä ja vastauksia.",
+    "body": "Vieläkö mietityttää? Dokumentaatio käy läpi agenttisilmukan, skillit ja MCP:n yksityiskohtaisesti.",
+    "items": [
+      {
+        "question": "Mitä ”vobe” tarkoittaa?",
+        "answer": "Vobeaminen on rakentamista Ollamalla luonnollisella kielellä – paikallisesti ja ilman tokenrajoja. Se on vibe codingia ilman tikittävää mittaria."
+      },
+      {
+        "question": "Tarvitsenko API-avaimen?",
+        "answer": "Et. Freevobe yhdistyy suoraan paikalliseen Ollama-asennukseesi."
+      },
+      {
+        "question": "Mitä malleja voin käyttää?",
+        "answer": "Mitään tahansa mallia, joka löytyy paikallisesta Ollama-asennuksestasi – Qwen, Llama, DeepSeek, Mistral, Gemma ja mitä seuraavaksi lataat."
+      },
+      {
+        "question": "Poistuuko koodini tietokoneeltani?",
+        "answer": "Ei oletuksena. Freevobe on paikallinen: agentti, malli ja tiedostosi toimivat koneellasi. Pilvimallia käytetään vain, jos yhdistät sellaisen itse."
+      },
+      {
+        "question": "Onko Freevobe ilmainen?",
+        "answer": "Ydinsovellus on ilmainen käyttää omien paikallisten Ollama-malliesi kanssa."
+      },
+      {
+        "question": "Mitä alustoja tuetaan?",
+        "answer": "Windows, macOS ja Linux."
+      }
+    ]
+  },
+  "finalCta": {
+    "heading": "Valmiina vobeamaan?",
+    "body": "Asenna sovellus, osoita se Ollamaan ja kuvaile, mitä haluat rakentaa. Diff saapuu ennen kuin yksikään tiedosto muuttuu.",
+    "secondary": "Kaikki alustat ja julkaisutiedot",
+    "free": "Ilmainen käyttää paikallisten Ollama-malliesi kanssa."
+  },
+  "footer": {
+    "tagline": "Paikallista vibekoodausta Ollamalla. Vobea tokeneita laskematta.",
+    "product": "Tuote",
+    "resources": "Resurssit",
+    "legal": "Juridiikka",
+    "features": "Ominaisuudet",
+    "howItWorks": "Näin se toimii",
+    "skills": "Skillit",
+    "givesBack": "Gives Back",
+    "learn": "Learn How to Vobe",
+    "download": "Lataa",
+    "documentation": "Dokumentaatio",
+    "github": "GitHub",
+    "discord": "Discord",
+    "faq": "Usein kysytyt",
+    "privacy": "Yksityisyys",
+    "terms": "Käyttöehdot",
+    "licenseLink": "Lisenssi (MIT)",
+    "socialGithub": "GitHub",
+    "socialDiscord": "Discord",
+    "socialX": "X",
+    "copyright": "© 2026 Freevobe.",
+    "builtFor": "Rakennettu vibekoodausyhteisölle."
+  },
+  "download": {
+    "metaTitle": "Lataa",
+    "metaDescription": "Lataa Freevobe Windowsille, macOS:lle tai Linuxille tai Android-sovellus puhelimeesi. Asennustiedostot julkaistaan GitHub Releases -sivulla.",
+    "title": "Lataa Freevobe",
+    "body": "Valitse alusta – alla oleva painike tietää sen jo. Freevobe toimii offline ja keskustelee oman koneesi Ollama-asennuksen kanssa.",
+    "signed": "Asennukset on allekirjoitettu, kun alusta sen sallii. Lähdekoodi on MIT-lisensoitu.",
+    "requirements": {
+      "title": "Ennen asennusta",
+      "ollama": "Ollama",
+      "ollamaDetail": "Käynnissä paikallisesti, vähintään yksi malli ladattuna",
+      "disk": "Levy",
+      "diskDetail": "~120 MB sovellukselle sekä malliesi tarvitsema tila",
+      "platforms": "Alustat",
+      "platformsDetail": "Windows 10+, macOS 12+ (Apple Silicon tai Intel), Linux (AppImage, x86-64)",
+      "phone": "Puhelin",
+      "phoneDetail": "Android 8+ voi asentaa APK-tiedoston suoraan. iOS vaatii Macin ja Apple-tilin."
+    },
+    "phone": {
+      "title": "Puhelinsovellus",
+      "body": "Freevobe Mobile peilaa työpöytäsovellusta: parita kerran QR-koodilla paikallisessa verkossa ja seuraa sitten ajoja, diffejä ja hyväksyntöjä sohvalta. Mikään ei poistu Wi-Fistäsi – puhelin keskustelee omalla koneellasi toimivan Freevobe-agentin kanssa.",
+      "step1": "Lataa APK-tiedosto ja avaa se. Android kysyy, sallitko asennukset tästä lähteestä – tiedosto ei tule Google Playstä.",
+      "step2": "Avaa työpöytäsovellus ja näytä parituksen QR-koodi. Osoita puhelimella sitä.",
+      "step3": "Molempien laitteiden on oltava samassa verkossa. Paritus toimii offline.",
+      "ios": "iOS-versioita ei vielä julkaista – ne vaativat Macin ja Apple Developer -tilin."
+    },
+    "learn": {
+      "eyebrow": "Freevobe Learn",
+      "title": "Learn How to Vobe – sovelluksena, ei sivuna",
+      "size": "1 tiedosto · ~0,34 MB",
+      "body": "Kirjoita maailma, anna se tarkistaa ja pelaa sitä. Oppitunnit näyttävät koodin, joka rakensi kartan. Sovellus on yksi HTML-tiedosto: lataa se, avaa ja pelaa – ei palvelinta, ei tiliä, ei mallia eikä yhteyttä. Edistyminen tallentuu omaan selaimeesi.",
+      "step1": "Lataa freevobe-learn.html julkaisusta.",
+      "step2": "Avaa tiedosto missä tahansa selaimessa – se toimii kansiosta, johon tallensit sen, myös ilman verkkoa.",
+      "step3": "Siirrä se työpöydälle, jos haluat sen omaksi sovellukseksi. Se pysyy, kunnes itse poistat sen.",
+      "download": "Lataa Freevobe Learn",
+      "allReleases": "Katso tiedosto kaikkien julkaisujen joukosta"
+    },
+    "notes": {
+      "title": "Mitä edellisessä julkaisussa muuttui",
+      "body": "Julkaisutiedot tulevat suoraan GitHubin uusimmasta tagista.",
+      "loading": "Haetaan uusinta julkaisua…",
+      "missingTitle": "Julkaisua ei ole vielä julkaistu",
+      "missingBody": "Asennustiedostot julkaistaan GitHub Releases -sivulla. Kunnes ensimmäinen tagi on pushattu, yllä olevat painikkeet johtavat julkaisusivulle.",
+      "errorTitle": "Julkaisutiedot eivät ole saatavilla",
+      "errorBody": "GitHubiin ei saatu yhteyttä tästä selaimesta (offline tai nopeusraja). Tiedot ovat aina GitHub Releases -sivulla.",
+      "empty": "Tässä julkaisussa ei ole tietoja. Katso koko historia GitHub Releases -sivulta.",
+      "readFull": "Lue koko julkaisu GitHubissa"
+    },
+    "where": {
+      "title": "Missä tiedostot ovat",
+      "body": "Jokainen koontiversio on {repo}-repositorion tagissa. Tältä sivustolta ei jaeta mitään, ja yllä oleva merkki näyttää uusimman tagin heti kun se on olemassa.",
+      "all": "Kaikki julkaisut GitHubissa",
+      "docs": "Lue dokumentaatio"
+    },
+    "files": {
+      "title": "Kaikki tämän julkaisun tiedostot",
+      "checksums": "Tarkistussummat",
+      "releaseFile": "Julkaisutiedosto",
+      "file": "tiedosto",
+      "files": "tiedostoa",
+      "loading": "Haetaan tiedostoluetteloa…",
+      "error": "Tiedostoluetteloa ei voitu hakea, koska GitHubiin ei saatu yhteyttä tästä selaimesta. Kaikki tiedostot ovat aina GitHubin julkaisussa.",
+      "empty": "Tässä julkaisussa ei ole vielä tiedostoja. Julkaisutyönkulku lataa ne heti tagin pushaamisen jälkeen –",
+      "emptyLink": "julkaisusivu",
+      "emptyAfter": "näyttää ne heti kun ne saapuvat.",
+      "download": "Lataa",
+      "noChecksum": "Tarkistussummaa ei ole julkaistu",
+      "copy": "Kopioi",
+      "copied": "Kopioitu",
+      "copyKey": "Ctrl+C",
+      "copyAria": "Kopioi tiedoston {file} SHA-256",
+      "copiedAria": "Tiedoston {file} SHA-256 kopioitiin",
+      "selectedAria": "Tiedoston {file} SHA-256 on valittu – paina Ctrl tai Cmd ja C",
+      "noRelease": "Julkaisua ei ole vielä julkaistu",
+      "allChecksums": "Kaikilla tiedostoilla on julkaistu SHA-256.",
+      "someChecksums": "{have} / {total} tiedostosta on julkaistu SHA-256 – loput ladattiin ennen tarkistussummien käyttöönottoa.",
+      "mismatch": "Jos summa ei täsmää, tiedostoa on muutettu matkalla – älä asenna sitä. Samat summat ovat tiedostossa",
+      "mismatchAfter": ", jonka",
+      "mismatchReads": "lukee.",
+      "platformMacLinux": "macOS/Linux",
+      "platformWindows": "Windows"
+    },
+    "button": {
+      "download": "Lataa",
+      "downloadFreevobe": "Lataa Freevobe",
+      "downloadFor": "Lataa {platform}",
+      "releases": "Julkaisut",
+      "viewReleases": "Näytä julkaisut"
+    },
+    "badge": {
+      "latest": "Uusin julkaisu {version}",
+      "latestNoVersion": "Uusin julkaisu",
+      "missing": "Näytä julkaisut"
+    },
+    "platform": {
+      "windows": "Windows",
+      "macAppleSilicon": "macOS",
+      "macIntel": "macOS Intel",
+      "linux": "Linux",
+      "android": "Android",
+      "unknown": "alustasi",
+      "appleSilicon": "Apple Silicon",
+      "intel": "Intel"
+    },
+    "platformNote": "Freevobe jaetaan GitHub Releases -sivun kautta.",
+    "platformNoteMissing": "Asennustiedostot julkaistaan GitHub Releases -sivulla."
+  },
+  "legal": {
+    "lastUpdated": "Päivitetty {date}",
+    "footerQuestion": "Kysyttävää tästä sivusta? Kysy yhteisön Discordissa, linkki alatunnisteessa.",
+    "privacy": {
+      "metaTitle": "Yksityisyys",
+      "metaDescription": "Freevobe toimii paikallisesti oletuksena: projektisi, kehotteesi ja tiedostosi pysyvät koneellasi.",
+      "title": "Yksityisyys",
+      "updated": "27. lokakuuta 2026",
+      "intro": "Freevobe on paikallinen. Tällä sivulla kerrotaan, mitä tämä verkkosivusto ja Freevoben työpöytäsovellus tekevät tiedoillasi.",
+      "sections": [
+        {
+          "title": "Tämä verkkosivusto",
+          "paragraphs": [
+            "Sivusto on staattinen sivu. Se ei aseta analytiikkaa, seurantapikseleitä eikä omia evästeitä, eikä tee pyyntöjä kolmannen osapuolen palvelimille – fontit ja kuvat tarjoillaan samasta verkkotunnuksesta.",
+            "Teemavalintasi (tumma tai vaalea) tallennetaan selaimen paikalliseen tallennustilaan, jotta sivu avautuu sellaisena kuin jätit sen. Se ei koskaan poistu koneeltasi."
+          ]
+        },
+        {
+          "title": "Mainonta ja Gives Back",
+          "paragraphs": [
+            "Freevobessa ei ole mainontaa: ei mainospaikkoja, mainoskomentosarjoja eikä mainosverkkoa. Sivusto ja työpöytäsovellus eivät siksi aseta mainosevästeitä tai laitetunnisteita, eikä tietoja jaeta kolmannelle osapuolelle markkinointiin.",
+            "Mainospaikan sijaan työpöytäsovellus voi näyttää vapaaehtoisen muistutuksen hyväntekeväisyysjärjestöstä – Freevobe Gives Back. Se on pois päältä, kunnes kytket sen päälle. Muistutus sisältää linkin järjestön omalle sivustolle; Freevobella ei ole kassaa, tiliä eikä maksupalveluntarjoajaa, eikä se koskaan vastaanota tai välitä lahjoitusta.",
+            "Jos kirjaat lahjoituksen sovelluksessa, merkintä jää paikalliseen tietokantaasi ja merkitään itse ilmoitetuksi. Sitä ei koskaan lähetetä järjestölle eikä meille, ja voit poistaa sen milloin tahansa."
+          ]
+        },
+        {
+          "title": "Työpöytäsovellus",
+          "bullets": [
+            "Koodisi, kehotteesi ja tiedostosi käsitellään omalla koneellasi mallilla, jota ajat itse Ollaman kautta. Mitään ei ladata oletuksena.",
+            "Istunnot, projektihakemistot ja muisti tallennetaan tietokoneesi paikalliseen SQLite-tietokantaan.",
+            "Sovellus ei lähetä telemetriaa. Tiliä eikä kirjautumista ei ole.",
+            "Pilvimalliin otetaan yhteyttä vain, jos määrität sellaisen itse, ja silloin yhteyttä säätelee valitsemasi tarjoaja."
+          ]
+        },
+        {
+          "title": "Lataukset",
+          "paragraphs": [
+            "Latauslinkit osoittavat projektin julkaisusivulle. Selaimesi ja kyseisen sivun palveluntarjoaja tekevät omat tavanomaiset kirjauksensa."
+          ]
+        },
+        {
+          "title": "Muutokset",
+          "paragraphs": [
+            "Jos tämä käytäntö muuttuu, sivun yläreunan päivämäärä muuttuu mukana. Freevobe on avointa lähdekoodia, joten sivu ja sen historia ovat tarkistettavissa julkisessa repositoriossa."
+          ]
+        }
+      ]
+    },
+    "terms": {
+      "metaTitle": "Käyttöehdot",
+      "metaDescription": "Selkeät ehdot Freevoben ja tämän verkkosivuston käyttöön.",
+      "title": "Käyttöehdot",
+      "updated": "27. lokakuuta 2026",
+      "intro": "Lyhyesti ja selvästi: Freevobe on ilmainen ohjelmisto, joka toimii omalla laitteellasi, ja vastaat siitä, mitä sillä rakennat.",
+      "sections": [
+        {
+          "title": "Sovellus",
+          "bullets": [
+            "Ydinsovellus on ilmainen käyttää omien paikallisten Ollama-malliesi kanssa. Tilausmaksua, tokenmittausta tai meidän asettamaamme käyttörajaa ei ole.",
+            "Lähdekoodi julkaistaan MIT-lisenssillä. Saat käyttää, muokata ja jakaa sitä kyseisen lisenssin mukaisesti.",
+            "Sovellus toimii koneellasi sinun tunnuksillasi ja tiedostoillasi. Vastaat projekteista, joihin sen osoitat, hyväksymistäsi komennoista ja commitoimistasi muutoksista."
+          ]
+        },
+        {
+          "title": "Ei takuuta",
+          "paragraphs": [
+            "Freevobe tarjotaan ”sellaisenaan” ilman minkäänlaista takuuta. Mallin tuottama sisältö voi olla väärää, ja generoitu koodi tulee tarkistaa kuten mikä tahansa muu muutos. Pidä työsi versionhallinnassa ja tarkista diffit ennen hyväksymistä."
+          ]
+        },
+        {
+          "title": "Mallit ja kolmannen osapuolen palvelut",
+          "paragraphs": [
+            "Ollaman kautta ajamiasi malleja ja yhdistämiäsi palveluita koskevat niiden omat ehdot ja lisenssit. Emme hallitse niitä emmekä vastaa niistä."
+          ]
+        },
+        {
+          "title": "Tämä verkkosivusto",
+          "paragraphs": [
+            "Täällä olevat tuotetiedot ovat ohjeellisia ja voivat muuttua sovelluksen kehittyessä. Materiaalia voivat tulevaisuudessa tarjoilla mainoskumppanit; katso yksityisyyssivulta, mitä se tarkoittaa tiedoillesi."
+          ]
+        }
+      ]
+    }
+  }
+}

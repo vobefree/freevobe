@@ -1,11 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAppStore } from '../store/appStore';
 import { AUTO_APPROVE_LABELS, PERMISSION_DESCRIPTIONS, PERMISSION_LABELS } from '../lib/format';
-import {
-  AUTO_APPROVE_CATEGORIES,
-  PERMISSION_MODES,
-  FREEVOBE_SKILLS_DIR,
-} from '@freevobe/protocol';
+import { AUTO_APPROVE_CATEGORIES, PERMISSION_MODES, FREEVOBE_SKILLS_DIR } from '@freevobe/protocol';
 
 interface Command {
   id: string;
@@ -16,6 +13,7 @@ interface Command {
 }
 
 export function CommandPalette() {
+  const { t } = useTranslation();
   const open = useAppStore((state) => state.paletteOpen);
   const setPalette = useAppStore((state) => state.setPalette);
   const [query, setQuery] = useState('');
@@ -25,37 +23,55 @@ export function CommandPalette() {
   const commands = useMemo<Command[]>(() => {
     const store = useAppStore.getState();
     return [
-      { id: 'chat', group: 'Navigering', label: 'Ny chatt', run: () => store.newSession() },
+      {
+        id: 'chat',
+        group: t('palette.groupNavigation'),
+        label: t('palette.newChat'),
+        run: () => store.newSession(),
+      },
       {
         id: 'sessions',
-        group: 'Navigering',
-        label: 'Ladda om sessioner',
+        group: t('palette.groupNavigation'),
+        label: t('palette.reloadSessions'),
         run: () => store.loadSessions(),
       },
       {
         id: 'left',
-        group: 'Navigering',
-        label: 'Växla vänsterpanel',
+        group: t('palette.groupNavigation'),
+        label: t('palette.toggleLeft'),
         run: () => store.toggleLeft(),
       },
       {
         id: 'right',
-        group: 'Navigering',
-        label: 'Växla högerpanel',
+        group: t('palette.groupNavigation'),
+        label: t('palette.toggleRight'),
         run: () => store.toggleRight(),
       },
-      { id: 'tree', group: 'Navigering', label: 'Växla filträd', run: () => store.toggleTree() },
-      { id: 'plan', group: 'Läge', label: 'Plan-läge', run: () => store.setMode('plan') },
-      { id: 'execute', group: 'Läge', label: 'Execute-läge', run: () => store.setMode('execute') },
+      {
+        id: 'tree',
+        group: t('palette.groupNavigation'),
+        label: t('palette.toggleTree'),
+        run: () => store.toggleTree(),
+      },
+      {
+        id: 'plan',
+        group: t('palette.groupMode'),
+        label: t('palette.planMode'),
+        run: () => store.setMode('plan'),
+      },
+      {
+        id: 'execute',
+        group: t('palette.groupMode'),
+        label: t('palette.executeMode'),
+        run: () => store.setMode('execute'),
+      },
       {
         id: 'plan-approve',
-        group: 'Läge',
-        label: 'Godkänn planen och utför den',
-        hint: 'Plan/Act-kontraktet',
+        group: t('palette.groupMode'),
+        label: t('palette.approvePlan'),
+        hint: t('palette.approvePlanHint'),
         run: () => {
-          const plan = useAppStore
-            .getState()
-            .plans.find((entry) => entry.status === 'proposed');
+          const plan = useAppStore.getState().plans.find((entry) => entry.status === 'proposed');
           return plan
             ? useAppStore.getState().decidePlan(plan.id, 'approved', { run: true })
             : Promise.resolve();
@@ -63,21 +79,17 @@ export function CommandPalette() {
       },
       {
         id: 'plan-reject',
-        group: 'Läge',
-        label: 'Avvisa planen',
+        group: t('palette.groupMode'),
+        label: t('palette.rejectPlan'),
         run: () => {
-          const plan = useAppStore
-            .getState()
-            .plans.find((entry) => entry.status === 'proposed');
-          return plan
-            ? useAppStore.getState().decidePlan(plan.id, 'rejected')
-            : Promise.resolve();
+          const plan = useAppStore.getState().plans.find((entry) => entry.status === 'proposed');
+          return plan ? useAppStore.getState().decidePlan(plan.id, 'rejected') : Promise.resolve();
         },
       },
       ...PERMISSION_MODES.map((mode) => ({
         id: `perm-${mode}`,
-        group: 'Behörigheter',
-        label: `Behörigheter: ${PERMISSION_LABELS[mode]}`,
+        group: t('palette.groupPermissions'),
+        label: t('palette.permission', { label: PERMISSION_LABELS[mode] }),
         hint: PERMISSION_DESCRIPTIONS[mode],
         run: () => store.setPermissionMode(mode),
       })),
@@ -85,72 +97,89 @@ export function CommandPalette() {
         const enabled = store.settings?.autoApprove[category] === true;
         return {
           id: `auto-${category}`,
-          group: 'Auto-godkänn',
-          label: `${enabled ? 'Slå av' : 'Slå på'} auto-godkännande: ${AUTO_APPROVE_LABELS[category]}`,
-          hint: enabled ? 'på' : 'av',
+          group: t('palette.groupAutoApprove'),
+          label: t(enabled ? 'palette.autoApproveOff' : 'palette.autoApproveOn', {
+            category: AUTO_APPROVE_LABELS[category],
+          }),
+          hint: enabled ? t('palette.on') : t('palette.off'),
           run: () => store.setAutoApprove(category, !enabled),
         };
       }),
       {
         id: 'skills',
-        group: 'Verktyg',
-        label: 'Skills…',
+        group: t('palette.groupTools'),
+        label: t('palette.skills'),
         hint: FREEVOBE_SKILLS_DIR,
         run: () => store.setSkillsOpen(true),
       },
-      { id: 'mcp', group: 'Verktyg', label: 'MCP-servrar…', run: () => store.setMcpOpen(true) },
+      {
+        id: 'mcp',
+        group: t('palette.groupTools'),
+        label: t('palette.mcp'),
+        run: () => store.setMcpOpen(true),
+      },
       {
         id: 'memory',
-        group: 'Verktyg',
-        label: 'Projektminne…',
+        group: t('palette.groupTools'),
+        label: t('palette.memory'),
         run: () => store.setMemoryOpen(true),
       },
-      { id: 'doctor', group: 'Verktyg', label: 'Kör Doctor', run: () => store.runDoctor() },
+      {
+        id: 'doctor',
+        group: t('palette.groupTools'),
+        label: t('palette.doctor'),
+        run: () => store.runDoctor(),
+      },
       {
         id: 'verify',
-        group: 'Verifiering',
-        label: 'Kör verifieringen',
-        hint: 'Typkontroll, lint, tester, bygge',
+        group: t('palette.groupVerification'),
+        label: t('palette.runVerification'),
+        hint: t('palette.runVerificationHint'),
         run: () => store.runVerification(),
       },
       {
         id: 'verify-panel',
-        group: 'Verifiering',
-        label: 'Visa verifieringsrapporten',
+        group: t('palette.groupVerification'),
+        label: t('palette.verificationReport'),
         run: () => store.setRightTab('verify'),
       },
       {
         id: 'settings',
-        group: 'Verktyg',
-        label: 'Inställningar…',
+        group: t('palette.groupTools'),
+        label: t('palette.settings'),
         run: () => store.setSettingsOpen(true),
       },
-      { id: 'git', group: 'Verktyg', label: 'Uppdatera git-status', run: () => store.refreshGit() },
+      {
+        id: 'git',
+        group: t('palette.groupTools'),
+        label: t('palette.refreshGit'),
+        run: () => store.refreshGit(),
+      },
       {
         id: 'tests',
-        group: 'Verktyg',
-        label: 'Kör tester via agenten',
+        group: t('palette.groupTools'),
+        label: t('palette.runTests'),
         run: () => store.runTests(),
       },
       {
         id: 'checkpoints',
-        group: 'Checkpoints',
-        label: 'Visa checkpoints',
-        hint: 'Tidslinjen i högerpanelen',
+        group: t('palette.groupCheckpoints'),
+        label: t('palette.checkpoints'),
+        hint: t('palette.checkpointsHint'),
         run: () => store.setRightTab('checkpoints'),
       },
       {
         id: 'checkpoint-save',
-        group: 'Checkpoints',
-        label: 'Spara checkpoint av nuvarande läge',
-        hint: 'Utan att röra Git',
+        group: t('palette.groupCheckpoints'),
+        label: t('palette.saveCheckpoint'),
+        hint: t('palette.saveCheckpointHint'),
         run: () => store.createCheckpoint(),
       },
       {
         id: 'checkpoint-undo',
-        group: 'Checkpoints',
-        label: 'Ångra senaste agentändringen',
-        hint: 'Återställ senaste öppna checkpointen',
+        group: t('palette.groupCheckpoints'),
+        label: t('palette.undo'),
+        hint: t('palette.undoHint'),
         run: () => {
           const newest = useAppStore
             .getState()
@@ -160,24 +189,24 @@ export function CommandPalette() {
       },
       {
         id: 'explorer',
-        group: 'Subagents',
-        label: 'Kör Explorer på projektet',
-        run: () =>
-          store.runSubagent(
-            'explorer',
-            'Sammanfatta projektets arkitektur och viktigaste moduler.',
-          ),
+        group: t('palette.groupSubagents'),
+        label: t('palette.explorer'),
+        run: () => store.runSubagent('explorer', t('palette.explorerPrompt')),
       },
       {
         id: 'reviewer',
-        group: 'Subagents',
-        label: 'Kör Reviewer på senaste ändringarna',
-        run: () =>
-          store.runSubagent('reviewer', 'Granska arbetskopians ändringar och rapportera risker.'),
+        group: t('palette.groupSubagents'),
+        label: t('palette.reviewer'),
+        run: () => store.runSubagent('reviewer', t('palette.reviewerPrompt')),
       },
-      { id: 'abort', group: 'Körning', label: 'Avbryt pågående körning', run: () => store.abort() },
+      {
+        id: 'abort',
+        group: t('palette.groupRun'),
+        label: t('palette.abort'),
+        run: () => store.abort(),
+      },
     ];
-  }, []);
+  }, [t]);
 
   const filtered = useMemo(() => {
     const needle = query.trim().toLowerCase();
@@ -238,12 +267,12 @@ export function CommandPalette() {
               void execute(filtered[cursor]);
             }
           }}
-          placeholder="Skriv ett kommando…"
+          placeholder={t('palette.placeholder')}
           className="w-full border-b border-steel bg-forge px-4 py-3 text-sm text-slate-100 placeholder:text-slate-600 outline-none"
         />
         <ul className="max-h-80 overflow-y-auto py-1">
           {filtered.length === 0 ? (
-            <li className="px-4 py-2 text-xs text-slate-600">Inga kommandon matchar.</li>
+            <li className="px-4 py-2 text-xs text-slate-600">{t('palette.noMatch')}</li>
           ) : null}
           {filtered.map((command, index) => (
             <li key={command.id}>

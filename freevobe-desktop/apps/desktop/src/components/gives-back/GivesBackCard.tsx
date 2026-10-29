@@ -1,8 +1,8 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   GIVES_BACK_INTERVAL_PROMPTS,
   causeForPrompt,
-  formatSek,
   type GivesBackCause,
 } from '@freevobe/protocol';
 import { useAppStore } from '../../store/appStore';
@@ -24,6 +24,7 @@ export interface GivesBackCardProps {
  * användaren själv registrerar hamnar bara i den lokala loggen.
  */
 export function GivesBackCard({ promptIndex, forceVisible = false }: GivesBackCardProps) {
+  const { t } = useTranslation();
   const config = useAppStore((state) => state.settings?.givesBack ?? null);
   const logContribution = useAppStore((state) => state.logContribution);
   const [dismissed, setDismissed] = useState(false);
@@ -49,7 +50,7 @@ export function GivesBackCard({ promptIndex, forceVisible = false }: GivesBackCa
   const submit = async (selected: GivesBackCause) => {
     const parsed = amount.trim() === '' ? 0 : Number(amount.replace(',', '.'));
     if (!Number.isFinite(parsed) || parsed < 0) {
-      setError('Ange ett belopp i kronor, eller lämna fältet tomt.');
+      setError(t('givesBack.card.invalidAmount'));
       return;
     }
     setBusy(true);
@@ -82,12 +83,10 @@ export function GivesBackCard({ promptIndex, forceVisible = false }: GivesBackCa
         <span className="rounded border border-mint/40 px-1.5 py-0.5 text-[10px] font-semibold tracking-wide text-mint uppercase">
           Gives Back
         </span>
-        <span className="text-[10px] text-slate-600">
-          Frivilligt · inga pengar går genom Freevobe
-        </span>
+        <span className="text-[10px] text-slate-600">{t('givesBack.card.voluntary')}</span>
         <button
           type="button"
-          aria-label="Dölj Gives Back"
+          aria-label={t('givesBack.card.dismiss')}
           data-testid="gives-back-dismiss"
           className="ml-auto cursor-pointer text-xs text-slate-600 hover:text-slate-300"
           onClick={() => setDismissed(true)}
@@ -101,7 +100,7 @@ export function GivesBackCard({ promptIndex, forceVisible = false }: GivesBackCa
 
       {saved ? (
         <p className="mt-2 text-xs text-mint" data-testid="gives-back-saved">
-          Tillagt i din lokala logg. Tack – du kan se och ta bort den under Gives Back.
+          {t('givesBack.card.saved')}
         </p>
       ) : null}
 
@@ -113,7 +112,7 @@ export function GivesBackCard({ promptIndex, forceVisible = false }: GivesBackCa
           rel="noreferrer noopener"
           data-testid="gives-back-open"
         >
-          Öppna {cause.name}
+          {t('givesBack.card.open', { name: cause.name })}
         </a>
         <button
           type="button"
@@ -121,11 +120,9 @@ export function GivesBackCard({ promptIndex, forceVisible = false }: GivesBackCa
           data-testid="gives-back-log"
           onClick={() => setFormOpen((value) => !value)}
         >
-          Jag gav
+          {t('givesBack.card.gave')}
         </button>
-        <span className="text-[10.5px] text-slate-600">
-          Du ger direkt till organisationen – appen har ingen betalning.
-        </span>
+        <span className="text-[10.5px] text-slate-600">{t('givesBack.card.direct')}</span>
       </div>
 
       {formOpen ? (
@@ -137,7 +134,7 @@ export function GivesBackCard({ promptIndex, forceVisible = false }: GivesBackCa
           }}
         >
           <label className="text-[10.5px] text-slate-500">
-            Belopp (kr, valfritt)
+            {t('givesBack.card.amount')}
             <input
               type="number"
               min={0}
@@ -149,7 +146,7 @@ export function GivesBackCard({ promptIndex, forceVisible = false }: GivesBackCa
             />
           </label>
           <label className="min-w-[12rem] flex-1 text-[10.5px] text-slate-500">
-            Anteckning (valfritt)
+            {t('givesBack.card.note')}
             <input
               value={note}
               maxLength={200}
@@ -164,7 +161,7 @@ export function GivesBackCard({ promptIndex, forceVisible = false }: GivesBackCa
             disabled={busy}
             data-testid="gives-back-submit"
           >
-            Spara i min logg
+            {t('givesBack.card.saveLog')}
           </button>
         </form>
       ) : null}
@@ -172,11 +169,4 @@ export function GivesBackCard({ promptIndex, forceVisible = false }: GivesBackCa
       {error ? <p className="mt-1.5 text-[11px] text-alert">{error}</p> : null}
     </aside>
   );
-}
-
-/** Kort rad till statusfältet: hur mycket användaren själv uppgett att den gett. */
-export function givesBackHint(enabled: boolean, summary: { count: number; totalSek: number }) {
-  if (!enabled) return 'gives back: av';
-  if (summary.count === 0) return 'gives back: på · ingen logg än';
-  return `gives back: ${summary.count} stöd · ${formatSek(summary.totalSek)}`;
 }

@@ -1,12 +1,13 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { McpServerConfig } from '@freevobe/protocol';
 import { useAppStore } from '../store/appStore';
 import { Button, Chip, Field, Modal, Toggle } from './ui';
 
-function blankServer(): McpServerConfig {
+function blankServer(name: string): McpServerConfig {
   return {
     id: `mcp_${Date.now().toString(36)}`,
-    name: 'ny-server',
+    name,
     transport: 'stdio',
     command: 'npx',
     args: ['-y', '@modelcontextprotocol/server-filesystem', '.'],
@@ -17,6 +18,7 @@ function blankServer(): McpServerConfig {
 }
 
 export function McpDialog() {
+  const { t } = useTranslation();
   const open = useAppStore((state) => state.mcpOpen);
   const setOpen = useAppStore((state) => state.setMcpOpen);
   const servers = useAppStore((state) => state.mcpServers);
@@ -41,22 +43,19 @@ export function McpDialog() {
       ? servers.map((server) => (server.id === draft.id ? draft : server))
       : [...servers, draft];
     await saveMcpServers(next);
-    setStatus(`Sparade ${draft.name}.`);
+    setStatus(t('mcp.saved', { name: draft.name }));
     setDraft(null);
   };
 
   const remove = async (id: string) => {
     await disconnectMcp(id).catch(() => undefined);
     await saveMcpServers(servers.filter((server) => server.id !== id));
-    setStatus('Servern togs bort.');
+    setStatus(t('mcp.removeDone'));
   };
 
   return (
-    <Modal title="MCP-servrar" onClose={() => setOpen(false)} width="max-w-4xl">
-      <p className="mb-3 text-xs text-slate-500">
-        MCP-verktyg dyker upp som vanliga agentverktyg. Varje server kan aktiveras per projekt, och
-        servrar som kräver godkännande visar en varning innan verktygen får köras.
-      </p>
+    <Modal title={t('mcp.title')} onClose={() => setOpen(false)} width="max-w-4xl">
+      <p className="mb-3 text-xs text-slate-500">{t('mcp.intro')}</p>
 
       <datalist id="mcp-examples">
         {examples.map((example) => (
@@ -68,19 +67,19 @@ export function McpDialog() {
         <section className="space-y-2">
           <div className="flex items-center gap-2">
             <h3 className="text-xs font-semibold tracking-wide text-slate-400 uppercase">
-              Konfigurerade
+              {t('mcp.configured')}
             </h3>
-            <span className="text-[10px] text-slate-600">{servers.length} st</span>
-            <Button className="ml-auto" onClick={() => upsert(blankServer())}>
-              Ny server
+            <span className="text-[10px] text-slate-600">
+              {t('mcp.count', { count: servers.length })}
+            </span>
+            <Button className="ml-auto" onClick={() => upsert(blankServer(t('mcp.newName')))}>
+              {t('mcp.new')}
             </Button>
           </div>
 
           <ul className="max-h-72 space-y-1 overflow-y-auto">
             {servers.length === 0 ? (
-              <li className="text-[11.5px] text-slate-600">
-                Inga servrar än. Lägg till en från exempellistan till höger.
-              </li>
+              <li className="text-[11.5px] text-slate-600">{t('mcp.none')}</li>
             ) : (
               servers.map((server) => {
                 const status = statuses.find((entry) => entry.id === server.id);
@@ -89,8 +88,10 @@ export function McpDialog() {
                     <div className="flex items-center gap-1.5">
                       <span className="text-[12px] font-medium text-slate-200">{server.name}</span>
                       <Chip tone={status?.connected ? 'mint' : 'neutral'}>{server.transport}</Chip>
-                      {!server.enabled ? <Chip>avstängd</Chip> : null}
-                      {server.requireApproval ? <Chip tone="ember">godkännande</Chip> : null}
+                      {!server.enabled ? <Chip>{t('mcp.disabled')}</Chip> : null}
+                      {server.requireApproval ? (
+                        <Chip tone="ember">{t('mcp.approval')}</Chip>
+                      ) : null}
                     </div>
                     <p className="mt-0.5 truncate font-mono text-[10.5px] text-slate-500">
                       {server.transport === 'stdio'
@@ -101,16 +102,18 @@ export function McpDialog() {
                       <p className="mt-0.5 text-[10.5px] text-alert">{status.error}</p>
                     ) : null}
                     <div className="mt-1.5 flex gap-1.5">
-                      <Button onClick={() => upsert(server)}>Redigera</Button>
+                      <Button onClick={() => upsert(server)}>{t('mcp.edit')}</Button>
                       {status?.connected ? (
-                        <Button onClick={() => void disconnectMcp(server.id)}>Koppla från</Button>
+                        <Button onClick={() => void disconnectMcp(server.id)}>
+                          {t('rightPanel.mcp.disconnect')}
+                        </Button>
                       ) : (
                         <Button variant="primary" onClick={() => void connectMcp(server.id)}>
-                          Anslut
+                          {t('rightPanel.mcp.connect')}
                         </Button>
                       )}
                       <Button variant="danger" onClick={() => void remove(server.id)}>
-                        Ta bort
+                        {t('mcp.remove')}
                       </Button>
                     </div>
                   </li>
@@ -121,10 +124,10 @@ export function McpDialog() {
 
           <div className="space-y-1 rounded border border-steel p-2">
             <h4 className="text-[10px] font-semibold tracking-wide text-slate-500 uppercase">
-              Exempel att lägga till
+              {t('mcp.examples')}
             </h4>
             {examples.length === 0 ? (
-              <p className="text-[11px] text-slate-600">Inga exempel tillgängliga.</p>
+              <p className="text-[11px] text-slate-600">{t('mcp.noExamples')}</p>
             ) : (
               examples.map((example) => (
                 <div key={example.id} className="flex items-start gap-2">
@@ -141,7 +144,7 @@ export function McpDialog() {
                       upsert({ ...example, id: `${example.id}_${Date.now().toString(36)}` })
                     }
                   >
-                    Lägg till
+                    {t('mcp.add')}
                   </Button>
                 </div>
               ))
@@ -151,18 +154,18 @@ export function McpDialog() {
 
         <section className="space-y-2">
           <h3 className="text-xs font-semibold tracking-wide text-slate-400 uppercase">
-            {draft ? `Redigera ${draft.name}` : 'Välj en server'}
+            {draft ? t('mcp.editTitle', { name: draft.name }) : t('mcp.selectTitle')}
           </h3>
           {draft ? (
             <>
-              <Field label="Namn">
+              <Field label={t('mcp.name')}>
                 <input
                   value={draft.name}
                   onChange={(event) => setDraft({ ...draft, name: event.target.value })}
                   className="w-full rounded border border-steel bg-anvil px-2 py-1.5 text-xs text-slate-200"
                 />
               </Field>
-              <Field label="Transport">
+              <Field label={t('mcp.transport')}>
                 <select
                   value={draft.transport}
                   onChange={(event) =>
@@ -173,21 +176,21 @@ export function McpDialog() {
                   }
                   className="w-full rounded border border-steel bg-anvil px-2 py-1.5 text-xs text-slate-200"
                 >
-                  <option value="stdio">stdio (lokal process)</option>
+                  <option value="stdio">{t('mcp.transportStdio')}</option>
                   <option value="http">HTTP</option>
                   <option value="sse">SSE</option>
                 </select>
               </Field>
               {draft.transport === 'stdio' ? (
                 <>
-                  <Field label="Kommando">
+                  <Field label={t('mcp.command')}>
                     <input
                       value={draft.command ?? ''}
                       onChange={(event) => setDraft({ ...draft, command: event.target.value })}
                       className="w-full rounded border border-steel bg-anvil px-2 py-1.5 font-mono text-xs text-slate-200"
                     />
                   </Field>
-                  <Field label="Argument" hint="Kommaseparerade.">
+                  <Field label={t('mcp.args')} hint={t('mcp.argsHint')}>
                     <input
                       value={(draft.args ?? []).join(', ')}
                       onChange={(event) =>
@@ -204,7 +207,7 @@ export function McpDialog() {
                   </Field>
                 </>
               ) : (
-                <Field label="URL">
+                <Field label={t('mcp.url')}>
                   <input
                     value={draft.url ?? ''}
                     onChange={(event) => setDraft({ ...draft, url: event.target.value })}
@@ -212,10 +215,7 @@ export function McpDialog() {
                   />
                 </Field>
               )}
-              <Field
-                label="Miljövariabler"
-                hint="Nycklar separeras med komma, t.ex. API_KEY. Värden sätts i din miljö."
-              >
+              <Field label={t('mcp.env')} hint={t('mcp.envHint')}>
                 <input
                   defaultValue={Object.keys(draft.env ?? {}).join(', ')}
                   onBlur={(event) =>
@@ -236,35 +236,31 @@ export function McpDialog() {
               <Toggle
                 checked={draft.enabled}
                 onChange={(value) => setDraft({ ...draft, enabled: value })}
-                label="Aktiv i det här projektet"
+                label={t('mcp.enabled')}
               />
               <Toggle
                 checked={draft.requireApproval}
                 onChange={(value) => setDraft({ ...draft, requireApproval: value })}
-                label="Kräv godkännande innan verktyg från servern körs (rekommenderas)"
+                label={t('mcp.requireApproval')}
               />
               {draft.transport === 'stdio' ? (
                 <p className="rounded border border-spark/40 bg-spark/10 p-2 text-[11px] text-spark">
-                  ⚠ stdio-servrar startar en lokal process med dina rättigheter. Granska kommandot
-                  innan du ansluter.
+                  ⚠ {t('mcp.warnStdio')}
                 </p>
               ) : (
                 <p className="rounded border border-spark/40 bg-spark/10 p-2 text-[11px] text-spark">
-                  ⚠ Nätverksservrar kan skicka projektdata vidare. Aktivera bara servrar du litar
-                  på.
+                  ⚠ {t('mcp.warnNetwork')}
                 </p>
               )}
               <div className="flex gap-2">
                 <Button variant="primary" onClick={() => void commit()}>
-                  Spara
+                  {t('mcp.save')}
                 </Button>
-                <Button onClick={() => setDraft(null)}>Avbryt</Button>
+                <Button onClick={() => setDraft(null)}>{t('mcp.cancel')}</Button>
               </div>
             </>
           ) : (
-            <p className="text-[11.5px] text-slate-600">
-              Välj en server till vänster för att redigera, eller lägg till en ny.
-            </p>
+            <p className="text-[11.5px] text-slate-600">{t('mcp.selectHint')}</p>
           )}
           {status ? <p className="text-[11px] text-mint">{status}</p> : null}
         </section>

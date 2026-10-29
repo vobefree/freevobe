@@ -63,13 +63,55 @@ Varje del har sina egna kommandon; CI kör samma saker vid varje push (se
 
 ```bash
 cd freevobe-mobile  && npm test && npm run typecheck && npm run lint
-cd freevobe-desktop && npm run typecheck && npm run lint && npm test
+cd freevobe-desktop && npm run typecheck && npm run lint && npm run i18n:check && npm test
 cd freevobe-learn   && npm test && npm run typecheck && npm run build
-cd freevobe         && npm test && npm run typecheck && npm run build
+cd freevobe         && npm run i18n:check && npm test && npm run typecheck && npm run build
 ```
 
 Sådant som kräver en riktig enhet eller nedladdade webbläsare – Playwright-sviten i
 `freevobe-desktop` och appens pushnotiser – körs inte i CI utan lokalt.
+
+## Språk (i18n)
+
+Engelska är default. Alla ytor finns på tolv språk:
+
+| Språk                | Tagg      |
+| -------------------- | --------- |
+| Engelska (default)   | `en`      |
+| Svenska              | `sv`      |
+| Norska (bokmål)      | `nb`      |
+| Danska               | `da`      |
+| Finska               | `fi`      |
+| Tyska                | `de`      |
+| Spanska              | `es`      |
+| Franska              | `fr`      |
+| Polska               | `pl`      |
+| Ryska                | `ru`      |
+| Kinesiska (förenklad) | `zh-Hans` |
+| Kinesiska (traditionell) | `zh-Hant` |
+
+Var språkfilerna bor:
+
+| Del      | Filer                                | Teknik                           | Status |
+| -------- | ------------------------------------ | -------------------------------- | ------ |
+| Desktop  | `freevobe-desktop/apps/desktop/src/locales/<tagg>.json` | i18next + react-i18next | Klar för appskalet: topprad, statusrad, onboarding, inställningar, chatt, planer, kommandopalett, vänster- och mittpanel. Kvar: högerpanelen och verktygsdialogerna. |
+| Webben   | `freevobe/messages/<tagg>.json`      | next-intl, `/[locale]/`-routing  | Klar: alla sidor, hreflang, sitemap, språkväxlare. |
+| Mobilen  | `freevobe-mobile/src/locales/<tagg>.json` | i18next + react-i18next      | Ej påbörjad. |
+| Docs     | `docs/<tagg>/`                       | Markdown med språkväxlare        | Ej påbörjad. |
+
+**Lägga till ett nytt språk**
+
+1. Kopiera `en.json` till `<ny-tagg>.json` i varje mapps locale-mapp och översätt värdena (nycklarna
+   lämnas orörda). Platzhållare som `{{count}}` och `{{name}}` måste vara kvar exakt.
+2. Registrera taggen i `SUPPORTED_LOCALES` + `LOCALE_LABELS` i
+   `freevobe-desktop/apps/desktop/src/i18n/index.ts`, i `locales`-listan i
+   `freevobe/src/i18n/routing.ts` och i `LOCALE_LABELS` i `freevobe/src/i18n/locales.ts` (webben).
+3. Lägg till eventuell regional mappning (t.ex. `zh-TW` → `zh-Hant`) i `normalizeLocale`.
+4. Kör `npm run i18n:check` i `freevobe` och `freevobe-desktop` – båda måste ge 0 fel.
+
+Nya strängar läggs alltid till i `en.json` först och översätts sedan till övriga språk. Språkvalet
+sparas lokalt (`freevobe.locale` för desktop/mobil, cookien `NEXT_LOCALE` för webben) och slår igenom
+offentligt utan omstart; saknade nycklar faller tillbaka på engelska.
 
 ## Säkerhet
 

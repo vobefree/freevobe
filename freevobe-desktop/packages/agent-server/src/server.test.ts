@@ -216,9 +216,7 @@ describe('projekt och sessioner', () => {
     await expect(
       fs.access(path.join(projectRoot, '.freevobe', 'rules.md')),
     ).resolves.toBeUndefined();
-    await expect(
-      fs.access(path.join(projectRoot, '.freevobe', 'skills')),
-    ).resolves.toBeUndefined();
+    await expect(fs.access(path.join(projectRoot, '.freevobe', 'skills'))).resolves.toBeUndefined();
   });
 
   it('sparar och läser meddelanden per session', async () => {

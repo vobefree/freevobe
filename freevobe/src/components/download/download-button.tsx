@@ -1,9 +1,10 @@
 'use client';
 
 import { Download, ExternalLink } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { DOWNLOAD_LINKS } from '@/config/release';
-import { assetUrlFor, PLATFORM_LABELS, type Platform } from '@/lib/release';
+import { assetUrlFor, type Platform } from '@/lib/release';
 import { cn } from '@/lib/utils';
 import { usePlatform, useRelease } from './use-release';
 
@@ -21,6 +22,7 @@ export function DownloadButton({
   label = 'full',
   showPlatform = true,
 }: DownloadButtonProps) {
+  const t = useTranslations('download');
   const { platform } = usePlatform();
   const release = useRelease();
 
@@ -37,16 +39,16 @@ export function DownloadButton({
   const text = !published ? (
     <>
       <ExternalLink className="size-4" />
-      {label === 'short' ? 'Releases' : 'View releases'}
+      {label === 'short' ? t('button.releases') : t('button.viewReleases')}
     </>
   ) : (
     <>
       <Download className="size-4" />
       {label === 'short'
-        ? 'Download'
+        ? t('button.download')
         : resolved && showPlatform
-          ? `Download for ${PLATFORM_LABELS[resolved]}`
-          : 'Download Freevobe'}
+          ? t('button.downloadFor', { platform: t(`platform.${resolved}`) })
+          : t('button.downloadFreevobe')}
     </>
   );
 

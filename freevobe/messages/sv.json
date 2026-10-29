@@ -1,0 +1,498 @@
+{
+  "common": {
+    "skipToContent": "Hoppa till innehållet",
+    "mainNav": "Huvudmeny",
+    "home": "Freevobe – startsidan",
+    "openMenu": "Öppna menyn",
+    "closeMenu": "Stäng menyn",
+    "switchToLight": "Byt till ljust läge",
+    "switchToDark": "Byt till mörkt läge",
+    "allPlatforms": "Alla plattformar och releaseanteckningar",
+    "language": "Språk",
+    "changeLanguage": "Byt språk"
+  },
+  "nav": {
+    "features": "Funktioner",
+    "howItWorks": "Så fungerar det",
+    "skills": "Skills",
+    "givesBack": "Gives Back",
+    "faq": "Vanliga frågor",
+    "learn": "Learn",
+    "github": "GitHub"
+  },
+  "meta": {
+    "title": "Freevobe – voba med Ollama, lokalt och utan token-gränser",
+    "titleTemplate": "%s · Freevobe",
+    "description": "Freevobe är din lokala vibekodningsagent. Installera, koppla på Ollama och bygg programvara genom samtal på vanlig svenska – inga API-nycklar, ingen tokenräkning, inget molnberoende.",
+    "shortDescription": "Lokal-first AI-kodagent för Ollama. Inga tokens, inga gränser, inget molnberoende.",
+    "ogTitle": "Freevobe – voba med Ollama",
+    "keywords": "Ollama, lokal AI-kodagent, vibekodning, vibe coding, local-first, Qwen coder, MCP, öppen källkod kodagent",
+    "featureList": "Lokal Ollama-anslutning;Arbetsyta i Claude-stil med chatt, diff och terminal;Diffgranskning och godkännande av kommandon;Markdown-skills och mallar;Git- och terminalintegration;MCP-integrationer",
+    "category": "utvecklarverktyg"
+  },
+  "hero": {
+    "badge": "Lokal-first AI-kodagent",
+    "title": "Voba med Ollama.",
+    "body": "Freevobe är din lokala vibekodningsagent. Installera, koppla på Ollama och bygg programvara genom samtal på vanlig svenska – inga API-nycklar, ingen tokenräkning, inget molnberoende.",
+    "secondary": "Se hur det fungerar",
+    "footnote": "Inga tokens. Inga gränser. Bara vibbar.",
+    "mockupCaption": "Hela loopen på din maskin – plan, diff, terminal och tester i en arbetsyta."
+  },
+  "socialProof": {
+    "aria": "Byggt för gemenskapen",
+    "heading": "Byggt för AI- och vibekodningsgemenskapen",
+    "badges": "Lokal-first;Drivs av Ollama;Ingen API-nyckel krävs;Öppna skills;Privat som standard"
+  },
+  "problem": {
+    "heading": "Token-gränser ska inte stoppa ditt flöde.",
+    "body": "Molnagenter tar betalt för att tänka. Freevobe kör modellen du redan har, så mätaren startar aldrig.",
+    "items": [
+      {
+        "problem": "Användningsgränser",
+        "solution": "Kör lokalt med Ollama.",
+        "detail": "Ditt grafikkort gör jobbet. Inga hastighetsgränser, inga veckotak och ingen väntan på att kvoten nollställs vid midnatt."
+      },
+      {
+        "problem": "API-kostnader",
+        "solution": "Ingen fakturering per token.",
+        "detail": "En lokal modell, obegränsat med prompter. Den enda kostnaden är elen du redan betalar för."
+      },
+      {
+        "problem": "Moln och integritet",
+        "solution": "Koden stannar på din maskin.",
+        "detail": "Filer, prompter och diffar lämnar aldrig datorn om du inte själv kopplar in en molnmodell."
+      }
+    ]
+  },
+  "features": {
+    "eyebrow": "Funktioner",
+    "heading": "Allt du behöver för att voba.",
+    "items": [
+      {
+        "icon": "plug",
+        "title": "Lokal Ollama-anslutning",
+        "body": "Koppla på dina lokala modeller med ett klick."
+      },
+      {
+        "icon": "layout",
+        "title": "Arbetsyta i Claude-stil",
+        "body": "Chatta, planera, redigera, granska diffar och kör – i en och samma arbetsyta."
+      },
+      {
+        "icon": "shield",
+        "title": "Säkra agentåtgärder",
+        "body": "Granska diffar och godkänn kommandon innan något ändras."
+      },
+      {
+        "icon": "sparkles",
+        "title": "Skills och mallar",
+        "body": "Lär Freevobe ditt arbetssätt med skills i Markdown."
+      },
+      {
+        "icon": "git",
+        "title": "Git och terminal",
+        "body": "Skapa grenar, committa ändringar och kör tester utan att lämna appen."
+      },
+      {
+        "icon": "blocks",
+        "title": "MCP-integrationer",
+        "body": "Koppla in externa verktyg via Model Context Protocol."
+      }
+    ]
+  },
+  "howItWorks": {
+    "eyebrow": "Så fungerar det",
+    "heading": "Tre steg till din första release.",
+    "steps": [
+      {
+        "title": "Ladda ner Freevobe",
+        "body": "Ta den nativa appen för Windows, macOS eller Linux. Inget mer att installera – agenten följer med."
+      },
+      {
+        "title": "Koppla på Ollama",
+        "body": "Freevobe hittar localhost:11434, listar dina modeller och visar vilka som klarar verktygsanrop."
+      },
+      {
+        "title": "Börja voba",
+        "body": "Beskriv appen du vill ha. Granska varje diff, godkänn kommandon och låt agenten committa."
+      }
+    ],
+    "flow": [
+      { "step": "Installera", "detail": "Native app för ditt system" },
+      { "step": "Koppla på Ollama", "detail": "Ett klick mot localhost:11434" },
+      { "step": "Välj modell", "detail": "Vilken modell du än har hämtat" },
+      { "step": "Prompta", "detail": "Beskriv vad som ska byggas" },
+      { "step": "Granska diffen", "detail": "Godkänn varje ändring" },
+      { "step": "Skeppa", "detail": "Committa och kör testerna" }
+    ]
+  },
+  "skills": {
+    "eyebrow": "Skills och mallar",
+    "heading": "Lär Freevobe hur du bygger.",
+    "body": "Skills är vanliga Markdown-filer med YAML-frontmatter. Lägg dem i projektet och agenten plockar upp dem – inga plugins, ingen ombyggnad.",
+    "badge": "skill",
+    "items": [
+      {
+        "name": "React-komponent",
+        "description": "Skapar en typad komponent med tester och stories.",
+        "body": "export function {{name}}(props: {{name}}Props) {}"
+      },
+      {
+        "name": "Next.js-sida",
+        "description": "Sida i App Router med metadata och laddningstillstånd.",
+        "body": "export default async function Page() {}"
+      },
+      {
+        "name": "API-endpoint",
+        "description": "Route handler med validering och typade svar.",
+        "body": "export async function POST(request: Request) {}"
+      },
+      {
+        "name": "Buggfix",
+        "description": "Reproducera, isolera, rätta – och bevisa det med ett test.",
+        "body": "failing test → smallest fix → green suite"
+      },
+      {
+        "name": "Skriv tester",
+        "description": "Tabellstyrda tester runt koden du just ändrade.",
+        "body": "describe(\"{{module}}\", () => { it(...) })"
+      },
+      {
+        "name": "Kodgranskning",
+        "description": "Granskar en diff efter buggar, kantfall och död kod.",
+        "body": "read diff → list findings → suggest patch"
+      }
+    ]
+  },
+  "givesBack": {
+    "eyebrow": "Gives Back",
+    "heading": "Inga annonser. Ett val att ge tillbaka.",
+    "body": "Freevobe säljer inte din uppmärksamhet. I stället för en annonsplats kan appen visa en frivillig påminnelse om ett ändamål du själv valt. Du ger direkt till organisationen – Freevobe hanterar aldrig pengarna.",
+    "badge": "Inget annonsnätverk, ingen spårning, ingen kassa i appen.",
+    "principles": [
+      {
+        "title": "Ingen reklam",
+        "body": "Freevobe levereras utan annonsplatser, annonsskript och annonsnätverk. Inget i appen är till salu."
+      },
+      {
+        "title": "Inga pengar genom Freevobe",
+        "body": "Appen har ingen kassa, inget konto och ingen betalningsleverantör. Varje länk öppnar organisationens egen sida."
+      },
+      {
+        "title": "Avstängt som standard",
+        "body": "Påminnelsen i chatten är frivillig, visas i ett eget block och rör aldrig agentens kontext."
+      },
+      {
+        "title": "Din logg stannar lokalt",
+        "body": "Om du bokför en gåva markeras den som självrapporterad och sparas bara i din lokala databas."
+      }
+    ],
+    "causes": [
+      {
+        "id": "lakare-utan-granser",
+        "name": "Läkare Utan Gränser",
+        "tagline": "Sjukvård där behovet är störst, oavsett var du föds.",
+        "description": "Medicinsk hjälp i krig, katastrofer och områden utan fungerande sjukvård. Oberoende av stater och parter i konflikter.",
+        "url": "https://lakareutangranser.se"
+      },
+      {
+        "id": "radda-barnen",
+        "name": "Rädda Barnen",
+        "tagline": "Barns rätt till skydd, skola och en trygg uppväxt.",
+        "description": "Arbetar med barns rättigheter i Sverige och internationellt: skydd mot våld, utbildning och stöd efter katastrofer.",
+        "url": "https://www.raddabarnen.se"
+      },
+      {
+        "id": "unicef",
+        "name": "UNICEF",
+        "tagline": "Rent vatten, vaccin och skola till barn i hela världen.",
+        "description": "FN:s barnfond arbetar med vaccin, nutrition, rent vatten och skolgång i fler än 190 länder.",
+        "url": "https://unicef.se"
+      },
+      {
+        "id": "wwf",
+        "name": "WWF",
+        "tagline": "Skogar, hav och arter som behöver finnas kvar.",
+        "description": "Bevarar naturområden, skyddar hotade arter och arbetar för att minska klimatpåverkan.",
+        "url": "https://www.wwf.se"
+      },
+      {
+        "id": "wikimedia",
+        "name": "Wikimedia Foundation",
+        "tagline": "Öppen kunskap som alla kan läsa och bygga vidare på.",
+        "description": "Driver Wikipedia och de fria kunskapsprojekten. Innehållet skrivs av frivilliga och får läsas av alla utan kostnad.",
+        "url": "https://donate.wikimedia.org"
+      },
+      {
+        "id": "kiva",
+        "name": "Kiva",
+        "tagline": "Smålån som gör att människor kan bygga eget.",
+        "description": "Förmedlar mikrolån till entreprenörer som annars inte får banklån. Lånen betalas tillbaka och kan lånas ut igen.",
+        "url": "https://www.kiva.org"
+      }
+    ],
+    "causeFooter": "Öppnar {host} · granskad {date}",
+    "footnote": "Katalogen är redaktionell och länkarna går till varje organisations egen förstasida i stället för till en kassa, så att ett ändrat betalflöde aldrig blir ett brutet löfte. Freevobe har inget partnerskap, ingen provision och inget värvningsavtal med någon organisation som listas här. Läs hela beskrivningen i",
+    "footnoteLink": "docs/gives-back.md"
+  },
+  "privacy": {
+    "eyebrow": "Integritet",
+    "heading": "Din kod är din.",
+    "body": "Freevobe kör lokalt som standard. Koppla på Ollama på din egen maskin och håll projekt, prompter och filer privata.",
+    "bullets": "Inget konto och ingen inloggning.;Ingen telemetri som lämnar appen.;Diff och godkännande innan varje skrivning.",
+    "dataPath": "Datavägen",
+    "path": "Din maskin;Ollama;Freevobe;Ditt projekt",
+    "note": "Allt i den loopen körs på hårdvara du redan äger. Inget laddas upp om du inte själv kopplar in en molnmodell."
+  },
+  "faq": {
+    "eyebrow": "Vanliga frågor",
+    "heading": "Frågor och svar.",
+    "body": "Fortfarande nyfiken? Dokumentationen går igenom agentloopen, skills och MCP i detalj.",
+    "items": [
+      {
+        "question": "Vad betyder ”voba”?",
+        "answer": "Att voba är att bygga med Ollama genom naturligt språk – lokalt och utan token-gränser. Det är vibe coding, minus mätaren som tickar."
+      },
+      {
+        "question": "Behöver jag en API-nyckel?",
+        "answer": "Nej. Freevobe ansluter direkt till din lokala Ollama-installation."
+      },
+      {
+        "question": "Vilka modeller kan jag använda?",
+        "answer": "Vilken modell som helst som finns i din lokala Ollama-installation – Qwen, Llama, DeepSeek, Mistral, Gemma och allt du hämtar härnäst."
+      },
+      {
+        "question": "Lämnar min kod datorn?",
+        "answer": "Inte som standard. Freevobe är lokal-first: agenten, modellen och filerna körs på din maskin. En molnmodell används bara om du själv kopplar in en."
+      },
+      {
+        "question": "Är Freevobe gratis?",
+        "answer": "Kärnappen är gratis att använda med dina egna lokala Ollama-modeller."
+      },
+      {
+        "question": "Vilka plattformar stöds?",
+        "answer": "Windows, macOS och Linux."
+      }
+    ]
+  },
+  "finalCta": {
+    "heading": "Redo att voba?",
+    "body": "Installera appen, peka den mot Ollama och beskriv vad du vill bygga. Diffen landar innan en enda fil ändras.",
+    "secondary": "Alla plattformar och releaseanteckningar",
+    "free": "Gratis att använda med dina lokala Ollama-modeller."
+  },
+  "footer": {
+    "tagline": "Lokal-first vibekodning med Ollama. Voba utan att räkna tokens.",
+    "product": "Produkt",
+    "resources": "Resurser",
+    "legal": "Juridik",
+    "features": "Funktioner",
+    "howItWorks": "Så fungerar det",
+    "skills": "Skills",
+    "givesBack": "Gives Back",
+    "learn": "Learn How to Vobe",
+    "download": "Ladda ner",
+    "documentation": "Dokumentation",
+    "github": "GitHub",
+    "discord": "Discord",
+    "faq": "Vanliga frågor",
+    "privacy": "Integritet",
+    "terms": "Villkor",
+    "licenseLink": "Licens (MIT)",
+    "socialGithub": "GitHub",
+    "socialDiscord": "Discord",
+    "socialX": "X",
+    "copyright": "© 2026 Freevobe.",
+    "builtFor": "Byggt för vibekodningsgemenskapen."
+  },
+  "download": {
+    "metaTitle": "Ladda ner",
+    "metaDescription": "Ladda ner Freevobe för Windows, macOS eller Linux, eller Android-appen till telefonen. Installationsfilerna publiceras på GitHub Releases.",
+    "title": "Ladda ner Freevobe",
+    "body": "Välj plattform – knappen nedan vet redan vilken. Freevobe kör offline och pratar med Ollama-installationen på din egen maskin.",
+    "signed": "Byggena är signerade där plattformen tillåter det. Källkoden är MIT-licensierad.",
+    "requirements": {
+      "title": "Innan du installerar",
+      "ollama": "Ollama",
+      "ollamaDetail": "Körs lokalt, med minst en modell hämtad",
+      "disk": "Disk",
+      "diskDetail": "~120 MB för appen, plus utrymmet dina modeller behöver",
+      "platforms": "Plattformar",
+      "platformsDetail": "Windows 10+, macOS 12+ (Apple Silicon eller Intel), Linux (AppImage, x86-64)",
+      "phone": "Telefon",
+      "phoneDetail": "Android 8+ kan installera APK-filen direkt. iOS kräver en Mac och ett Apple-konto."
+    },
+    "phone": {
+      "title": "Telefonappen",
+      "body": "Freevobe Mobile speglar skrivbordsappen: para ihop en gång med QR-koden över ditt lokala nätverk och följ sedan körningar, diffar och godkännanden från soffan. Inget lämnar ditt Wi-Fi – telefonen pratar med Freevobe-agenten som kör på din egen maskin.",
+      "step1": "Ladda ner APK-filen och öppna den. Android frågar om du vill tillåta installationer från den här källan – filen kommer inte från Google Play.",
+      "step2": "Öppna skrivbordsappen och visa parnings-QR-koden. Rikta telefonen mot den.",
+      "step3": "Båda enheterna måste vara på samma nätverk. Parningen fungerar offline.",
+      "ios": "iOS-byggen publiceras inte än – de kräver en Mac och ett Apple Developer-konto."
+    },
+    "learn": {
+      "eyebrow": "Freevobe Learn",
+      "title": "Learn How to Vobe – som app, inte som sida",
+      "size": "1 fil · ~0,34 MB",
+      "body": "Skriv en värld, få den kontrollerad och spela den. Lektionerna visar koden som byggde kartan. Appen är en enda HTML-fil: ladda ner den, öppna den och spela – ingen server, inget konto, ingen modell och ingen uppkoppling. Framstegen sparas i din egen webbläsare.",
+      "step1": "Ladda ner freevobe-learn.html från releasen.",
+      "step2": "Öppna filen i valfri webbläsare – den fungerar från mappen du sparade den i, även utan nät.",
+      "step3": "Flytta den till skrivbordet om du vill ha den som en egen app. Den ligger kvar tills du själv tar bort den.",
+      "download": "Ladda ner Freevobe Learn",
+      "allReleases": "Se filen bland alla releases"
+    },
+    "notes": {
+      "title": "Vad som ändrades i förra releasen",
+      "body": "Releaseanteckningarna kommer direkt från den nyaste taggen på GitHub.",
+      "loading": "Hämtar den senaste releasen…",
+      "missingTitle": "Ingen release publicerad än",
+      "missingBody": "Installationsfilerna publiceras på GitHub Releases. Tills den första taggen är pushad leder knapparna ovan till releasesidan.",
+      "errorTitle": "Releaseanteckningarna kunde inte hämtas",
+      "errorBody": "GitHub gick inte att nå från den här webbläsaren (offline eller hastighetsgräns). Anteckningarna finns alltid på GitHub Releases.",
+      "empty": "Den här releasen har inga anteckningar. Se hela historiken på GitHub Releases.",
+      "readFull": "Läs hela releasen på GitHub"
+    },
+    "where": {
+      "title": "Var filerna ligger",
+      "body": "Varje bygge hänger på en tagg i {repo}. Inget serveras från den här sajten, och märket ovan visar den nyaste taggen så snart den finns.",
+      "all": "Alla releases på GitHub",
+      "docs": "Läs dokumentationen"
+    },
+    "files": {
+      "title": "Alla filer i den här releasen",
+      "checksums": "Kontrollsummor",
+      "releaseFile": "Releasefil",
+      "file": "fil",
+      "files": "filer",
+      "loading": "Hämtar fillistan…",
+      "error": "Fillistan kunde inte hämtas eftersom GitHub inte gick att nå från den här webbläsaren. Alla filer finns alltid på releasen på GitHub.",
+      "empty": "Den här releasen har inga filer än. De laddas upp av release-workflowen direkt efter att taggen pushats –",
+      "emptyLink": "releasesidan",
+      "emptyAfter": "visar dem så snart de finns.",
+      "download": "Ladda ner",
+      "noChecksum": "Ingen kontrollsumma publicerad",
+      "copy": "Kopiera",
+      "copied": "Kopierat",
+      "copyKey": "Ctrl+C",
+      "copyAria": "Kopiera SHA-256 för {file}",
+      "copiedAria": "SHA-256 för {file} kopierades",
+      "selectedAria": "SHA-256 för {file} är markerad – tryck Ctrl eller Cmd och C",
+      "noRelease": "Ingen release publicerad än",
+      "allChecksums": "Alla filer har en publicerad SHA-256.",
+      "someChecksums": "{have} av {total} filer har en publicerad SHA-256 – resten laddades upp innan kontrollsummorna infördes.",
+      "mismatch": "Stämmer summan inte har filen ändrats på vägen – installera den inte. Samma summor finns i",
+      "mismatchAfter": ", filen som",
+      "mismatchReads": "läser.",
+      "platformMacLinux": "macOS/Linux",
+      "platformWindows": "Windows"
+    },
+    "button": {
+      "download": "Ladda ner",
+      "downloadFreevobe": "Ladda ner Freevobe",
+      "downloadFor": "Ladda ner för {platform}",
+      "releases": "Releases",
+      "viewReleases": "Visa releases"
+    },
+    "badge": {
+      "latest": "Senaste release {version}",
+      "latestNoVersion": "Senaste release",
+      "missing": "Visa releases"
+    },
+    "platform": {
+      "windows": "Windows",
+      "macAppleSilicon": "macOS",
+      "macIntel": "macOS Intel",
+      "linux": "Linux",
+      "android": "Android",
+      "unknown": "din plattform",
+      "appleSilicon": "Apple Silicon",
+      "intel": "Intel"
+    },
+    "platformNote": "Freevobe distribueras via GitHub Releases.",
+    "platformNoteMissing": "Installationsfilerna publiceras på GitHub Releases."
+  },
+  "legal": {
+    "lastUpdated": "Senast uppdaterad {date}",
+    "footerQuestion": "Frågor om den här sidan? Ställ dem i gemenskapens Discord, länkad i sidfoten.",
+    "privacy": {
+      "metaTitle": "Integritet",
+      "metaDescription": "Freevobe kör lokalt som standard: dina projekt, prompter och filer stannar på din maskin.",
+      "title": "Integritet",
+      "updated": "27 oktober 2026",
+      "intro": "Freevobe är lokal-first. Den här sidan beskriver vad den här webbplatsen och skrivbordsappen Freevobe gör med dina uppgifter.",
+      "sections": [
+        {
+          "title": "Den här webbplatsen",
+          "paragraphs": [
+            "Sajten är en statisk sida. Den sätter ingen analys, inga spårningspixlar och inga egna cookies, och den gör inga anrop till tredjepartsvärdar – typsnitt och bilder serveras från samma domän.",
+            "Ditt temaval (mörkt eller ljust) sparas i webbläsarens lokala lagring så att sidan öppnas som du lämnade den. Det lämnar aldrig din maskin."
+          ]
+        },
+        {
+          "title": "Reklam och Gives Back",
+          "paragraphs": [
+            "Freevobe har ingen reklam: inga annonsplatser, inga annonsskript och inget annonsnätverk. Webbplatsen och skrivbordsappen sätter därför inga reklamcookies eller enhetsidentifierare, och inga uppgifter delas med tredje part för marknadsföring.",
+            "I stället för en annonsplats kan skrivbordsappen visa en frivillig påminnelse om en välgörenhetsorganisation – Freevobe Gives Back. Den är avstängd tills du slår på den. Påminnelsen innehåller en länk till organisationens egen webbplats; Freevobe har ingen kassa, inget konto och ingen betalningsleverantör, och tar aldrig emot eller förmedlar en gåva.",
+            "Om du bokför en gåva i appen stannar anteckningen i din lokala databas och märks som självrapporterad. Den skickas aldrig till organisationen eller till oss, och du kan radera den när som helst."
+          ]
+        },
+        {
+          "title": "Skrivbordsappen",
+          "bullets": [
+            "Din kod, dina prompter och filer behandlas på din egen maskin av en modell som du själv kör via Ollama. Inget laddas upp som standard.",
+            "Sessioner, projektindex och minne lagras i en lokal SQLite-databas på din dator.",
+            "Appen skickar ingen telemetri. Det finns inget konto och ingen inloggning.",
+            "En molnmodell kontaktas bara om du själv konfigurerar en, och den anslutningen styrs då av leverantören du valde."
+          ]
+        },
+        {
+          "title": "Nedladdningar",
+          "paragraphs": [
+            "Nedladdningslänkarna pekar på projektets releasesida. Din webbläsare och den värd som sidan ligger hos gör sina vanliga loggningar."
+          ]
+        },
+        {
+          "title": "Ändringar",
+          "paragraphs": [
+            "Om policyn ändras ändras datumet högst upp på sidan. Freevobe är öppen källkod, så sidan och dess historik går att granska i det publika repot."
+          ]
+        }
+      ]
+    },
+    "terms": {
+      "metaTitle": "Villkor",
+      "metaDescription": "Enkla villkor för att använda Freevobe och den här webbplatsen.",
+      "title": "Villkor",
+      "updated": "27 oktober 2026",
+      "intro": "Kort och enkelt: Freevobe är fri programvara som körs på din hårdvara, och du ansvarar för det du bygger med den.",
+      "sections": [
+        {
+          "title": "Appen",
+          "bullets": [
+            "Kärnappen är gratis att använda med dina egna lokala Ollama-modeller. Det finns inget abonnemang, ingen tokenmätning och ingen användningsgräns från oss.",
+            "Källkoden släpps under MIT-licensen. Du får använda, ändra och distribuera den enligt den licensen.",
+            "Appen körs på din maskin med dina inloggningar och dina filer. Du ansvarar för de projekt du pekar den mot, de kommandon du godkänner och de ändringar du committar."
+          ]
+        },
+        {
+          "title": "Ingen garanti",
+          "paragraphs": [
+            "Freevobe tillhandahålls ”i befintligt skick”, utan garanti av något slag. Modellens utdata kan vara felaktig, och genererad kod bör granskas som alla andra bidrag. Håll ditt arbete under versionskontroll och granska diffar innan du godkänner dem."
+          ]
+        },
+        {
+          "title": "Modeller och tredjepartstjänster",
+          "paragraphs": [
+            "Modeller du kör via Ollama, och tjänster du väljer att koppla in, styrs av sina egna villkor och licenser. Vi kontrollerar dem inte och ansvarar inte för dem."
+          ]
+        },
+        {
+          "title": "Den här webbplatsen",
+          "paragraphs": [
+            "Produktinformationen här är vägledande och kan ändras i takt med att appen utvecklas. Material kan i framtiden levereras av annonspartner; se integritetssidan för vad det innebär för dina uppgifter."
+          ]
+        }
+      ]
+    }
+  }
+}

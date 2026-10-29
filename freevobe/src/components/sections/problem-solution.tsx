@@ -1,25 +1,29 @@
 import { ArrowRight } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { Reveal, RevealGroup, RevealItem } from '@/components/motion/reveal';
 import { card } from '@/lib/tokens';
-import { problems } from '@/lib/site';
 import { cn } from '@/lib/utils';
 
+type Item = { problem: string; solution: string; detail: string };
+
 export function ProblemSolution() {
+  const t = useTranslations('problem');
+  const items = t.raw('items') as Item[];
+
   return (
     <section id="why" className="scroll-mt-24 py-20 lg:py-28">
       <div className="vf-shell">
         <Reveal>
           <h2 className="mx-auto max-w-3xl text-center text-3xl font-semibold tracking-tight text-balance sm:text-4xl lg:text-[2.75rem]">
-            Token limits should not stop your flow.
+            {t('heading')}
           </h2>
           <p className="mx-auto mt-5 max-w-2xl text-center text-base leading-relaxed text-muted">
-            Cloud agents bill you for thinking. Freevobe runs the model you already have, so the
-            meter never starts.
+            {t('body')}
           </p>
         </Reveal>
 
         <RevealGroup className="mt-14 grid gap-5 md:grid-cols-3">
-          {problems.map((item) => (
+          {items.map((item) => (
             <RevealItem key={item.problem}>
               <div className={cn(card(), 'group h-full')}>
                 <p className="text-sm font-medium text-muted line-through decoration-diff-remove/70">

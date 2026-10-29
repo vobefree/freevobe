@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { useAppStore } from '../../store/appStore';
 import { Chip, EmptyState } from '../ui';
 import { diffSummary, diffWeight, renderDiff } from '../../lib/diffRender';
@@ -8,6 +9,12 @@ const RISK_TONE: Record<RiskLevel, 'neutral' | 'ember' | 'alert'> = {
   low: 'neutral',
   medium: 'ember',
   high: 'alert',
+};
+
+const WEIGHT_KEYS: Record<ReturnType<typeof diffWeight>, string> = {
+  small: 'diff.weight.small',
+  medium: 'diff.weight.medium',
+  large: 'diff.weight.large',
 };
 
 export function DiffLineList({ diff }: { diff: Parameters<typeof renderDiff>[0] }) {
@@ -44,22 +51,20 @@ export function DiffLineList({ diff }: { diff: Parameters<typeof renderDiff>[0] 
 }
 
 export function DiffPane() {
+  const { t } = useTranslation();
   const diffs = useAppStore((state) => state.diffs);
   const activeDiffId = useAppStore((state) => state.activeDiffId);
   const setActiveDiff = useAppStore((state) => state.setActiveDiff);
   const openFile = useAppStore((state) => state.openFile);
 
   if (diffs.length === 0) {
-    return (
-      <EmptyState
-        title="Inga ändringar än"
-        hint="När agenten föreslår eller skriver en fil visas diffen här. Ingenting sparas i ditt projekt utan att du ser den först."
-      />
-    );
+    return <EmptyState title={t('diff.empty.title')} hint={t('diff.empty.hint')} />;
   }
 
   const active = diffs.find((diff) => diff.id === activeDiffId) ?? diffs[diffs.length - 1];
-  if (!active) return <EmptyState title="Ingen diff vald" />;
+  if (!active) return <EmptyState title={t('diff.noneSelected')} />;
+
+  const weight = diffWeight(active);
 
   return (
     <div className="flex h-full min-h-0 flex-col">
@@ -104,27 +109,30 @@ export function DiffPane() {
           {diffSummary(active)}
         </span>
         <Chip tone={active.kind === 'delete' ? 'alert' : 'neutral'}>{active.kind}</Chip>
-        <Chip tone={diffWeight(active) === 'stor' ? 'alert' : 'neutral'}>{diffWeight(active)}</Chip>
+        <Chip tone={weight === 'large' ? 'alert' : 'neutral'}>{t(WEIGHT_KEYS[weight])}</Chip>
         <button
           type="button"
           className="ml-auto cursor-pointer text-[10px] text-slate-500 underline decoration-dotted"
           onClick={() => void openFile(active.path)}
         >
-          öppna fil
+          {t('diff.open')}
         </button>
       </div>
 
       <div className="min-h-0 flex-1 overflow-auto">
         {active.binary ? (
-          <p className="p-3 text-xs text-slate-500">Binär fil – ingen textdiff tillgänglig.</p>
+          <p className="p-3 text-xs text-slate-500">{t('diff.binary')}</p>
         ) : (
           <DiffLineList diff={active} />
         )}
       </div>
 
       <footer className="shrink-0 border-t border-steel px-2.5 py-1.5 text-[10px] text-slate-600">
-        Diffen är oföränderlig: {active.additions} tillagda och {active.deletions} borttagna rader i{' '}
-        {active.absolutePath}
+        {t('diff.footer', {
+          additions: active.additions,
+          deletions: active.deletions,
+          path: active.absolutePath,
+        })}
       </footer>
     </div>
   );

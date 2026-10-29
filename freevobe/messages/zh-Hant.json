@@ -1,0 +1,498 @@
+{
+  "common": {
+    "skipToContent": "跳到正文",
+    "mainNav": "主選單",
+    "home": "Freevobe – 首頁",
+    "openMenu": "開啟選單",
+    "closeMenu": "關閉選單",
+    "switchToLight": "切換為淺色模式",
+    "switchToDark": "切換為深色模式",
+    "allPlatforms": "所有平台與版本說明",
+    "language": "語言",
+    "changeLanguage": "切換語言"
+  },
+  "nav": {
+    "features": "功能",
+    "howItWorks": "運作方式",
+    "skills": "Skills",
+    "givesBack": "Gives Back",
+    "faq": "常見問題",
+    "learn": "Learn",
+    "github": "GitHub"
+  },
+  "meta": {
+    "title": "Freevobe – 用 Ollama 在本機 vobe，沒有 token 限制",
+    "titleTemplate": "%s · Freevobe",
+    "description": "Freevobe 是你的本機 vibecoding 代理。安裝後連接 Ollama，用中文對話就能打造軟體——不需要 API 金鑰，不計算 token，也不依賴雲端。",
+    "shortDescription": "為 Ollama 打造的本機優先 AI 編碼代理。無 token、無限制、無雲端依賴。",
+    "ogTitle": "Freevobe – 用 Ollama vobe",
+    "keywords": "Ollama, 本機 AI 編碼代理, vibecoding, vibe coding, local-first, Qwen coder, MCP, 開源編碼代理",
+    "featureList": "本機 Ollama 連線;類似 Claude 的工作區，含聊天、diff 與終端機;diff 審查與指令核准;Markdown skills 與範本;Git 與終端機整合;MCP 整合",
+    "category": "開發者工具"
+  },
+  "hero": {
+    "badge": "本機優先 AI 編碼代理",
+    "title": "用 Ollama vobe。",
+    "body": "Freevobe 是你的本機 vibecoding 代理。安裝後連接 Ollama，用中文對話就能打造軟體——不需要 API 金鑰，不計算 token，也不依賴雲端。",
+    "secondary": "看看怎麼用",
+    "footnote": "沒有 token。沒有上限。只有感覺。",
+    "mockupCaption": "整個流程都在你的機器上——計畫、diff、終端機與測試集中在一個工作區。"
+  },
+  "socialProof": {
+    "aria": "為社群而建",
+    "heading": "為 AI 與 vibecoding 社群而建",
+    "badges": "本機優先;由 Ollama 驅動;免 API 金鑰;開放的 skills;預設私密"
+  },
+  "problem": {
+    "heading": "token 上限不該打斷你的思緒。",
+    "body": "雲端代理會為「思考」收費。Freevobe 執行你已經有的模型，所以計費表永遠不會啟動。",
+    "items": [
+      {
+        "problem": "使用上限",
+        "solution": "用 Ollama 在本機執行。",
+        "detail": "由你的顯示卡做事。沒有速率限制、沒有每週額度，也不用等半夜重置。"
+      },
+      {
+        "problem": "API 費用",
+        "solution": "不按 token 計費。",
+        "detail": "一個本機模型，無限提示。唯一成本是你本來就要付的電費。"
+      },
+      {
+        "problem": "雲端隱私",
+        "solution": "程式碼留在你的機器上。",
+        "detail": "除非你自己連接雲端模型，否則檔案、提示與 diff 永遠不會離開你的電腦。"
+      }
+    ]
+  },
+  "features": {
+    "eyebrow": "功能",
+    "heading": "vobe 所需要的一切。",
+    "items": [
+      {
+        "icon": "plug",
+        "title": "本機 Ollama 連線",
+        "body": "一鍵連接你的本機模型。"
+      },
+      {
+        "icon": "layout",
+        "title": "類似 Claude 的工作區",
+        "body": "聊天、規劃、編輯、檢視 diff 與執行，都在同一個乾淨的工作區。"
+      },
+      {
+        "icon": "shield",
+        "title": "安全的代理動作",
+        "body": "在任何變更發生之前審查 diff 並核准指令。"
+      },
+      {
+        "icon": "sparkles",
+        "title": "Skills 與範本",
+        "body": "用 Markdown skills 教 Freevobe 你的工作方式。"
+      },
+      {
+        "icon": "git",
+        "title": "Git 與終端機",
+        "body": "不必離開應用就能建立分支、提交變更、執行測試。"
+      },
+      {
+        "icon": "blocks",
+        "title": "MCP 整合",
+        "body": "透過 Model Context Protocol 連接外部工具。"
+      }
+    ]
+  },
+  "howItWorks": {
+    "eyebrow": "運作方式",
+    "heading": "三個步驟完成第一次發佈。",
+    "steps": [
+      {
+        "title": "下載 Freevobe",
+        "body": "取得 Windows、macOS 或 Linux 原生應用。不用安裝其他東西——代理已隨附。"
+      },
+      {
+        "title": "連接 Ollama",
+        "body": "Freevobe 會找到 localhost:11434，列出你的模型，並標示哪些支援工具呼叫。"
+      },
+      {
+        "title": "開始 vobe",
+        "body": "描述你想要的应用。審查每個 diff、核准指令，讓代理提交。"
+      }
+    ],
+    "flow": [
+      { "step": "安裝", "detail": "適用你系統的原生應用" },
+      { "step": "連接 Ollama", "detail": "一鍵連到 localhost:11434" },
+      { "step": "選擇模型", "detail": "任何已下載的模型" },
+      { "step": "提示", "detail": "描述要打造什麼" },
+      { "step": "審查 diff", "detail": "核准每一處變更" },
+      { "step": "發佈", "detail": "提交並執行測試" }
+    ]
+  },
+  "skills": {
+    "eyebrow": "Skills 與範本",
+    "heading": "讓 Freevobe 學會你的建構方式。",
+    "body": "Skills 就是帶 YAML frontmatter 的一般 Markdown 檔案。放進專案裡，代理會自動辨識——沒有外掛，也不用重新建構。",
+    "badge": "skill",
+    "items": [
+      {
+        "name": "React 元件",
+        "description": "產生帶型別、測試與 stories 的元件。",
+        "body": "export function {{name}}(props: {{name}}Props) {}"
+      },
+      {
+        "name": "Next.js 頁面",
+        "description": "帶中繼資料與載入狀態的 App Router 頁面。",
+        "body": "export default async function Page() {}"
+      },
+      {
+        "name": "API 端點",
+        "description": "帶驗證與型別化回應的 route handler。",
+        "body": "export async function POST(request: Request) {}"
+      },
+      {
+        "name": "修正缺陷",
+        "description": "重現、隔離、修正——並用測試證明。",
+        "body": "failing test → smallest fix → green suite"
+      },
+      {
+        "name": "撰寫測試",
+        "description": "圍繞剛改動的程式碼寫表驅動測試。",
+        "body": "describe(\"{{module}}\", () => { it(...) })"
+      },
+      {
+        "name": "程式碼審查",
+        "description": "檢查 diff 中的缺陷、邊界情況與死程式碼。",
+        "body": "read diff → list findings → suggest patch"
+      }
+    ]
+  },
+  "givesBack": {
+    "eyebrow": "Gives Back",
+    "heading": "沒有廣告。選擇回饋。",
+    "body": "Freevobe 不出賣你的注意力。不做廣告版位，應用可以顯示一則你自願選擇的公益提醒。你直接捐給機構——Freevobe 從不經手金錢。",
+    "badge": "沒有廣告網路、沒有追蹤、應用內沒有付款。",
+    "principles": [
+      {
+        "title": "沒有廣告",
+        "body": "Freevobe 不含廣告版位、廣告腳本與廣告網路。應用裡沒有任何東西在販售。"
+      },
+      {
+        "title": "不透過 Freevobe 收錢",
+        "body": "應用沒有付款、沒有帳號、沒有支付服務商。每個連結都開啟機構自己的頁面。"
+      },
+      {
+        "title": "預設關閉",
+        "body": "聊天中的提醒是自願開啟的，顯示在獨立區塊，絕不進入代理的上下文。"
+      },
+      {
+        "title": "紀錄只留在本機",
+        "body": "如果你記錄了一筆捐款，它會標示為自行申報，只保存在你的本機資料庫。"
+      }
+    ],
+    "causes": [
+      {
+        "id": "lakare-utan-granser",
+        "name": "無國界醫生",
+        "tagline": "在最需要的地方提供醫療，無論你出生在哪裡。",
+        "description": "在戰爭、災難與缺乏醫療的地區提供醫療援助。獨立於國家與衝突各方。",
+        "url": "https://www.msf.org"
+      },
+      {
+        "id": "radda-barnen",
+        "name": "救助兒童會",
+        "tagline": "兒童獲得保護、教育與安全成長的權利。",
+        "description": "在各地推動兒童權利：免於暴力、接受教育，並在災難後提供支持。",
+        "url": "https://www.savethechildren.net"
+      },
+      {
+        "id": "unicef",
+        "name": "聯合國兒童基金會",
+        "tagline": "為全世界的兒童提供乾淨的水、疫苗與學校。",
+        "description": "聯合國兒童基金會在 190 多個國家推動疫苗、營養、清潔用水與教育。",
+        "url": "https://www.unicef.org"
+      },
+      {
+        "id": "wwf",
+        "name": "世界自然基金會",
+        "tagline": "必須繼續存在的森林、海洋與物種。",
+        "description": "保護自然區域與瀕危物種，並努力減少氣候影響。",
+        "url": "https://www.wwf.org"
+      },
+      {
+        "id": "wikimedia",
+        "name": "維基媒體基金會",
+        "tagline": "人人可讀、可續寫的開放知識。",
+        "description": "營運維基百科與自由知識專案。內容由志工撰寫，任何人都可以免費閱讀。",
+        "url": "https://donate.wikimedia.org"
+      },
+      {
+        "id": "kiva",
+        "name": "Kiva",
+        "tagline": "讓人們能夠建立自己事業的小額貸款。",
+        "description": "為拿不到銀行貸款的創業者提供小額貸款。貸款會償還，並可以再次借出。",
+        "url": "https://www.kiva.org"
+      }
+    ],
+    "causeFooter": "開啟 {host} · 審核於 {date}",
+    "footnote": "這份名單是編輯性質的，連結指向各機構自己的首頁而不是結帳頁，這樣付款流程改變也不會變成空頭承諾。Freevobe 與這裡列出的任何機構都沒有合作、佣金或推薦協議。完整說明見",
+    "footnoteLink": "docs/gives-back.md"
+  },
+  "privacy": {
+    "eyebrow": "隱私",
+    "heading": "你的程式碼始終屬於你。",
+    "body": "Freevobe 預設在本機執行。在你自己的機器上連接 Ollama，讓專案、提示與檔案保持私密。",
+    "bullets": "沒有帳號，也不需要登入。;沒有離開應用的遙測。;每次寫入前都有 diff 與核准。",
+    "dataPath": "資料路徑",
+    "path": "你的機器;Ollama;Freevobe;你的專案",
+    "note": "這條鏈路全部執行在你已有的硬體上。除非你自己連接雲端模型，否則不會上傳任何內容。"
+  },
+  "faq": {
+    "eyebrow": "常見問題",
+    "heading": "問題與回答。",
+    "body": "還想了解更多？文件詳細說明了代理迴圈、skills 與 MCP。",
+    "items": [
+      {
+        "question": "「vobe」是什麼意思？",
+        "answer": "vobe 就是用自然語言、透過 Ollama 進行建構——在本機，而且沒有 token 限制。它是 vibe coding，但沒有計費表在跑。"
+      },
+      {
+        "question": "需要 API 金鑰嗎？",
+        "answer": "不需要。Freevobe 直接連接你本機的 Ollama 安裝。"
+      },
+      {
+        "question": "可以用哪些模型？",
+        "answer": "你本機 Ollama 裡的任何模型——Qwen、Llama、DeepSeek、Mistral、Gemma，以及你接下來下載的任何模型。"
+      },
+      {
+        "question": "我的程式碼會離開電腦嗎？",
+        "answer": "預設不會。Freevobe 是本機優先：代理、模型與檔案都在你的機器上執行。只有你自己連接雲端模型時才會用到它。"
+      },
+      {
+        "question": "Freevobe 免費嗎？",
+        "answer": "核心應用可以免費搭配你自己的本機 Ollama 模型使用。"
+      },
+      {
+        "question": "支援哪些平台？",
+        "answer": "Windows、macOS 與 Linux。"
+      }
+    ]
+  },
+  "finalCta": {
+    "heading": "準備好 vobe 了嗎？",
+    "body": "安裝應用、指向 Ollama，描述你想打造的東西。在任何一個檔案改變之前，diff 就已經出現。",
+    "secondary": "所有平台與版本說明",
+    "free": "搭配本機 Ollama 模型免費使用。"
+  },
+  "footer": {
+    "tagline": "用 Ollama 進行本機優先的 vibecoding。vobe，不用數 token。",
+    "product": "產品",
+    "resources": "資源",
+    "legal": "法律",
+    "features": "功能",
+    "howItWorks": "運作方式",
+    "skills": "Skills",
+    "givesBack": "Gives Back",
+    "learn": "Learn How to Vobe",
+    "download": "下載",
+    "documentation": "文件",
+    "github": "GitHub",
+    "discord": "Discord",
+    "faq": "常見問題",
+    "privacy": "隱私",
+    "terms": "條款",
+    "licenseLink": "授權（MIT）",
+    "socialGithub": "GitHub",
+    "socialDiscord": "Discord",
+    "socialX": "X",
+    "copyright": "© 2026 Freevobe.",
+    "builtFor": "為 vibecoding 社群而建。"
+  },
+  "download": {
+    "metaTitle": "下載",
+    "metaDescription": "下載適用於 Windows、macOS 或 Linux 的 Freevobe，或手機上的 Android 應用。安裝檔發佈於 GitHub Releases。",
+    "title": "下載 Freevobe",
+    "body": "選擇你的平台——下面的按鈕已經知道是哪個。Freevobe 可離線執行，並與你自己機器上的 Ollama 通訊。",
+    "signed": "在平台允許的情況下，安裝檔預設已簽章。原始碼使用 MIT 授權。",
+    "requirements": {
+      "title": "安裝之前",
+      "ollama": "Ollama",
+      "ollamaDetail": "本機執行，並已下載至少一個模型",
+      "disk": "磁碟",
+      "diskDetail": "應用約 120 MB，另加模型所需空間",
+      "platforms": "平台",
+      "platformsDetail": "Windows 10+、macOS 12+（Apple Silicon 或 Intel）、Linux（AppImage，x86-64）",
+      "phone": "手機",
+      "phoneDetail": "Android 8+ 可直接安裝 APK。iOS 需要 Mac 與 Apple 帳號。"
+    },
+    "phone": {
+      "title": "手機應用",
+      "body": "Freevobe Mobile 與桌面應用同步：在區域網路用 QR 碼配對一次，就可以在沙發上查看執行、diff 與核准。任何內容都不會離開你的 Wi-Fi——手機與你機器上執行的 Freevobe 代理通訊。",
+      "step1": "下載 APK 並開啟。Android 會詢問是否允許從此來源安裝——這個檔案不是來自 Google Play。",
+      "step2": "開啟桌面應用並顯示配對 QR 碼，把手機對準它。",
+      "step3": "兩台裝置必須在同一個網路。配對可以離線完成。",
+      "ios": "iOS 版本尚未發佈——需要 Mac 與 Apple Developer 帳號。"
+    },
+    "learn": {
+      "eyebrow": "Freevobe Learn",
+      "title": "Learn How to Vobe——是應用，不是網頁",
+      "size": "1 個檔案 · 約 0.34 MB",
+      "body": "寫下世界，讓它通過檢查，然後玩。課程會展示建立地圖的程式碼。這個應用就是一個 HTML 檔案：下載、開啟、開始玩——沒有伺服器、帳號、模型，也不需要連網。進度保存在你自己的瀏覽器裡。",
+      "step1": "從版本頁下載 freevobe-learn.html。",
+      "step2": "用任何瀏覽器開啟該檔案——從你儲存它的資料夾就能執行，離線也可以。",
+      "step3": "想把它當作獨立應用就移到桌面。它會一直留著，直到你自己刪除。",
+      "download": "下載 Freevobe Learn",
+      "allReleases": "在所有版本中查看該檔案"
+    },
+    "notes": {
+      "title": "上一個版本有什麼變化",
+      "body": "版本說明直接來自 GitHub 上最新的標籤。",
+      "loading": "正在取得最新版本…",
+      "missingTitle": "尚未發佈任何版本",
+      "missingBody": "安裝檔發佈於 GitHub Releases。在推送第一個標籤之前，上面的按鈕會指向版本頁面。",
+      "errorTitle": "版本說明無法取得",
+      "errorBody": "此瀏覽器無法連上 GitHub（離線或觸發速率限制）。版本說明始終可在 GitHub Releases 查看。",
+      "empty": "這個版本沒有說明。完整歷史見 GitHub Releases。",
+      "readFull": "在 GitHub 上閱讀完整版本"
+    },
+    "where": {
+      "title": "檔案在哪裡",
+      "body": "每個建置都掛在 {repo} 的一個標籤上。本站不提供任何檔案下載，上面的徽章會在最新標籤出現時立即顯示。",
+      "all": "GitHub 上的所有版本",
+      "docs": "閱讀文件"
+    },
+    "files": {
+      "title": "此版本中的所有檔案",
+      "checksums": "校驗和",
+      "releaseFile": "版本檔案",
+      "file": "個檔案",
+      "files": "個檔案",
+      "loading": "正在取得檔案清單…",
+      "error": "無法取得檔案清單，因為此瀏覽器無法連上 GitHub。所有檔案始終附在 GitHub 的版本上。",
+      "empty": "此版本尚無檔案。推送標籤後，發佈流程會立即上傳它們——",
+      "emptyLink": "版本頁面",
+      "emptyAfter": "會在檔案到達時顯示。",
+      "download": "下載",
+      "noChecksum": "未發佈校驗和",
+      "copy": "複製",
+      "copied": "已複製",
+      "copyKey": "Ctrl+C",
+      "copyAria": "複製 {file} 的 SHA-256",
+      "copiedAria": "已複製 {file} 的 SHA-256",
+      "selectedAria": "{file} 的 SHA-256 已選取——按 Ctrl 或 Cmd 加 C",
+      "noRelease": "尚未發佈任何版本",
+      "allChecksums": "每個檔案都有已發佈的 SHA-256。",
+      "someChecksums": "{total} 個檔案中有 {have} 個發佈了 SHA-256——其餘是在加入校驗和之前上傳的。",
+      "mismatch": "如果校驗和不一致，表示檔案在傳輸中被改動——不要安裝。相同的校驗和也在",
+      "mismatchAfter": "，即",
+      "mismatchReads": "讀取的檔案。",
+      "platformMacLinux": "macOS/Linux",
+      "platformWindows": "Windows"
+    },
+    "button": {
+      "download": "下載",
+      "downloadFreevobe": "下載 Freevobe",
+      "downloadFor": "下載 {platform} 版",
+      "releases": "版本",
+      "viewReleases": "查看版本"
+    },
+    "badge": {
+      "latest": "最新版本 {version}",
+      "latestNoVersion": "最新版本",
+      "missing": "查看版本"
+    },
+    "platform": {
+      "windows": "Windows",
+      "macAppleSilicon": "macOS",
+      "macIntel": "macOS Intel",
+      "linux": "Linux",
+      "android": "Android",
+      "unknown": "你的平台",
+      "appleSilicon": "Apple Silicon",
+      "intel": "Intel"
+    },
+    "platformNote": "Freevobe 透過 GitHub Releases 發佈。",
+    "platformNoteMissing": "安裝檔發佈於 GitHub Releases。"
+  },
+  "legal": {
+    "lastUpdated": "最後更新：{date}",
+    "footerQuestion": "對這裡有疑問？請在頁尾連結的社群 Discord 中提問。",
+    "privacy": {
+      "metaTitle": "隱私",
+      "metaDescription": "Freevobe 預設在本機執行：你的專案、提示與檔案都留在你的機器上。",
+      "title": "隱私",
+      "updated": "2026 年 10 月 27 日",
+      "intro": "Freevobe 是本機優先。本頁說明本站與 Freevobe 桌面應用會如何處理你的資料。",
+      "sections": [
+        {
+          "title": "本網站",
+          "paragraphs": [
+            "本站是靜態頁面。它不設定分析、追蹤像素或自己的 cookie，也不向第三方主機發起請求——字型與圖片都從同一個網域提供。",
+            "你的主題選擇（深色或淺色）保存在瀏覽器的本機儲存空間，讓頁面以你離開時的樣子開啟。它永遠不會離開你的機器。"
+          ]
+        },
+        {
+          "title": "廣告與 Gives Back",
+          "paragraphs": [
+            "Freevobe 沒有廣告：沒有廣告版位、廣告腳本，也沒有廣告網路。因此本站與桌面應用不設定廣告 cookie 或裝置識別碼，也不會為行銷目的與第三方分享資料。",
+            "作為廣告版位的替代，桌面應用可以顯示一則關於慈善機構的自願提醒——Freevobe Gives Back。它預設關閉，直到你主動開啟。提醒中包含指向機構自己網站的連結；Freevobe 沒有付款、帳號與支付服務商，從不接收或轉交捐款。",
+            "如果你在應用中記錄一筆捐款，紀錄會留在本機資料庫並標示為自行申報。它永遠不會傳送給機構或我們，你隨時可以刪除。"
+          ]
+        },
+        {
+          "title": "桌面應用",
+          "bullets": [
+            "你的程式碼、提示與檔案由你自己透過 Ollama 執行的模型在本機處理。預設不會上傳任何內容。",
+            "工作階段、專案索引與記憶保存在你電腦上的本機 SQLite 資料庫。",
+            "應用不傳送遙測。沒有帳號，也不需要登入。",
+            "只有你自己設定時才會連接雲端模型，屆時適用你所選服務商的條款。"
+          ]
+        },
+        {
+          "title": "下載",
+          "paragraphs": [
+            "下載連結指向專案的版本頁面。你的瀏覽器與該頁面的代管服務商會進行一般的存取紀錄。"
+          ]
+        },
+        {
+          "title": "變更",
+          "paragraphs": [
+            "如果本政策變更，頁面頂端的日期會隨之更新。Freevobe 是開源的，因此本頁及其歷史都可以在公開儲存庫中查看。"
+          ]
+        }
+      ]
+    },
+    "terms": {
+      "metaTitle": "條款",
+      "metaDescription": "使用 Freevobe 與本網站的簡明條款。",
+      "title": "條款",
+      "updated": "2026 年 10 月 27 日",
+      "intro": "簡短明瞭：Freevobe 是執行在你硬體上的自由軟體，你要對自己用它建構的東西負責。",
+      "sections": [
+        {
+          "title": "應用",
+          "bullets": [
+            "核心應用可免費搭配你自己的本機 Ollama 模型使用。沒有訂閱、沒有 token 計量，也沒有我們設定的使用上限。",
+            "原始碼以 MIT 授權發佈。你可以在該授權下使用、修改與再散布。",
+            "應用使用你的憑證與檔案在你的機器上執行。你要對指向的專案、核准的指令與提交的變更負責。"
+          ]
+        },
+        {
+          "title": "不提供擔保",
+          "paragraphs": [
+            "Freevobe 依「現狀」提供，不附帶任何形式的擔保。模型輸出可能有誤，產生的程式碼應像任何其他貢獻一樣接受審查。請把工作置於版本控制之下，並在核准前審查 diff。"
+          ]
+        },
+        {
+          "title": "模型與第三方服務",
+          "paragraphs": [
+            "你透過 Ollama 執行的模型，以及你選擇連接的服務，都受其自身條款與授權約束。我們不控制它們，也不對它們負責。"
+          ]
+        },
+        {
+          "title": "本網站",
+          "paragraphs": [
+            "這裡的產品資訊僅供參考，可能隨應用演進而變化。未來內容可能由廣告夥伴提供；這對你的資料意味著什麼，請參閱隱私頁面。"
+          ]
+        }
+      ]
+    }
+  }
+}

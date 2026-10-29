@@ -30,7 +30,7 @@ export type ToolName = BuiltinToolName | (string & {});
 /** Hur farligt ett verktyg är. `execute`, `write` och `network` kräver godkännande som standard. */
 export type ToolDanger = 'safe' | 'write' | 'execute' | 'network';
 
-export type ToolSource = 'builtin' | 'mcp' | 'skill';
+export type ToolSource = 'builtin' | 'mcp' | 'skill' | 'connector';
 
 export interface McpToolOrigin {
   server: string;
@@ -46,6 +46,8 @@ export interface ToolSpec {
   /** Sant när verktyget inte får köras utan att användaren klickat ja (oavsett behörighetsläge). */
   alwaysRequiresApproval?: boolean;
   origin?: McpToolOrigin;
+  /** Id för connectorn som äger verktyget, t.ex. "vercel". Utelämnas för inbyggda verktyg. */
+  connectorId?: string;
 }
 
 export interface ToolCall {

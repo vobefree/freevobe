@@ -25,6 +25,13 @@ export * from './skills/store.js';
 export * from './rules/loader.js';
 export * from './memory/store.js';
 
+export * from './connectors/registry.js';
+export * from './connectors/secrets.js';
+export * from './connectors/service.js';
+export * from './connectors/tools.js';
+export * from './connectors/vercel/client.js';
+export * from './connectors/vercel/tools.js';
+
 export * from './mcp/client.js';
 export * from './mcp/config.js';
 export * from './mcp/httpTransport.js';

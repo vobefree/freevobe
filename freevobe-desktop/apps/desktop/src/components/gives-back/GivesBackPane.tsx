@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   GIVES_BACK_CAUSES,
   MAX_CONTRIBUTION_NOTE_CHARS,
@@ -22,6 +23,7 @@ function ContributionRow({
   entry: Contribution;
   onDelete: (id: string) => Promise<void>;
 }) {
+  const { t, i18n } = useTranslation();
   const cause = findCause(entry.causeId);
   const [busy, setBusy] = useState(false);
   return (
@@ -29,11 +31,12 @@ function ContributionRow({
       <header className="flex items-center gap-2">
         <span className="text-xs font-semibold text-slate-200">{causeName(entry.causeId)}</span>
         <span className="ml-auto font-mono text-[11px] text-mint">
-          {entry.amountSek > 0 ? formatSek(entry.amountSek) : 'utan belopp'}
+          {entry.amountSek > 0 ? formatSek(entry.amountSek) : t('givesBack.pane.noAmount')}
         </span>
       </header>
       <p className="mt-0.5 text-[10.5px] text-slate-600">
-        {new Date(entry.createdAt).toLocaleDateString('sv-SE')} · egen rapportering
+        {new Date(entry.createdAt).toLocaleDateString(i18n.language)} ·{' '}
+        {t('givesBack.pane.ownReport')}
       </p>
       {entry.note ? <p className="mt-1 text-[11px] text-slate-400">{entry.note}</p> : null}
       <footer className="mt-1.5 flex items-center gap-2">
@@ -57,7 +60,7 @@ function ContributionRow({
             setBusy(false);
           }}
         >
-          Ta bort
+          {t('givesBack.pane.remove')}
         </Button>
       </footer>
     </article>
@@ -71,6 +74,7 @@ function ContributionRow({
  * visas är det användaren själv skrivit in, sparat lokalt i samma databas som sessionshistoriken.
  */
 export function GivesBackPane() {
+  const { t } = useTranslation();
   const entries = useAppStore((state) => state.contributions);
   const summary = useAppStore((state) => state.contributionsSummary);
   const config = useAppStore((state) => state.settings?.givesBack ?? null);
@@ -95,7 +99,7 @@ export function GivesBackPane() {
   const submit = async () => {
     const parsed = amount.trim() === '' ? 0 : Number(amount.replace(',', '.'));
     if (!Number.isFinite(parsed) || parsed < 0) {
-      setError('Ange ett belopp i kronor, eller lämna fältet tomt.');
+      setError(t('givesBack.pane.invalidAmount'));
       return;
     }
     setBusy(true);
@@ -135,22 +139,22 @@ export function GivesBackPane() {
               enabled ? 'border-mint/40 text-mint' : 'border-steel text-slate-500'
             }`}
           >
-            {enabled ? 'på i chatten' : 'av'}
+            {enabled ? t('givesBack.pane.onInChat') : t('givesBack.pane.off')}
           </span>
           <span className="ml-auto text-[10.5px] text-slate-500" data-testid="gives-back-summary">
-            {summary.count} stöd · {formatSek(summary.totalSek)} enligt din logg
+            {t('givesBack.pane.summary', {
+              count: summary.count,
+              total: formatSek(summary.totalSek),
+            })}
           </span>
         </div>
-        <p className="mt-1 text-[10.5px] text-slate-600">
-          Freevobe tar inte emot pengar och förmedlar inga bidrag. Länkarna går till
-          organisationernas egna sidor, där du väljer belopp och betalsätt själv.
-        </p>
+        <p className="mt-1 text-[10.5px] text-slate-600">{t('givesBack.pane.notice')}</p>
       </div>
 
       <div className="min-h-0 flex-1 space-y-2 overflow-y-auto p-2">
         <section className="space-y-1.5">
           <h3 className="text-[10px] font-semibold tracking-wide text-slate-500 uppercase">
-            Ändamål i rotationen
+            {t('givesBack.pane.causes')}
           </h3>
           <div className="flex flex-wrap gap-1.5">
             {GIVES_BACK_CAUSES.map((cause) => {
@@ -183,7 +187,7 @@ export function GivesBackPane() {
           }}
         >
           <h3 className="text-[10px] font-semibold tracking-wide text-slate-500 uppercase">
-            Registrera ett stöd du gett
+            {t('givesBack.pane.logTitle')}
           </h3>
           <div className="flex flex-wrap gap-1.5">
             <select
@@ -203,7 +207,7 @@ export function GivesBackPane() {
               min={0}
               step={1}
               value={amount}
-              placeholder="Belopp (kr)"
+              placeholder={t('givesBack.pane.amountPlaceholder')}
               data-testid="gives-back-pane-amount"
               onChange={(event) => setAmount(event.target.value)}
               className="w-28 rounded border border-steel bg-anvil px-2 py-1 text-xs text-slate-200"
@@ -211,26 +215,21 @@ export function GivesBackPane() {
             <input
               value={note}
               maxLength={MAX_CONTRIBUTION_NOTE_CHARS}
-              placeholder="Anteckning (valfritt)"
+              placeholder={t('givesBack.pane.notePlaceholder')}
               data-testid="gives-back-pane-note"
               onChange={(event) => setNote(event.target.value)}
               className="min-w-[10rem] flex-1 rounded border border-steel bg-anvil px-2 py-1 text-xs text-slate-200"
             />
             <Button type="submit" variant="primary" disabled={busy}>
-              Spara
+              {t('givesBack.pane.save')}
             </Button>
           </div>
-          <p className="text-[10px] text-slate-600">
-            Beloppet är din egen uppgift. Det finns inget kvitto och ingen transaktion i appen.
-          </p>
+          <p className="text-[10px] text-slate-600">{t('givesBack.pane.disclaimer')}</p>
           {error ? <p className="text-[10.5px] text-alert">{error}</p> : null}
         </form>
 
         {entries.length === 0 ? (
-          <EmptyState
-            title="Ingen logg än"
-            hint="När du stöttat något kan du anteckna det här – bara för din egen skull, bara på din dator."
-          />
+          <EmptyState title={t('givesBack.pane.emptyTitle')} hint={t('givesBack.pane.emptyHint')} />
         ) : (
           entries.map((entry) => (
             <ContributionRow key={entry.id} entry={entry} onDelete={deleteContribution} />

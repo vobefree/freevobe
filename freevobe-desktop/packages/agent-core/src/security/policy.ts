@@ -371,7 +371,35 @@ export function evaluateToolCall(
     );
   }
 
-  // 6. Behörighetsläget avgör resten.
+  // 6. Connector-verktyg: läsning följer läget, men ändringar i en extern tjänst kräver alltid
+  //    ett personligt ja – även i Full auto. Produktionsdeploy har dessutom ett extra steg i
+  //    verktyget självt (vercel_deploy frågar igen när målet är produktion).
+  if (spec.source === 'connector') {
+    const label = spec.connectorId ? `connectorn "${spec.connectorId}"` : 'en connector';
+    if (spec.danger === 'safe' || spec.danger === 'network') {
+      if (context.mode === 'full-auto') {
+        return { effect: 'allow', reason: `Läsning från ${label} tillåts i Full auto.` };
+      }
+      return applyCategoryAutoApprove(
+        spec,
+        {
+          effect: 'require-approval',
+          risk: 'low',
+          reason: `Läsning från ${label} kräver godkännande.`,
+          hardBlock: false,
+        },
+        context.autoApprove,
+      );
+    }
+    return {
+      effect: 'require-approval',
+      risk: spec.danger === 'execute' ? 'high' : 'medium',
+      reason: `Ändringar i ${label} kräver alltid ditt godkännande.`,
+      hardBlock: true,
+    };
+  }
+
+  // 7. Behörighetsläget avgör resten.
   const isWrite = FILE_WRITE_TOOLS.has(spec.name);
   const isExecute = spec.name === 'run_terminal_command' || spec.name === 'run_tests';
   const isVcs = spec.name === 'git_commit' || spec.name === 'git_branch';
@@ -395,6 +423,9 @@ export function evaluateToolCall(
  */
 export function toolCategory(spec: ToolSpec): ApprovalCategory {
   if (spec.source === 'mcp') return 'mcp';
+  // Connector-anrop är nätverksanrop; kategorin "network" kan därför auto-godkännas av den som
+  // vill – men bara för läsande verktyg, eftersom ändringar alltid är hårda.
+  if (spec.source === 'connector') return 'network';
   if (FILE_WRITE_TOOLS.has(spec.name)) return 'file_write';
   if (spec.name === 'run_tests') return 'test';
   if (spec.name === 'run_terminal_command') return 'command';

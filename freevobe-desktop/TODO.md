@@ -1,7 +1,7 @@
 # TODO och öppna punkter
 
 Det här är den ärliga listan över vad som är klart, vad som är halvfärdigt och vad som medvetet är avstängt.
-Statusen gäller version 0.1.0 (2026-10-27).
+Statusen gäller version 0.2.0 (2026-10-29).
 
 ## Klart och verifierat
 
@@ -30,6 +30,10 @@ Statusen gäller version 0.1.0 (2026-10-27).
       onboarding, kommandopalett, inställningar, skills-, minne- och doctor-dialoger.
 - [x] Gives Back i chatten (avstängd som standard) med egen komponent, lokal påverkanslogg i SQLite och tester.
       Se [Gives Back](docs/gives-back.md).
+- [x] Connectors med token i ett krypterat lokalt valv, per projekt. Vercel-connectorn har verktyg för projekt,
+      preview-deploy, loggar, env-variabler och domäner – produktion kräver alltid ett extra godkännande.
+      Se [Connectors](docs/connectors.md).
+- [x] Gränssnittet på tolv språk (`i18n`), med språkvalsmeny i inställningarna och `npm run i18n:check` i CI.
 - [x] Doctor-läge både i appen och som CLI (`npm run doctor`).
 - [x] Publik webbplats (Next.js, statisk export) med Gives Back-sektion och utan annonskod.
 - [x] Tauri-skal med konfiguration, capabilities, agentövervakning, ikoner och sidecar-skript.
@@ -67,7 +71,9 @@ Statusen gäller version 0.1.0 (2026-10-27).
 
 - [ ] **Smart Context Engine** – inkrementell komprimering av samtalet med bevarade beslut.
 - [ ] **Git worktrees**, sessionspersistens utöver SQLite, LSP, Review Mode, Hooks 2.0, modellrouting,
-      projekttemplates, mobil-API och i18n.
+      projekttemplates och mobil-API.
+- [ ] **Fler connectors**: Supabase, GitHub, Netlify, Railway, Stripe, Resend, Cloudflare och Neon ligger som
+      "kommer snart" – Vercel (steg 2) är klart, övriga följer samma mönster.
 
 ### Kvalitet och prestanda
 

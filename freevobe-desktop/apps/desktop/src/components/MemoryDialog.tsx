@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { FREEVOBE_MEMORY_FILE, FREEVOBE_RULES_FILE, AGENTS_FILE } from '@freevobe/protocol';
 import { useAppStore } from '../store/appStore';
 import { Button, Field, Modal } from './ui';
 
 export function MemoryDialog() {
+  const { t } = useTranslation();
   const open = useAppStore((state) => state.memoryOpen);
   const setOpen = useAppStore((state) => state.setMemoryOpen);
   const memory = useAppStore((state) => state.memory);
@@ -23,34 +25,32 @@ export function MemoryDialog() {
 
   return (
     <Modal
-      title="Projektminne och regler"
+      title={t('memory.title')}
       onClose={() => setOpen(false)}
       width="max-w-3xl"
       footer={
         <>
-          <Button onClick={() => setDraft(memory)}>Återställ</Button>
+          <Button onClick={() => setDraft(memory)}>{t('memory.reset')}</Button>
           <Button
             variant="primary"
             onClick={() =>
-              void saveMemory(draft).then(() => setStatus(`Sparat i ${FREEVOBE_MEMORY_FILE}.`))
+              void saveMemory(draft).then(() =>
+                setStatus(t('memory.saved', { file: FREEVOBE_MEMORY_FILE })),
+              )
             }
           >
-            Spara minne
+            {t('memory.save')}
           </Button>
         </>
       }
     >
       <p className="mb-3 text-xs text-slate-500">
-        Minnet är en vanlig Markdown-fil i projektet (
-        <code className="font-mono">{FREEVOBE_MEMORY_FILE}</code>) som injiceras i systemprompten
-        tillsammans med <code className="font-mono">{AGENTS_FILE}</code> och{' '}
-        <code className="font-mono">{FREEVOBE_RULES_FILE}</code>. Det är lokal, versionshanterbart
-        och redigerbart.
+        {t('memory.intro.before')} <code className="font-mono">{FREEVOBE_MEMORY_FILE}</code>{' '}
+        {t('memory.intro.mid')} <code className="font-mono">{AGENTS_FILE}</code>{' '}
+        {t('memory.intro.and')} <code className="font-mono">{FREEVOBE_RULES_FILE}</code>
+        {t('memory.intro.after')}
       </p>
-      <Field
-        label="Projektminne"
-        hint="Skriv ner arkitektur, tekniska val, kända buggar, testkommandon och kodstil – det agenten ska komma ihåg."
-      >
+      <Field label={t('memory.label')} hint={t('memory.hint')}>
         <textarea
           value={draft}
           onChange={(event) => setDraft(event.target.value)}

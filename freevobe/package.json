@@ -10,6 +10,8 @@
     "deploy:prepare": "node scripts/prepare-deploy.mjs",
     "start": "next start --port 4300",
     "typecheck": "tsc --noEmit",
+    "i18n:check": "node scripts/i18n-check.mjs",
+    "verify": "npm run i18n:check && npm run typecheck && npm test",
     "test": "vitest run",
     "test:watch": "vitest"
   },
@@ -21,6 +23,7 @@
     "framer-motion": "^12.4.0",
     "lucide-react": "^0.474.0",
     "next": "^15.4.0",
+    "next-intl": "^4.14.9",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "tailwind-merge": "^2.6.0"

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAppStore } from '../../store/appStore';
 import { AutoApproveChips } from '../AutoApproveSettings';
 import { Button, Chip, EmptyState } from '../ui';
@@ -14,6 +15,7 @@ const SUBAGENT_TONE: Record<string, 'neutral' | 'ember' | 'mint' | 'alert'> = {
 };
 
 export function LeftPanel() {
+  const { t } = useTranslation();
   const sessions = useAppStore((state) => state.sessions);
   const sessionId = useAppStore((state) => state.sessionId);
   const project = useAppStore((state) => state.project);
@@ -36,7 +38,7 @@ export function LeftPanel() {
       <section className="vf-panel p-2">
         <div className="flex items-center gap-1.5">
           <Button variant="primary" full onClick={() => void newSession()} testId="new-session">
-            + Ny chatt
+            {t('left.newChat')}
           </Button>
         </div>
         <div className="mt-2 flex rounded border border-steel p-0.5 text-[11px]">
@@ -50,18 +52,14 @@ export function LeftPanel() {
                   ? 'bg-ember font-semibold text-anvil'
                   : 'text-slate-400 hover:text-slate-200'
               }`}
-              title={
-                value === 'plan'
-                  ? 'Agenten läser och föreslår en plan. Inga filer ändras förrän du godkänt planen.'
-                  : 'Agenten får skriva kod – inom den godkända planen om det finns en.'
-              }
+              title={value === 'plan' ? t('left.planTip') : t('left.executeTip')}
             >
-              {value === 'plan' ? 'Plan-läge' : 'Execute-läge'}
+              {value === 'plan' ? t('left.planMode') : t('left.executeMode')}
             </button>
           ))}
         </div>
         <label className="mt-2 block text-[10px] tracking-wide text-slate-500 uppercase">
-          Behörigheter
+          {t('left.permissions')}
         </label>
         <select
           value={permissionMode}
@@ -80,7 +78,7 @@ export function LeftPanel() {
         </p>
         {mode === 'plan' ? (
           <p className="mt-1 rounded border border-sky/30 bg-sky/5 px-1.5 py-1 text-[10px] leading-4 text-sky">
-            Plan-läget avslutas när du godkänner planen i chatten.
+            {t('left.planNotice')}
           </p>
         ) : null}
         {settings ? <AutoApproveChips autoApprove={settings.autoApprove} /> : null}
@@ -89,15 +87,17 @@ export function LeftPanel() {
       <section className="vf-panel p-2">
         <div className="flex items-center justify-between">
           <h2 className="text-[10px] font-semibold tracking-wide text-slate-500 uppercase">
-            Projekt
+            {t('left.projects')}
           </h2>
-          <span className="text-[10px] text-slate-600">{projects.length} kända</span>
+          <span className="text-[10px] text-slate-600">
+            {t('left.projectsKnown', { count: projects.length })}
+          </span>
         </div>
         <p
           className="mt-1 truncate font-mono text-[11px] text-slate-300"
           title={project?.path ?? ''}
         >
-          {project ? shortPath(project.path, 46) : 'Inget projekt öppet'}
+          {project ? shortPath(project.path, 46) : t('left.noProject')}
         </p>
         <div className="mt-1.5 flex gap-1">
           <input
@@ -106,16 +106,16 @@ export function LeftPanel() {
             onKeyDown={(event) => {
               if (event.key === 'Enter' && projectPath.trim()) void openProject(projectPath.trim());
             }}
-            placeholder="C:\\kod\\mitt-projekt"
+            placeholder={t('ob.project.placeholder')}
             data-testid="open-project-path"
             className="flex-1 rounded border border-steel bg-anvil px-2 py-1 font-mono text-[11px] text-slate-200 placeholder:text-slate-600"
           />
           <Button
             onClick={() => projectPath.trim() && void openProject(projectPath.trim())}
-            title="Öppna mappen"
+            title={t('left.openTitle')}
             testId="open-project"
           >
-            Öppna
+            {t('left.open')}
           </Button>
         </div>
         {projects.length > 0 ? (
@@ -141,11 +141,11 @@ export function LeftPanel() {
 
       <section className="vf-panel flex min-h-0 flex-1 flex-col p-2">
         <h2 className="text-[10px] font-semibold tracking-wide text-slate-500 uppercase">
-          Sessioner
+          {t('left.sessions')}
         </h2>
         <div className="mt-1 min-h-0 flex-1 space-y-0.5 overflow-y-auto">
           {sessions.length === 0 ? (
-            <p className="p-1 text-[11px] text-slate-600">Inga sessioner än.</p>
+            <p className="p-1 text-[11px] text-slate-600">{t('left.noSessions')}</p>
           ) : (
             sessions.map((session) => (
               <div
@@ -164,14 +164,17 @@ export function LeftPanel() {
                     {session.title}
                   </span>
                   <span className="block text-[10px] text-slate-600">
-                    {session.messageCount} meddelanden · {timeAgo(session.updatedAt)}
+                    {t('left.messages', {
+                      count: session.messageCount,
+                      when: timeAgo(session.updatedAt),
+                    })}
                   </span>
                 </button>
                 <button
                   type="button"
                   onClick={() => void deleteSession(session.id)}
                   className="cursor-pointer px-1 text-[10px] text-slate-600 opacity-0 group-hover:opacity-100 hover:text-alert"
-                  title="Ta bort sessionen"
+                  title={t('left.deleteSession')}
                 >
                   ✕
                 </button>
@@ -183,10 +186,10 @@ export function LeftPanel() {
 
       <section className="vf-panel max-h-48 shrink-0 overflow-y-auto p-2">
         <h2 className="text-[10px] font-semibold tracking-wide text-slate-500 uppercase">
-          Uppgifter
+          {t('left.tasks')}
         </h2>
         {tasks.length === 0 ? (
-          <p className="mt-1 text-[11px] text-slate-600">Agentens plan dyker upp här.</p>
+          <p className="mt-1 text-[11px] text-slate-600">{t('left.tasksEmpty')}</p>
         ) : (
           <ul className="mt-1 space-y-1">
             {tasks.map((task) => (
@@ -226,16 +229,16 @@ export function LeftPanel() {
       <section className="vf-panel max-h-56 shrink-0 overflow-y-auto p-2">
         <div className="flex items-center justify-between">
           <h2 className="text-[10px] font-semibold tracking-wide text-slate-500 uppercase">
-            Subagents
+            {t('left.subagents')}
           </h2>
           <span className="text-[10px] text-slate-600">
-            {subagents.filter((entry) => entry.status === 'running').length} aktiva
+            {t('left.activeCount', {
+              count: subagents.filter((entry) => entry.status === 'running').length,
+            })}
           </span>
         </div>
         {subagents.length === 0 ? (
-          <p className="mt-1 text-[11px] text-slate-600">
-            Inga subagents har körts i den här sessionen.
-          </p>
+          <p className="mt-1 text-[11px] text-slate-600">{t('left.noSubagents')}</p>
         ) : (
           <ul className="mt-1 space-y-1.5">
             {subagents.slice(0, 12).map((agent) => (

@@ -1,4 +1,5 @@
 import { useCallback, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAppStore } from './store/appStore';
 import { AppShell } from './components/AppShell';
 import { Onboarding } from './components/Onboarding';
@@ -9,9 +10,11 @@ import { McpDialog } from './components/McpDialog';
 import { DoctorDialog } from './components/DoctorDialog';
 import { MemoryDialog } from './components/MemoryDialog';
 import { Button } from './components/ui';
+import { LanguageSelect } from './components/LanguageSelect';
 import { useShortcuts, type ShortcutHandlers } from './hooks/useShortcuts';
 
 export function App() {
+  const { t } = useTranslation();
   const connectionStatus = useAppStore((state) => state.connectionStatus);
   const connectionError = useAppStore((state) => state.connectionError);
   const onboardingComplete = useAppStore((state) => state.onboardingComplete);
@@ -56,7 +59,7 @@ export function App() {
       <div className="flex h-full items-center justify-center">
         <div className="flex items-center gap-3 text-sm text-slate-400">
           <span className="h-2 w-2 animate-pulse rounded-full bg-ember" />
-          Ansluter till Freevobe-agenten…
+          {t('app.connecting')}
         </div>
       </div>
     );
@@ -66,18 +69,21 @@ export function App() {
     return (
       <div className="flex h-full items-center justify-center p-8">
         <div className="vf-panel max-w-lg space-y-3 p-6">
-          <h1 className="text-lg font-semibold">Freevobe-agenten svarar inte</h1>
+          <div className="flex items-center justify-between gap-3">
+            <h1 className="text-lg font-semibold">{t('app.errorTitle')}</h1>
+            <LanguageSelect />
+          </div>
           <p className="text-sm text-slate-400">{connectionError}</p>
           <ol className="list-inside list-decimal space-y-1 text-xs text-slate-500">
             <li>
-              Starta agenten: <code className="text-slate-300">npm run dev:server</code>
+              {t('app.startAgent')} <code className="text-slate-300">npm run dev:server</code>
             </li>
-            <li>Kontrollera att porten 4319 är ledig.</li>
-            <li>Öppna dokumentationen om det fortfarande inte fungerar.</li>
+            <li>{t('app.portFree')}</li>
+            <li>{t('app.seeDocs')}</li>
           </ol>
           <div className="flex gap-2">
             <Button variant="primary" onClick={() => void useAppStore.getState().connect()}>
-              Försök igen
+              {t('app.retry')}
             </Button>
             <a
               className="vf-button"
@@ -85,7 +91,7 @@ export function App() {
               target="_blank"
               rel="noreferrer"
             >
-              Öppna hjälp
+              {t('app.help')}
             </a>
           </div>
         </div>

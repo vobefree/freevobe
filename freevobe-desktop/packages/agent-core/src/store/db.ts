@@ -187,6 +187,25 @@ export const MIGRATIONS: Migration[] = [
       `CREATE INDEX IF NOT EXISTS idx_gives_back_created ON gives_back_entries(created_at DESC)`,
     ],
   },
+  {
+    version: 6,
+    name: 'connectors',
+    statements: [
+      // Connectors är opt-in per projekt. Här ligger bara projektets val (aktiv/inaktiv) och en
+      // eventuell felorsak – själva token ligger krypterad i användarens Freevobe-home, aldrig här.
+      `CREATE TABLE IF NOT EXISTS connectors (
+        project_id TEXT NOT NULL,
+        connector_id TEXT NOT NULL,
+        enabled INTEGER NOT NULL DEFAULT 1,
+        account_label TEXT,
+        last_error TEXT,
+        updated_at INTEGER NOT NULL,
+        PRIMARY KEY (project_id, connector_id),
+        FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE
+      )`,
+      `CREATE INDEX IF NOT EXISTS idx_connectors_project ON connectors(project_id)`,
+    ],
+  },
 ];
 
 export class FreevobeDatabase {

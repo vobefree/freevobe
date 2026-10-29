@@ -1,51 +1,45 @@
 import { ChevronRight, Download, MonitorSmartphone, Terminal } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { Reveal, RevealGroup, RevealItem } from '@/components/motion/reveal';
-import { flow } from '@/lib/site';
 import { card, eyebrow, sectionTitle } from '@/lib/tokens';
 import { cn } from '@/lib/utils';
 
-const steps = [
-  {
-    icon: Download,
-    title: 'Download Freevobe',
-    body: 'Grab the native app for Windows, macOS or Linux. Nothing else to install — the agent ships with it.',
-  },
-  {
-    icon: Terminal,
-    title: 'Connect Ollama',
-    body: 'Freevobe finds localhost:11434, lists your models and shows which ones support tool calling.',
-  },
-  {
-    icon: MonitorSmartphone,
-    title: 'Start vobing',
-    body: 'Describe the app you want. Review every diff, approve commands and let the agent commit.',
-  },
-] as const;
+const ICONS = [Download, Terminal, MonitorSmartphone] as const;
+
+type Step = { title: string; body: string };
+type FlowItem = { step: string; detail: string };
 
 export function HowItWorks() {
+  const t = useTranslations('howItWorks');
+  const steps = t.raw('steps') as Step[];
+  const flow = t.raw('flow') as FlowItem[];
+
   return (
     <section id="how-it-works" className="scroll-mt-24 border-y border-line bg-bg-soft/50 py-20 lg:py-24">
       <div className="vf-shell">
         <Reveal>
-          <p className={eyebrow()}>How it works</p>
-          <h2 className={sectionTitle()}>Three steps to your first ship.</h2>
+          <p className={eyebrow()}>{t('eyebrow')}</p>
+          <h2 className={sectionTitle()}>{t('heading')}</h2>
         </Reveal>
 
         <RevealGroup className="mt-12 grid gap-5 md:grid-cols-3">
-          {steps.map((step, index) => (
-            <RevealItem key={step.title}>
-              <div className={cn(card(), 'h-full')}>
-                <div className="flex items-center gap-3">
-                  <span className="flex size-9 items-center justify-center rounded-xl border border-line bg-card-strong font-mono text-sm text-accent-soft">
-                    {index + 1}
-                  </span>
-                  <step.icon className="size-[18px] text-muted" />
+          {steps.map((step, index) => {
+            const Icon = ICONS[index] ?? Download;
+            return (
+              <RevealItem key={step.title}>
+                <div className={cn(card(), 'h-full')}>
+                  <div className="flex items-center gap-3">
+                    <span className="flex size-9 items-center justify-center rounded-xl border border-line bg-card-strong font-mono text-sm text-accent-soft">
+                      {index + 1}
+                    </span>
+                    <Icon className="size-[18px] text-muted" />
+                  </div>
+                  <h3 className="mt-4 text-base font-semibold tracking-tight">{step.title}</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-muted">{step.body}</p>
                 </div>
-                <h3 className="mt-4 text-base font-semibold tracking-tight">{step.title}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-muted">{step.body}</p>
-              </div>
-            </RevealItem>
-          ))}
+              </RevealItem>
+            );
+          })}
         </RevealGroup>
 
         {/* Flödesgraf: samma sex steg som i verkligheten, i en enda rad på stora skärmar. */}
