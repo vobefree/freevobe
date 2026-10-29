@@ -1,0 +1,202 @@
+@import 'tailwindcss';
+
+/*
+ * Freevobe Learn har en egen yta: ett kartbord i grönt bläck med guldkant, ritat i rutor.
+ * Ytan är mörk i mörkt läge och papper i ljust läge, men formerna är desamma – tjocka kanter,
+ * hårda skuggor och inga mjuka glaskort. Inga typsnitt laddas ner; appen ska fungera offline.
+ */
+:root {
+  color-scheme: dark light;
+  --font-sans: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  background-color: #0c1512;
+}
+
+html.light {
+  background-color: #f3f7ee;
+}
+
+body {
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+.learn {
+  --learn-surface: #0c1512;
+  --learn-panel: #111f19;
+  --learn-panel-strong: #16281f;
+  --learn-line: #24382e;
+  --learn-line-strong: #34503f;
+  --learn-fg: #f1f7f2;
+  --learn-muted: #a2b7a9;
+  --learn-gold: #f5b53f;
+  --learn-gold-ink: #241a05;
+  --learn-mint: #6ee7a8;
+  --learn-coral: #ff8a6b;
+  --learn-shadow: #04100b;
+  background-color: var(--learn-surface);
+  color: var(--learn-fg);
+  min-height: 100vh;
+}
+
+html.light .learn {
+  --learn-surface: #f3f7ee;
+  --learn-panel: #ffffff;
+  --learn-panel-strong: #eef4e7;
+  --learn-line: #cfdccb;
+  --learn-line-strong: #a8bda4;
+  --learn-fg: #10201a;
+  --learn-muted: #4c6357;
+  --learn-gold: #a86c05;
+  --learn-gold-ink: #ffffff;
+  --learn-mint: #0b7a4b;
+  --learn-coral: #b8422a;
+  --learn-shadow: #cfdccb;
+}
+
+@layer components {
+  .vf-shell {
+    width: 100%;
+    max-width: 76rem;
+    margin-inline: auto;
+    padding-inline: 1.25rem;
+  }
+
+  .learn-panel {
+    background: var(--learn-panel);
+    border: 2px solid var(--learn-line-strong);
+    border-radius: 18px;
+  }
+
+  .learn-panel-flat {
+    background: var(--learn-panel);
+    border: 1px solid var(--learn-line);
+    border-radius: 12px;
+  }
+
+  .learn-tile {
+    background: var(--learn-panel-strong);
+    border: 1px solid var(--learn-line);
+    border-radius: 10px;
+  }
+
+  .learn-chip {
+    border: 1.5px solid var(--learn-line-strong);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--learn-muted);
+    font-size: 12.5px;
+    padding: 0.4rem 0.8rem;
+    transition: color 0.15s ease, border-color 0.15s ease, background-color 0.15s ease;
+  }
+
+  .learn-chip:hover {
+    border-color: var(--learn-gold);
+    color: var(--learn-fg);
+  }
+
+  .learn-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border-radius: 12px;
+    border: 2px solid transparent;
+    padding: 0.65rem 1rem;
+    font-weight: 600;
+    font-size: 14px;
+    touch-action: manipulation;
+    transition: transform 0.12s ease, background-color 0.12s ease, color 0.12s ease;
+  }
+
+  .learn-button:active {
+    transform: translateY(1px);
+  }
+
+  .learn-button-primary {
+    background: var(--learn-gold);
+    color: var(--learn-gold-ink);
+    box-shadow: 4px 4px 0 var(--learn-shadow);
+  }
+
+  .learn-button-primary:hover {
+    filter: brightness(1.06);
+  }
+
+  .learn-button-secondary {
+    background: transparent;
+    border-color: var(--learn-line-strong);
+    color: var(--learn-fg);
+  }
+
+  .learn-button-secondary:hover {
+    border-color: var(--learn-gold);
+  }
+
+  .learn-grid-bg {
+    background-image:
+      linear-gradient(to right, color-mix(in srgb, var(--learn-line) 55%, transparent) 1px, transparent 1px),
+      linear-gradient(to bottom, color-mix(in srgb, var(--learn-line) 55%, transparent) 1px, transparent 1px);
+    background-size: 22px 22px;
+  }
+
+  .learn-code {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    line-height: 1.8;
+    overflow-x: auto;
+    background: #08110d;
+    color: #e4f2e8;
+    border: 1px solid #24382e;
+    border-radius: 10px;
+    padding: 0.9rem 1rem;
+  }
+
+  .learn-code .learn-code-key {
+    color: #ffd479;
+  }
+
+  .learn-nav-key {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    /* 48 px, så att en sexåring kan träffa rätt med tummen. */
+    min-width: 3rem;
+    height: 3rem;
+    border-radius: 10px;
+    border: 2px solid var(--learn-line-strong);
+    background: var(--learn-panel-strong);
+    font-family: var(--font-mono);
+    font-size: 16px;
+    color: var(--learn-fg);
+    touch-action: manipulation;
+  }
+
+  .learn-nav-key:hover {
+    border-color: var(--learn-gold);
+  }
+
+  .learn-nav-key:active {
+    transform: translateY(1px);
+  }
+}
+
+.learn :focus-visible {
+  outline: 2px solid var(--learn-gold);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}

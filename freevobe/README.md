@@ -40,13 +40,14 @@ src/
   components/
     site/               navbar (sticky + mobilmeny) och footer
     sections/           hero, social proof, problem→lösning, features, how it works,
-                        skills, privacy, FAQ, avslutande CTA
+                        skills, gives-back, privacy, FAQ, avslutande CTA
     ui/                 button, card, badge, accordion (shadcn-stil)
     motion/reveal.tsx   scroll-animationer
-    ads/ad-slot.tsx     AdSense-plats, avstängd tills vidare
+    sections/gives-back.tsx  Gives Back – välgörenhet i stället för annonser
     app-mockup.tsx      produktmockup byggd i HTML/CSS (chat, diff, terminal, tester)
   lib/
     site.ts             all text, länkar, nav och produktfakta på ett ställe
+    gives-back.ts       katalogen med ändamål och de fyra principerna
     tokens.ts           delade ytklasser
     utils.ts            cn()
 ```
@@ -62,15 +63,28 @@ navbaren; valet sparas i `localStorage` och sätts före första målningen så 
 Kod- och terminalpaneler är alltid mörka (som i en riktig editor) via `.vf-dark-surface`, så att
 diff- och terminalfärger behåller kontrasten i båda lägena.
 
-## Annonser (AdSense)
+## Gives Back (inga annonser)
 
-Sidan är förberedd men innehåller **ingen** annonskod. `AdSlot` renderar ingenting förrän:
+Sidan har **ingen annonskod** – ingen AdSense, inga annonsnätverk och inga spårningselement. Där
+annonsplatsen låg finns i stället sektionen `#gives-back`, som förklarar principen och länkar
+direkt till organisationernas egna sidor.
 
-1. `NEXT_PUBLIC_ADSENSE_CLIENT` och `NEXT_PUBLIC_ADSENSE_SLOT` är satta (se `.env.example`), och
-2. `@/components/ads/ad-slot.tsx` har fått script-taggen `<Script src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=…" strategy="afterInteractive" />`
-   tillagd i `layout.tsx` (eller via `next/script` i `page.tsx`) och själva `<ins class="adsbygoogle">`-blocket.
+- Katalogen ligger i [`src/lib/gives-back.ts`](src/lib/gives-back.ts) och har samma id:n som
+  skrivbordsappens katalog (`packages/protocol/src/gives-back.ts` i `freevobe-desktop/`).
+- Inga pengar går genom sajten eller appen: ingen kassa, inget konto, ingen betalningsleverantör,
+  ingen provision och inga spårningsparametrar i länkarna.
+- `src/lib/gives-back.test.ts` låser att länkarna är https, att id:na är unika och att inget pekar
+  på ett annonsnätverk.
 
-Platsen har reserverad höjd, så att CLS förblir noll när annonsen slås på.
+Full beskrivning: [`freevobe-desktop/docs/gives-back.md`](../freevobe-desktop/docs/gives-back.md).
+
+## Learn How to Vobe
+
+Learn är en **egen app**, inte en sida på sajten: den byggs i `freevobe-learn/` till en enda
+HTML-fil som laddas ner från releasen och spelas offline. Här på sajten finns bara en nedladdning
+(under `/download/#learn`) – ingen `/learn/`-route, ingen spelkod i det här paketet.
+
+Full beskrivning: [`freevobe-learn/docs/learn-how-to-vobe.md`](../freevobe-learn/docs/learn-how-to-vobe.md).
 
 ## Deploy
 

@@ -33,7 +33,9 @@ export const nav = [
   { href: '#features', label: 'Features' },
   { href: '#how-it-works', label: 'How it works' },
   { href: '#skills', label: 'Skills' },
+  { href: '#gives-back', label: 'Gives Back' },
   { href: '#faq', label: 'FAQ' },
+  { href: '/download/#learn', label: 'Learn' },
   { href: site.github, label: 'GitHub', external: true },
 ] as const;
 

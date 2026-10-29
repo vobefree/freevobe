@@ -97,7 +97,7 @@ Bedömningen ligger i `src/lib/pairing.ts` och är enhetstestad.
 ## Endpoints som Freevobe Desktop måste exponera
 
 Alla anrop skickar parningskoden i huvudet `x-freevobe-token`. Appen skickar även det äldre
-`x-vibeforge-token` med samma värde, så att den fungerar mot både dagens server och en omdöpt sådan.
+`x-freevobe-token` med samma värde, så att den fungerar mot både dagens server och en omdöpt sådan.
 Adaptern som översätter svaren ligger i `src/api/desktop.ts`; den är medvetet förlåtande – ett saknat
 eller oväntat fält ska ge en tom vy, inte en krasch.
 
@@ -192,7 +192,7 @@ I CI skrivs filen och nyckellagret från hemligheterna `ANDROID_KEYSTORE_BASE64`
 kontrollerar efter bygget att APK:n inte är debug-signerad. Vill du bygga en signerad APK lokalt:
 skapa nyckellagret med `keytool`, lägg `key.properties` i `android/` och kör sedan
 `cd android && ./gradlew assembleRelease`. Saknas `key.properties` används debugnyckeln, så att
-lokala byggen fungerar utan hemligheter. Se [Release](../vibeforge/docs/releasing.md#android-nyckellager).
+lokala byggen fungerar utan hemligheter. Se [Release](../freevobe-desktop/docs/releasing.md#android-nyckellager).
 
 ## Felsökning
 

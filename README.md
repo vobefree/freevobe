@@ -1,13 +1,14 @@
 # Freevobe
 
 Freevobe är en lokal-first AI-kodagent: modellen körs via Ollama på din egen dator och koden lämnar
-den inte utan att du uttryckligen godkänner det. Repot innehåller produktens tre delar, en mapp per
+den inte utan att du uttryckligen godkänner det. Repot innehåller produktens fyra delar, en mapp per
 del.
 
 | Mapp                                  | Del                  | Vad den gör                                                                                                                                                 |
 | ------------------------------------- | -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [`vibeforge/`](vibeforge)             | **Freevobe Desktop** | Skrivbordsappen och den lokala agent-servern (port 4319). Planerar, läser kod, skriver filer, kör kommandon, testar och committar – efter ditt godkännande. |
+| [`freevobe-desktop/`](freevobe-desktop) | **Freevobe Desktop** | Skrivbordsappen och den lokala agent-servern (port 4319). Planerar, läser kod, skriver filer, kör kommandon, testar och committar – efter ditt godkännande. |
 | [`freevobe-mobile/`](freevobe-mobile) | **Freevobe Mobile**  | Telefonappen (Expo, SDK 58). Följer körningar, svarar på godkännanden, läser diffar och loggar och notiserar när något väntar på dig.                       |
+| [`freevobe-learn/`](freevobe-learn)   | **Freevobe Learn**   | Egen app, inte en sida: beskriv en värld, få den kontrollerad och spela den. Byggs till en enda HTML-fil som laddas ner och körs offline.                   |
 | [`freevobe/`](freevobe)               | **Freevobe-sidan**   | Marknadssidan och nedladdningen (Next.js 15, statisk och beroendesnål).                                                                                     |
 
 Telefonen kan köras i demoläge utan dator, men för riktig användning krävs att skrivbordsappen körs på
@@ -26,6 +27,7 @@ samma filer med storlek och SHA-256.
 | `Freevobe_v0.1.0_x64.dmg`        | macOS 11+ (Intel)         | Samma app för Intel-Macar                                                 |
 | `Freevobe_v0.1.0_amd64.AppImage` | Linux (x86-64)            | Körbar utan installation; `chmod +x` och starta                           |
 | `Freevobe-Mobile_1.0.0.apk`      | Android 8+                | Telefonappen, installeras vid sidan om Google Play                        |
+| `freevobe-learn.html`            | Alla webbläsare           | Learn How to Vobe som egen app; öppnas från disk och spelar utan nät      |
 | `SHA256SUMS.txt`                 | Alla                      | Kontrollsummor i `sha256sum`-format (från och med nästa tagg)             |
 
 **Ollama behövs inte för att starta.** Första gången går det att hoppa över Ollama-steget i
@@ -37,10 +39,14 @@ fort Ollama svarar på `localhost:11434`.
 
 ```bash
 # Freevobe Desktop (agent-server + skrivbordsapp)
-cd vibeforge && npm install && npm run dev
+cd freevobe-desktop && npm install && npm run dev
 
 # Freevobe Mobile (Expo – visar QR-kod för Expo Go)
 cd freevobe-mobile && npm install && npm start
+
+# Freevobe Learn (nedladdningsbar enfil-app)
+cd freevobe-learn && npm install && npm run dev   # http://localhost:4310
+cd freevobe-learn && npm run package              # release/freevobe-learn.html
 
 # Freevobe-sidan
 cd freevobe && npm install && npm run dev      # http://localhost:4300
@@ -56,13 +62,14 @@ Varje del har sina egna kommandon; CI kör samma saker vid varje push (se
 [`.github/workflows/ci.yml`](.github/workflows/ci.yml)).
 
 ```bash
-cd freevobe-mobile && npm test && npm run typecheck && npm run lint
-cd vibeforge      && npm run typecheck && npm run lint && npm test
-cd freevobe       && npm test && npm run typecheck
+cd freevobe-mobile  && npm test && npm run typecheck && npm run lint
+cd freevobe-desktop && npm run typecheck && npm run lint && npm test
+cd freevobe-learn   && npm test && npm run typecheck && npm run build
+cd freevobe         && npm test && npm run typecheck && npm run build
 ```
 
-Sådant som kräver en riktig enhet eller nedladdade webbläsare – Playwright-sviten i `vibeforge` och
-appens pushnotiser – körs inte i CI utan lokalt.
+Sådant som kräver en riktig enhet eller nedladdade webbläsare – Playwright-sviten i
+`freevobe-desktop` och appens pushnotiser – körs inte i CI utan lokalt.
 
 ## Säkerhet
 

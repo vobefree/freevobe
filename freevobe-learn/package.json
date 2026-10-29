@@ -1,0 +1,35 @@
+{
+  "name": "freevobe-learn",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Freevobe Learn – en nedladdningsbar offline-app där man beskriver en värld, får den kontrollerad och spelar den.",
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=22.5.0"
+  },
+  "scripts": {
+    "dev": "vite --port 4310",
+    "build": "vite build",
+    "preview": "vite preview --port 4310",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "package": "npm run typecheck && npm run build && node scripts/package.mjs"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.0.0",
+    "@types/node": "^22.10.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react": "^4.3.4",
+    "tailwindcss": "^4.0.0",
+    "typescript": "^5.9.0",
+    "vite": "^6.0.0",
+    "vite-plugin-singlefile": "^2.1.0",
+    "vitest": "^3.2.7"
+  },
+  "dependencies": {
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  }
+}

@@ -6,9 +6,11 @@ const columns = [
   {
     title: 'Product',
     links: [
-      { label: 'Features', href: '#features' },
-      { label: 'How it works', href: '#how-it-works' },
-      { label: 'Skills', href: '#skills' },
+      { label: 'Features', href: '/#features' },
+      { label: 'How it works', href: '/#how-it-works' },
+      { label: 'Skills', href: '/#skills' },
+      { label: 'Gives Back', href: '/#gives-back' },
+      { label: 'Learn How to Vobe', href: '/download/#learn' },
       { label: 'Download', href: '/download/' },
     ],
   },
@@ -18,7 +20,7 @@ const columns = [
       { label: 'Documentation', href: site.docs },
       { label: 'GitHub', href: site.github },
       { label: 'Discord', href: site.discord },
-      { label: 'FAQ', href: '#faq' },
+      { label: 'FAQ', href: '/#faq' },
     ],
   },
   {

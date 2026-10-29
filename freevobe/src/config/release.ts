@@ -49,6 +49,8 @@ export const ASSET_FILE_NAMES = {
   macIntel: (tag: string) => `Freevobe_${tag}_x64.dmg`,
   linux: (tag: string) => `Freevobe_${tag}_amd64.AppImage`,
   android: () => `Freevobe-Mobile_${MOBILE_APP_VERSION}.apk`,
+  // Learn är en egen app: en enda HTML-fil som laddas ner, öppnas och spelas offline.
+  learn: () => 'freevobe-learn.html',
 } as const;
 
 /** Direktadress till en plattformsfil för en viss tagg. */
@@ -79,6 +81,7 @@ export const DOWNLOAD_LINKS = {
   macIntel: assetUrlForTag('macIntel'),
   linux: assetUrlForTag('linux'),
   android: assetUrlForTag('android'),
+  learn: assetUrlForTag('learn'),
 } as const;
 
 /** GitHub-sidan för repot (används av nav, footer och "Star on GitHub"). */

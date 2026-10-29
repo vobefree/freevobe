@@ -29,12 +29,22 @@ export default function PrivacyPage() {
       </section>
 
       <section>
-        <h2>Advertising</h2>
+        <h2>Advertising and Gives Back</h2>
         <p>
-          Advertising is currently disabled and no ad code is loaded. If ads are enabled on this
-          site later, they will be served by Google AdSense, which may use cookies or device
-          identifiers to serve and measure ads. You will be able to decline personalised ads
-          through the consent notice that appears with them.
+          Freevobe has no advertising: no ad slots, no ad scripts and no ad network. The website
+          and the desktop app therefore set no advertising cookies or device identifiers, and no
+          data is shared with a third party for marketing.
+        </p>
+        <p>
+          In place of an ad slot, the desktop app can show a voluntary reminder about a
+          charity — Freevobe Gives Back. It is off until you turn it on. The reminder contains a
+          link to the organisation&apos;s own website; Freevobe has no checkout, no account and no
+          payment provider, and never receives or forwards a donation.
+        </p>
+        <p>
+          If you record a contribution in the app, the note stays in your local database and is
+          labelled as self-reported. It is never sent to the organisation or to us, and you can
+          delete it at any time.
         </p>
       </section>
 

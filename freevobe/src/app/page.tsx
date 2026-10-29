@@ -1,5 +1,5 @@
-import { AdSlot } from '@/components/ads/ad-slot';
 import { Faq } from '@/components/sections/faq';
+import { GivesBack } from '@/components/sections/gives-back';
 import { Features } from '@/components/sections/features';
 import { FinalCta } from '@/components/sections/final-cta';
 import { Hero } from '@/components/sections/hero';
@@ -19,11 +19,8 @@ export default function Home() {
       <HowItWorks />
       <Skills />
 
-      {/*
-        Annonsplatsen är förberedd men avstängd: den renderar ingenting förrän
-        NEXT_PUBLIC_ADSENSE_CLIENT är satt. Ingen AdSense-kod ligger i sidan ännu.
-      */}
-      <AdSlot />
+      {/* I stället för annonsplats: den frivilliga välgörenhetsdelen. */}
+      <GivesBack />
 
       <Privacy />
       <Faq />

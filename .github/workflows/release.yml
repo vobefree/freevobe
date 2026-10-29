@@ -33,9 +33,9 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
-          cache-dependency-path: vibeforge/package-lock.json
+          cache-dependency-path: freevobe-desktop/package-lock.json
       - name: Versionen i tauri.conf.json måste matcha taggen
-        working-directory: vibeforge
+        working-directory: freevobe-desktop
         run: |
           set -euo pipefail
           # Vid en manuell körning finns ingen tagg att jämföra mot; då räcker det att bygget går
@@ -53,10 +53,35 @@ jobs:
           fi
           echo "Version $version stämmer med taggen $GITHUB_REF_NAME."
       - run: npm ci
-        working-directory: vibeforge
+        working-directory: freevobe-desktop
       - name: Typecheck, lint och tester
-        working-directory: vibeforge
+        working-directory: freevobe-desktop
         run: npm run verify
+
+  # Learn är en egen app, inte en sida på sajten: den publiceras som en enda HTML-fil som går att
+  # ladda ner, öppna offline och spela utan server. Samma fil som `npm run package` ger lokalt.
+  learn:
+    name: Freevobe Learn (.html)
+    needs: verify
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: freevobe-learn
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: freevobe-learn/package-lock.json
+      - run: npm ci
+      - run: npm test
+      - run: npm run package
+      - uses: actions/upload-artifact@v4
+        with:
+          name: learn-app
+          path: freevobe-learn/release/freevobe-learn.html
+          if-no-files-found: error
 
   windows:
     name: Windows (.exe)
@@ -65,39 +90,39 @@ jobs:
     # Authenticode-signering av installeraren. Hemligheterna är valfria: utan dem blir bygget
     # osignerat och SmartScreen varnar vid start, men releasen publiceras ändå. Se docs/releasing.md.
     env:
-      # Hemligheterna ligger i jobbets miljö under VIBEFORGE_-namn och flyttas till sina riktiga
+      # Hemligheterna ligger i jobbets miljö under FREEVOBE_-namn och flyttas till sina riktiga
       # namn av signeringssteget – bara när de har ett värde. Skälet står där.
-      VIBEFORGE_WINDOWS_CERTIFICATE: ${{ secrets.WINDOWS_CERTIFICATE }}
-      VIBEFORGE_WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
+      FREEVOBE_WINDOWS_CERTIFICATE: ${{ secrets.WINDOWS_CERTIFICATE }}
+      FREEVOBE_WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
-          cache-dependency-path: vibeforge/package-lock.json
+          cache-dependency-path: freevobe-desktop/package-lock.json
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
         with:
-          workspaces: vibeforge/apps/desktop/src-tauri
+          workspaces: freevobe-desktop/apps/desktop/src-tauri
       - run: npm ci
-        working-directory: vibeforge
+        working-directory: freevobe-desktop
       - name: Bygg agenten och sidecar-binären
-        working-directory: vibeforge
+        working-directory: freevobe-desktop
         run: npm run sidecar:build
       - name: Förbered signering av installeraren
         shell: pwsh
-        working-directory: vibeforge
+        working-directory: freevobe-desktop
         run: |
           $ErrorActionPreference = 'Stop'
           # Konfigurationen skrivs utanför repot och pekas ut med en absolut sökväg: Tauri körs med
           # workspace-katalogen (apps/desktop) som arbetskatalog och letar annars efter filen där.
           $configPath = Join-Path $env:RUNNER_TEMP 'tauri-signing.conf.json'
-          "VIBEFORGE_TAURI_CONFIG=$configPath" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          "FREEVOBE_TAURI_CONFIG=$configPath" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
 
-          if ([string]::IsNullOrWhiteSpace($env:VIBEFORGE_WINDOWS_CERTIFICATE)) {
+          if ([string]::IsNullOrWhiteSpace($env:FREEVOBE_WINDOWS_CERTIFICATE)) {
             '{}' | Set-Content -Path $configPath -Encoding utf8
-            "VIBEFORGE_WINDOWS_SIGNED=false" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+            "FREEVOBE_WINDOWS_SIGNED=false" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
             Write-Host "::warning::WINDOWS_CERTIFICATE saknas – installeraren blir osignerad och SmartScreen varnar vid start (se docs/releasing.md)."
             exit 0
           }
@@ -105,8 +130,8 @@ jobs:
           # Certifikatet skickas in som base64 (radbrytningar tillåtna) och importeras i runnerkontots
           # arkiv – det är så Tauri hittar det, via tumavtrycket.
           $pfx = Join-Path $env:RUNNER_TEMP 'codesign.pfx'
-          [IO.File]::WriteAllBytes($pfx, [Convert]::FromBase64String(($env:VIBEFORGE_WINDOWS_CERTIFICATE -replace '\s', '')))
-          $password = ConvertTo-SecureString -String $env:VIBEFORGE_WINDOWS_CERTIFICATE_PASSWORD -Force -AsPlainText
+          [IO.File]::WriteAllBytes($pfx, [Convert]::FromBase64String(($env:FREEVOBE_WINDOWS_CERTIFICATE -replace '\s', '')))
+          $password = ConvertTo-SecureString -String $env:FREEVOBE_WINDOWS_CERTIFICATE_PASSWORD -Force -AsPlainText
           $cert = Import-PfxCertificate -FilePath $pfx -CertStoreLocation Cert:\CurrentUser\My -Password $password
           Remove-Item $pfx -Force
 
@@ -123,18 +148,18 @@ jobs:
             }
           } | ConvertTo-Json -Depth 4 | Set-Content -Path $configPath -Encoding utf8
 
-          "VIBEFORGE_WINDOWS_SIGNED=true" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          "FREEVOBE_WINDOWS_SIGNED=true" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
           Write-Host "Importerade $($cert.Subject) ($($cert.Thumbprint))."
 
       - name: Bygg installeraren
         shell: pwsh
-        working-directory: vibeforge
+        working-directory: freevobe-desktop
         run: >-
-          npm run tauri --workspace @vibeforge/desktop -- build
-          --bundles nsis --config "$env:VIBEFORGE_TAURI_CONFIG"
+          npm run tauri --workspace @freevobe/desktop -- build
+          --bundles nsis --config "$env:FREEVOBE_TAURI_CONFIG"
       - name: Döp artefakten till nedladdningssidans filnamn
         shell: bash
-        working-directory: vibeforge
+        working-directory: freevobe-desktop
         run: |
           set -euo pipefail
           mkdir -p dist-release
@@ -143,7 +168,7 @@ jobs:
           ls -l dist-release
       - name: Verifiera signaturen
         shell: pwsh
-        working-directory: vibeforge
+        working-directory: freevobe-desktop
         run: |
           $ErrorActionPreference = 'Stop'
 
@@ -153,7 +178,7 @@ jobs:
           if (Test-Path $mainExe) { $files += (Resolve-Path $mainExe).Path }
           if ($files.Count -eq 0) { throw 'Hittade inga byggda filer att verifiera.' }
 
-          if ($env:VIBEFORGE_WINDOWS_SIGNED -ne 'true') {
+          if ($env:FREEVOBE_WINDOWS_SIGNED -ne 'true') {
             Write-Host '::warning::Installeraren är osignerad (inget certifikat konfigurerat).'
             exit 0
           }
@@ -168,7 +193,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: windows-installer
-          path: vibeforge/dist-release/*
+          path: freevobe-desktop/dist-release/*
           if-no-files-found: error
 
   macos:
@@ -176,35 +201,35 @@ jobs:
     needs: verify
     runs-on: macos-latest
     # Koden-signering och notarisering. Alla är valfria: utan dem blir appen osignerad och Gatekeeper
-    # varnar vid start, men releasen publiceras ändå. Se docs/releasing.md. Namnen har VIBEFORGE_-
+    # varnar vid start, men releasen publiceras ändå. Se docs/releasing.md. Namnen har FREEVOBE_-
     # prefix och flyttas till sina riktiga namn av signeringssteget – bara när de har ett värde.
     env:
-      VIBEFORGE_APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
-      VIBEFORGE_APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
-      VIBEFORGE_APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
-      VIBEFORGE_APPLE_ID: ${{ secrets.APPLE_ID }}
-      VIBEFORGE_APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
-      VIBEFORGE_APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-      VIBEFORGE_APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
-      VIBEFORGE_APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
-      VIBEFORGE_APPLE_API_KEY_P8_BASE64: ${{ secrets.APPLE_API_KEY_P8_BASE64 }}
+      FREEVOBE_APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+      FREEVOBE_APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+      FREEVOBE_APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+      FREEVOBE_APPLE_ID: ${{ secrets.APPLE_ID }}
+      FREEVOBE_APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+      FREEVOBE_APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+      FREEVOBE_APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
+      FREEVOBE_APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+      FREEVOBE_APPLE_API_KEY_P8_BASE64: ${{ secrets.APPLE_API_KEY_P8_BASE64 }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
-          cache-dependency-path: vibeforge/package-lock.json
+          cache-dependency-path: freevobe-desktop/package-lock.json
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: aarch64-apple-darwin
       - uses: Swatinem/rust-cache@v2
         with:
-          workspaces: vibeforge/apps/desktop/src-tauri
+          workspaces: freevobe-desktop/apps/desktop/src-tauri
       - run: npm ci
-        working-directory: vibeforge
+        working-directory: freevobe-desktop
       - name: Bygg agenten och sidecar-binären
-        working-directory: vibeforge
+        working-directory: freevobe-desktop
         run: npm run sidecar:build
       - name: Förbered signering
         id: signing
@@ -213,7 +238,7 @@ jobs:
           set -euo pipefail
           # Tauri läser APPLE_*-variablerna själv under bygget, så de behöver sina riktiga namn – men
           # bara när de har ett värde: en tom APPLE_CERTIFICATE eller APPLE_SIGNING_IDENTITY tolkas
-          # som "signera med ett tomt certifikat" och fäller bygget. Därför VIBEFORGE_-namnen i
+          # som "signera med ett tomt certifikat" och fäller bygget. Därför FREEVOBE_-namnen i
           # jobbets miljö och en flytt hit, enbart för de variabler som faktiskt är satta.
           expose() {
             local name="$1"
@@ -223,27 +248,27 @@ jobs:
           }
           # Notarisering med App Store Connect-nyckel kräver .p8-filen på disk. Den skickas in som
           # base64 och läggs i runnerkontots tempkatalog – aldrig i repot.
-          if [ -n "${VIBEFORGE_APPLE_API_KEY_P8_BASE64:-}" ]; then
-            printf '%s' "$VIBEFORGE_APPLE_API_KEY_P8_BASE64" | tr -d '\n' \
+          if [ -n "${FREEVOBE_APPLE_API_KEY_P8_BASE64:-}" ]; then
+            printf '%s' "$FREEVOBE_APPLE_API_KEY_P8_BASE64" | tr -d '\n' \
               | openssl base64 -d -A > "$RUNNER_TEMP/AuthKey.p8"
             chmod 600 "$RUNNER_TEMP/AuthKey.p8"
             expose APPLE_API_KEY_PATH "$RUNNER_TEMP/AuthKey.p8"
           fi
-          expose APPLE_CERTIFICATE "${VIBEFORGE_APPLE_CERTIFICATE:-}"
-          expose APPLE_CERTIFICATE_PASSWORD "${VIBEFORGE_APPLE_CERTIFICATE_PASSWORD:-}"
-          expose APPLE_SIGNING_IDENTITY "${VIBEFORGE_APPLE_SIGNING_IDENTITY:-}"
-          expose APPLE_ID "${VIBEFORGE_APPLE_ID:-}"
-          expose APPLE_PASSWORD "${VIBEFORGE_APPLE_PASSWORD:-}"
-          expose APPLE_TEAM_ID "${VIBEFORGE_APPLE_TEAM_ID:-}"
-          expose APPLE_API_KEY "${VIBEFORGE_APPLE_API_KEY:-}"
-          expose APPLE_API_ISSUER "${VIBEFORGE_APPLE_API_ISSUER:-}"
-          if [ -n "${VIBEFORGE_APPLE_CERTIFICATE:-}" ]; then
+          expose APPLE_CERTIFICATE "${FREEVOBE_APPLE_CERTIFICATE:-}"
+          expose APPLE_CERTIFICATE_PASSWORD "${FREEVOBE_APPLE_CERTIFICATE_PASSWORD:-}"
+          expose APPLE_SIGNING_IDENTITY "${FREEVOBE_APPLE_SIGNING_IDENTITY:-}"
+          expose APPLE_ID "${FREEVOBE_APPLE_ID:-}"
+          expose APPLE_PASSWORD "${FREEVOBE_APPLE_PASSWORD:-}"
+          expose APPLE_TEAM_ID "${FREEVOBE_APPLE_TEAM_ID:-}"
+          expose APPLE_API_KEY "${FREEVOBE_APPLE_API_KEY:-}"
+          expose APPLE_API_ISSUER "${FREEVOBE_APPLE_API_ISSUER:-}"
+          if [ -n "${FREEVOBE_APPLE_CERTIFICATE:-}" ]; then
             echo "signed=true" >> "$GITHUB_OUTPUT"
           else
             echo "signed=false" >> "$GITHUB_OUTPUT"
             echo "::warning::APPLE_CERTIFICATE saknas – appen blir osignerad och Gatekeeper varnar vid start (se docs/releasing.md)."
           fi
-          if [ -n "${VIBEFORGE_APPLE_ID:-}" ] || [ -n "${VIBEFORGE_APPLE_API_KEY:-}" ]; then
+          if [ -n "${FREEVOBE_APPLE_ID:-}" ] || [ -n "${FREEVOBE_APPLE_API_KEY:-}" ]; then
             echo "notary=true" >> "$GITHUB_OUTPUT"
           else
             echo "notary=false" >> "$GITHUB_OUTPUT"
@@ -251,13 +276,13 @@ jobs:
           fi
 
       - name: Bygg installeraren
-        working-directory: vibeforge
+        working-directory: freevobe-desktop
         run: >-
-          npm run tauri --workspace @vibeforge/desktop -- build
+          npm run tauri --workspace @freevobe/desktop -- build
           --target aarch64-apple-darwin --bundles dmg
       - name: Döp artefakten till nedladdningssidans filnamn
         shell: bash
-        working-directory: vibeforge
+        working-directory: freevobe-desktop
         run: |
           set -euo pipefail
           mkdir -p dist-release
@@ -267,7 +292,7 @@ jobs:
       - name: Notarisera och häfta fast biljetten på dmg:n
         if: steps.signing.outputs.signed == 'true' && steps.signing.outputs.notary == 'true'
         shell: bash
-        working-directory: vibeforge
+        working-directory: freevobe-desktop
         run: |
           set -euo pipefail
           dmg=$(ls dist-release/*.dmg)
@@ -290,7 +315,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: macos-installer
-          path: vibeforge/dist-release/*
+          path: freevobe-desktop/dist-release/*
           if-no-files-found: error
 
   # Intel-Macar: macos-latest är Apple Silicon, och sidobinären paketeras på byggmaskinens
@@ -302,34 +327,34 @@ jobs:
     runs-on: macos-15-intel
     # En utgången runner får inte stoppa de andra filerna från att publiceras.
     continue-on-error: true
-    # Samma signeringshemligheter som macos-jobbet (VIBEFORGE_-prefix, se kommentaren där).
+    # Samma signeringshemligheter som macos-jobbet (FREEVOBE_-prefix, se kommentaren där).
     env:
-      VIBEFORGE_APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
-      VIBEFORGE_APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
-      VIBEFORGE_APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
-      VIBEFORGE_APPLE_ID: ${{ secrets.APPLE_ID }}
-      VIBEFORGE_APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
-      VIBEFORGE_APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-      VIBEFORGE_APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
-      VIBEFORGE_APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
-      VIBEFORGE_APPLE_API_KEY_P8_BASE64: ${{ secrets.APPLE_API_KEY_P8_BASE64 }}
+      FREEVOBE_APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+      FREEVOBE_APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+      FREEVOBE_APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+      FREEVOBE_APPLE_ID: ${{ secrets.APPLE_ID }}
+      FREEVOBE_APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+      FREEVOBE_APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+      FREEVOBE_APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
+      FREEVOBE_APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+      FREEVOBE_APPLE_API_KEY_P8_BASE64: ${{ secrets.APPLE_API_KEY_P8_BASE64 }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
-          cache-dependency-path: vibeforge/package-lock.json
+          cache-dependency-path: freevobe-desktop/package-lock.json
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: x86_64-apple-darwin
       - uses: Swatinem/rust-cache@v2
         with:
-          workspaces: vibeforge/apps/desktop/src-tauri
+          workspaces: freevobe-desktop/apps/desktop/src-tauri
       - run: npm ci
-        working-directory: vibeforge
+        working-directory: freevobe-desktop
       - name: Bygg agenten och sidecar-binären
-        working-directory: vibeforge
+        working-directory: freevobe-desktop
         run: npm run sidecar:build
       - name: Förbered signering
         id: signing
@@ -338,7 +363,7 @@ jobs:
           set -euo pipefail
           # Tauri läser APPLE_*-variablerna själv under bygget, så de behöver sina riktiga namn – men
           # bara när de har ett värde: en tom APPLE_CERTIFICATE eller APPLE_SIGNING_IDENTITY tolkas
-          # som "signera med ett tomt certifikat" och fäller bygget. Därför VIBEFORGE_-namnen i
+          # som "signera med ett tomt certifikat" och fäller bygget. Därför FREEVOBE_-namnen i
           # jobbets miljö och en flytt hit, enbart för de variabler som faktiskt är satta.
           expose() {
             local name="$1"
@@ -348,27 +373,27 @@ jobs:
           }
           # Notarisering med App Store Connect-nyckel kräver .p8-filen på disk. Den skickas in som
           # base64 och läggs i runnerkontots tempkatalog – aldrig i repot.
-          if [ -n "${VIBEFORGE_APPLE_API_KEY_P8_BASE64:-}" ]; then
-            printf '%s' "$VIBEFORGE_APPLE_API_KEY_P8_BASE64" | tr -d '\n' \
+          if [ -n "${FREEVOBE_APPLE_API_KEY_P8_BASE64:-}" ]; then
+            printf '%s' "$FREEVOBE_APPLE_API_KEY_P8_BASE64" | tr -d '\n' \
               | openssl base64 -d -A > "$RUNNER_TEMP/AuthKey.p8"
             chmod 600 "$RUNNER_TEMP/AuthKey.p8"
             expose APPLE_API_KEY_PATH "$RUNNER_TEMP/AuthKey.p8"
           fi
-          expose APPLE_CERTIFICATE "${VIBEFORGE_APPLE_CERTIFICATE:-}"
-          expose APPLE_CERTIFICATE_PASSWORD "${VIBEFORGE_APPLE_CERTIFICATE_PASSWORD:-}"
-          expose APPLE_SIGNING_IDENTITY "${VIBEFORGE_APPLE_SIGNING_IDENTITY:-}"
-          expose APPLE_ID "${VIBEFORGE_APPLE_ID:-}"
-          expose APPLE_PASSWORD "${VIBEFORGE_APPLE_PASSWORD:-}"
-          expose APPLE_TEAM_ID "${VIBEFORGE_APPLE_TEAM_ID:-}"
-          expose APPLE_API_KEY "${VIBEFORGE_APPLE_API_KEY:-}"
-          expose APPLE_API_ISSUER "${VIBEFORGE_APPLE_API_ISSUER:-}"
-          if [ -n "${VIBEFORGE_APPLE_CERTIFICATE:-}" ]; then
+          expose APPLE_CERTIFICATE "${FREEVOBE_APPLE_CERTIFICATE:-}"
+          expose APPLE_CERTIFICATE_PASSWORD "${FREEVOBE_APPLE_CERTIFICATE_PASSWORD:-}"
+          expose APPLE_SIGNING_IDENTITY "${FREEVOBE_APPLE_SIGNING_IDENTITY:-}"
+          expose APPLE_ID "${FREEVOBE_APPLE_ID:-}"
+          expose APPLE_PASSWORD "${FREEVOBE_APPLE_PASSWORD:-}"
+          expose APPLE_TEAM_ID "${FREEVOBE_APPLE_TEAM_ID:-}"
+          expose APPLE_API_KEY "${FREEVOBE_APPLE_API_KEY:-}"
+          expose APPLE_API_ISSUER "${FREEVOBE_APPLE_API_ISSUER:-}"
+          if [ -n "${FREEVOBE_APPLE_CERTIFICATE:-}" ]; then
             echo "signed=true" >> "$GITHUB_OUTPUT"
           else
             echo "signed=false" >> "$GITHUB_OUTPUT"
             echo "::warning::APPLE_CERTIFICATE saknas – appen blir osignerad och Gatekeeper varnar vid start (se docs/releasing.md)."
           fi
-          if [ -n "${VIBEFORGE_APPLE_ID:-}" ] || [ -n "${VIBEFORGE_APPLE_API_KEY:-}" ]; then
+          if [ -n "${FREEVOBE_APPLE_ID:-}" ] || [ -n "${FREEVOBE_APPLE_API_KEY:-}" ]; then
             echo "notary=true" >> "$GITHUB_OUTPUT"
           else
             echo "notary=false" >> "$GITHUB_OUTPUT"
@@ -376,13 +401,13 @@ jobs:
           fi
 
       - name: Bygg installeraren
-        working-directory: vibeforge
+        working-directory: freevobe-desktop
         run: >-
-          npm run tauri --workspace @vibeforge/desktop -- build
+          npm run tauri --workspace @freevobe/desktop -- build
           --target x86_64-apple-darwin --bundles dmg
       - name: Döp artefakten till nedladdningssidans filnamn
         shell: bash
-        working-directory: vibeforge
+        working-directory: freevobe-desktop
         run: |
           set -euo pipefail
           mkdir -p dist-release
@@ -392,7 +417,7 @@ jobs:
       - name: Notarisera och häfta fast biljetten på dmg:n
         if: steps.signing.outputs.signed == 'true' && steps.signing.outputs.notary == 'true'
         shell: bash
-        working-directory: vibeforge
+        working-directory: freevobe-desktop
         run: |
           set -euo pipefail
           dmg=$(ls dist-release/*.dmg)
@@ -415,7 +440,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: macos-intel-installer
-          path: vibeforge/dist-release/*
+          path: freevobe-desktop/dist-release/*
           if-no-files-found: error
 
   linux:
@@ -432,22 +457,22 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
-          cache-dependency-path: vibeforge/package-lock.json
+          cache-dependency-path: freevobe-desktop/package-lock.json
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
         with:
-          workspaces: vibeforge/apps/desktop/src-tauri
+          workspaces: freevobe-desktop/apps/desktop/src-tauri
       - run: npm ci
-        working-directory: vibeforge
+        working-directory: freevobe-desktop
       - name: Bygg agenten och sidecar-binären
-        working-directory: vibeforge
+        working-directory: freevobe-desktop
         run: npm run sidecar:build
       - name: Bygg installeraren
-        working-directory: vibeforge
-        run: npm run tauri --workspace @vibeforge/desktop -- build --bundles appimage
+        working-directory: freevobe-desktop
+        run: npm run tauri --workspace @freevobe/desktop -- build --bundles appimage
       - name: Döp artefakten till nedladdningssidans filnamn
         shell: bash
-        working-directory: vibeforge
+        working-directory: freevobe-desktop
         run: |
           set -euo pipefail
           mkdir -p dist-release
@@ -457,7 +482,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: linux-installer
-          path: vibeforge/dist-release/*
+          path: freevobe-desktop/dist-release/*
           if-no-files-found: error
 
   android:
@@ -467,10 +492,10 @@ jobs:
     # Signering av release-APK:n. Utan hemligheterna signeras APK:n med debugnyckeln – installerbar
     # vid sidan om butiken, men inte publicerbar. Se docs/releasing.md.
     env:
-      VIBEFORGE_ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
-      VIBEFORGE_ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-      VIBEFORGE_ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
-      VIBEFORGE_ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+      FREEVOBE_ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+      FREEVOBE_ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+      FREEVOBE_ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+      FREEVOBE_ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
     defaults:
       run:
         working-directory: freevobe-mobile
@@ -498,20 +523,20 @@ jobs:
           set -euo pipefail
           # Nyckellagret läses av plugins/with-android-release-signing.js via android/key.properties.
           # Båda filerna ligger under android/, som prebuild skapar och .gitignore utesluter.
-          if [ -z "${VIBEFORGE_ANDROID_KEYSTORE_BASE64:-}" ]; then
-            echo "VIBEFORGE_ANDROID_SIGNED=false" >> "$GITHUB_ENV"
+          if [ -z "${FREEVOBE_ANDROID_KEYSTORE_BASE64:-}" ]; then
+            echo "FREEVOBE_ANDROID_SIGNED=false" >> "$GITHUB_ENV"
             echo "::warning::ANDROID_KEYSTORE_BASE64 saknas – APK:n signeras med debugnyckeln och kan inte publiceras i Play Store (se docs/releasing.md)."
             exit 0
           fi
-          printf '%s' "$VIBEFORGE_ANDROID_KEYSTORE_BASE64" | tr -d '\n' | base64 -d > android/app/upload-key.jks
+          printf '%s' "$FREEVOBE_ANDROID_KEYSTORE_BASE64" | tr -d '\n' | base64 -d > android/app/upload-key.jks
           cat > android/key.properties <<EOF
           storeFile=app/upload-key.jks
-          storePassword=$VIBEFORGE_ANDROID_KEYSTORE_PASSWORD
-          keyAlias=$VIBEFORGE_ANDROID_KEY_ALIAS
-          keyPassword=$VIBEFORGE_ANDROID_KEY_PASSWORD
+          storePassword=$FREEVOBE_ANDROID_KEYSTORE_PASSWORD
+          keyAlias=$FREEVOBE_ANDROID_KEY_ALIAS
+          keyPassword=$FREEVOBE_ANDROID_KEY_PASSWORD
           EOF
-          echo "VIBEFORGE_ANDROID_SIGNED=true" >> "$GITHUB_ENV"
-          echo "Nyckellagret är på plats (alias $VIBEFORGE_ANDROID_KEY_ALIAS)."
+          echo "FREEVOBE_ANDROID_SIGNED=true" >> "$GITHUB_ENV"
+          echo "Nyckellagret är på plats (alias $FREEVOBE_ANDROID_KEY_ALIAS)."
       - name: Bygg APK
         working-directory: freevobe-mobile/android
         run: ./gradlew assembleRelease --no-daemon
@@ -541,7 +566,7 @@ jobs:
           fi
           certs=$("$apksigner" verify --print-certs android/app/build/outputs/apk/release/app-release.apk)
           printf '%s\n' "$certs"
-          if [ "${VIBEFORGE_ANDROID_SIGNED:-false}" = "true" ]; then
+          if [ "${FREEVOBE_ANDROID_SIGNED:-false}" = "true" ]; then
             # Det här är kontrollen som faktiskt avgör om signeringen tog: att APK:n inte längre bär
             # debugnyckelns identitet.
             if printf '%s' "$certs" | grep -qi 'CN=Android Debug'; then
@@ -565,7 +590,7 @@ jobs:
 
   release:
     name: Publicera releasen
-    needs: [windows, macos, macos_intel, linux, android]
+    needs: [learn, windows, macos, macos_intel, linux, android]
     # En manuell körning används för att testa bygget och ska bara lämna artefakter – den får inte
     # skapa eller skriva om en release (en körning från en gren har inget taggnamn att publicera på).
     if: github.event_name == 'push'

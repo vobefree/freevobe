@@ -35,15 +35,11 @@ export interface HttpApiOptions {
 }
 
 /**
- * Skrivbordet kräver sitt token i ett eget huvud. Appen skickar både det aktuella namnet och det
- * äldre (`x-vibeforge-token`) så att den fungerar mot både dagens server och en omdöpt sådan – det är
- * en medveten kompatibilitetsschim, inte ett antagande om två tokens.
+ * Skrivbordet kräver sitt token i ett eget huvud. Samma huvudnamn används av skrivbordet och
+ * webbläsarläget, så det finns bara ett att hålla reda på.
  */
 export function authHeaders(token: string): Record<string, string> {
-  return {
-    'x-freevobe-token': token,
-    'x-vibeforge-token': token,
-  };
+  return { 'x-freevobe-token': token };
 }
 
 /** Tar bort avslutande snedstreck så att sökvägar kan läggas på utan dubbla snedstreck. */

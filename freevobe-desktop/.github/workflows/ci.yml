@@ -1,0 +1,74 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Typkontroll, lint och tester (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.14.0
+          cache: npm
+
+      - name: Installera beroenden
+        run: npm ci
+
+      - name: Generera appikoner
+        run: npm run icons
+
+      - name: Typkontroll
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Formatering
+        run: npm run format:check
+
+      - name: Enhetstester
+        run: npm test
+
+      - name: Bygg webbplatsen
+        run: npm run build:web
+
+  e2e:
+    name: E2E-tester (Playwright)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.14.0
+          cache: npm
+
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+
+      # Agenten körs med FREEVOBE_E2E=1 (databas i minnet) och en fejkad Ollama,
+      # så testerna kräver varken en riktig modell eller nätverksåtkomst.
+      - name: E2E
+        run: npm run test:e2e
+
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: playwright-report
+          retention-days: 7

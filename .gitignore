@@ -6,7 +6,8 @@
 !/README.md
 !/freevobe/
 !/freevobe-mobile/
-!/vibeforge/
+!/freevobe-desktop/
+!/freevobe-learn/
 
 # Byggartefakter och lokalt tillstånd som annars smugit med (gäller alla delar)
 node_modules/
@@ -26,6 +27,9 @@ next-env.d.ts
 
 # Wranglers lokala miniflare-state
 .wrangler/
+
+# Learn byggs till en enda HTML-fil; den publiceras via releasen, inte via git
+freevobe-learn/release/
 
 # Mobilappen
 freevobe-mobile/.expo/

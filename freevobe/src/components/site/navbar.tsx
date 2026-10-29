@@ -2,6 +2,7 @@
 
 import { AnimatePresence, motion } from 'framer-motion';
 import { Menu, X } from 'lucide-react';
+import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { DownloadButton } from '@/components/download/download-button';
 import { Button } from '@/components/ui/button';
@@ -52,6 +53,10 @@ export function Logo({ className }: { className?: string }) {
 export function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
+  const pathname = usePathname();
+  const onHome = pathname === '/' || pathname === '';
+  // Sektionslänkarna hör till startsidan. Från /download/ ska de gå dit, inte bli döda.
+  const sectionHref = (href: string) => (href.startsWith('#') && !onHome ? `/${href}` : href);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 12);
@@ -70,7 +75,7 @@ export function Navbar() {
       )}
     >
       <nav className="vf-shell flex h-16 items-center gap-6" aria-label="Main">
-        <a href="#top" className="rounded-lg" aria-label="Freevobe home">
+        <a href={onHome ? '#top' : '/'} className="rounded-lg" aria-label="Freevobe home">
           <Logo />
         </a>
 
@@ -78,7 +83,7 @@ export function Navbar() {
           {nav.map((item) => (
             <li key={item.label}>
               <a
-                href={item.href}
+                href={sectionHref(item.href)}
                 {...('external' in item && item.external
                   ? { target: '_blank', rel: 'noreferrer noopener' }
                   : {})}
@@ -120,7 +125,7 @@ export function Navbar() {
               {nav.map((item) => (
                 <li key={item.label}>
                   <a
-                    href={item.href}
+                    href={sectionHref(item.href)}
                     onClick={() => setOpen(false)}
                     className="block border-b border-line/60 py-3 text-muted transition-colors hover:text-fg"
                   >

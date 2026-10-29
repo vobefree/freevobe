@@ -35,26 +35,44 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: vibeforge
+        working-directory: freevobe-desktop
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
-          cache-dependency-path: vibeforge/package-lock.json
+          cache-dependency-path: freevobe-desktop/package-lock.json
       - run: npm ci
       - run: npm run typecheck
       - run: npm run lint
       # Playwright-sviten (test:e2e) kräver nedladdade webbläsare och körs därför inte här.
       - run: npm test
 
+  freevobe-learn:
+    name: Freevobe Learn (appen)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: freevobe-learn
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: freevobe-learn/package-lock.json
+      - run: npm ci
+      - run: npm test
+      - run: npm run typecheck
+      - run: npm run build
+
   freevobe-web:
     name: Freevobe-sidan (webb)
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: freevobe
+        working-directory: freevobe-desktop
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

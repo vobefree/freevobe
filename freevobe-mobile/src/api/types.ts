@@ -1,7 +1,7 @@
 /**
  * Protokollet mellan Freevobe Mobile och Freevobe Desktop.
  *
- * Typerna speglar skrivbordsappens egna typer (vibeforge/packages/protocol) så att HTTP-adaptern blir
+ * Typerna speglar skrivbordsappens egna typer (freevobe-desktop/packages/protocol) så att HTTP-adaptern blir
  * en tunn översättning i stället för en gissning. Mobilappen lägger bara till de aggregerade vyer den
  * visar: missions, loggrader och en snapshot av datorns status.
  */

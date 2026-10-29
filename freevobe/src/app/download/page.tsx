@@ -121,6 +121,62 @@ export default function DownloadPage() {
         </div>
       </section>
 
+      {/* Learn är en egen app – en fil, ingen sida på sajten. Därför ligger den här som en
+          nedladdning bredvid installerarna, inte som en egen route. */}
+      <section id="learn" className="vf-shell max-w-4xl scroll-mt-24 pb-12">
+        <div className="vf-panel p-5">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="font-mono text-[11px] tracking-[0.08em] text-accent-soft">
+                Freevobe Learn
+              </p>
+              <h2 className="mt-1 text-sm font-semibold tracking-tight">
+                Learn How to Vobe – som app, inte som sida
+              </h2>
+            </div>
+            <span className="rounded-full border border-line px-3 py-1 font-mono text-[11px] text-muted">
+              1 fil · ~0,34 MB
+            </span>
+          </div>
+
+          <p className="mt-2 text-[12.5px] leading-relaxed text-muted">
+            Skriv en värld, få den kontrollerad och spela den. Lektionerna visar koden som byggde
+            kartan. Appen är en enda HTML-fil: ladda ner den, öppna den och spela – ingen server,
+            inget konto, ingen modell och ingen uppkoppling. Framstegen sparas i webbläsaren på din
+            egen dator.
+          </p>
+
+          <ol className="mt-3 space-y-2 text-[12.5px] leading-relaxed text-muted">
+            <li>
+              <span className="font-medium text-fg">1.</span> Ladda ner{" "}
+              <span className="font-mono">freevobe-learn.html</span> från releasen.
+            </li>
+            <li>
+              <span className="font-medium text-fg">2.</span> Öppna filen i valfri webbläsare – den
+              fungerar från mappen du sparade den i, även utan nät.
+            </li>
+            <li>
+              <span className="font-medium text-fg">3.</span> Flytta den till skrivbordet om du vill
+              ha den kvar som en egen app. Den ligger kvar tills du själv tar bort den.
+            </li>
+          </ol>
+
+          <div className="mt-4 flex flex-wrap items-center gap-2">
+            <Button asChild size="sm">
+              <a href={DOWNLOAD_LINKS.learn} download>
+                Download Freevobe Learn
+              </a>
+            </Button>
+            <Button asChild variant="ghost" size="sm">
+              <a href={DOWNLOAD_LINKS.all} target="_blank" rel="noreferrer noopener">
+                Se filen bland alla releases
+                <ExternalLink className="size-3.5" />
+              </a>
+            </Button>
+          </div>
+        </div>
+      </section>
+
       <section className="vf-shell max-w-4xl pb-12">
         <ReleaseFiles />
       </section>

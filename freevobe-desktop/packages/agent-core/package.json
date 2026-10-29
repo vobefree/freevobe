@@ -1,0 +1,21 @@
+{
+  "name": "@freevobe/agent-core",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Freevobe agent-kärna: Ollama-klient, agent-loop, verktyg, kontext, skills, MCP och policy. Inga runtime-beroenden.",
+  "exports": {
+    ".": "./src/index.ts",
+    "./testing": "./src/testing/index.ts"
+  },
+  "bin": {
+    "freevobe-doctor": "./bin/freevobe-doctor.mjs"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --dir src"
+  },
+  "dependencies": {
+    "@freevobe/protocol": "*"
+  }
+}
