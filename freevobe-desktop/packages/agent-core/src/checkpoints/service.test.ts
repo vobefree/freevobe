@@ -1,7 +1,7 @@
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { CHECKPOINT_LIMIT } from '@freevobe/protocol';
 import { CheckpointService } from './service.js';
 import { FreevobeDatabase } from '../store/db.js';
@@ -284,6 +284,39 @@ describe('CheckpointService', () => {
     expect(list).toHaveLength(CHECKPOINT_LIMIT);
     expect(list[0]?.label).toBe(`Checkpoint ${CHECKPOINT_LIMIT + 1}`);
     expect(list.some((checkpoint) => checkpoint.label === 'Checkpoint 0')).toBe(false);
+  });
+
+  it('ordnar checkpoints som skapas i samma millisekund efter skapandet', async () => {
+    // Två checkpoints kan få samma created_at när de skapas snabbt. Då måste ordningen ändå vara
+    // den som de skapades i – annars visar tidslinjen den äldre som nyast.
+    vi.useFakeTimers({ toFake: ['Date'] });
+    try {
+      vi.setSystemTime(new Date('2026-10-29T12:00:00.000Z'));
+      for (const label of ['Först', 'Sedan', 'Sist']) {
+        await service.createManual({
+          projectId,
+          label,
+          files: [
+            {
+              path: `src/${label}.ts`,
+              beforeContent: '',
+              afterContent: '',
+              additions: 0,
+              deletions: 0,
+              changeKind: 'create',
+            },
+          ],
+        });
+      }
+    } finally {
+      vi.useRealTimers();
+    }
+
+    expect(service.list(projectId).map((checkpoint) => checkpoint.label)).toEqual([
+      'Sist',
+      'Sedan',
+      'Först',
+    ]);
   });
 
   it('vägrar spara en manuell checkpoint utan filer', async () => {

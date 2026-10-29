@@ -154,8 +154,12 @@ export class CheckpointService {
   // ---------------------------------------------------------------- läsning
 
   list(projectId: string): Checkpoint[] {
+    // rowid bryter tiden när flera checkpoints skapas inom samma millisekund: utan det blir
+    // ordningen godtycklig och den nyaste kan hamna under den äldre (t.ex. i ett snabbt test).
     const rows = this.db.db
-      .prepare('SELECT * FROM checkpoints WHERE project_id = ? ORDER BY created_at DESC LIMIT ?')
+      .prepare(
+        'SELECT * FROM checkpoints WHERE project_id = ? ORDER BY created_at DESC, rowid DESC LIMIT ?',
+      )
       .all(projectId, CHECKPOINT_LIMIT) as unknown as CheckpointRow[];
     return rows.map(mapCheckpoint);
   }
@@ -392,7 +396,7 @@ export class CheckpointService {
   async prune(projectId: string): Promise<void> {
     const rows = this.db.db
       .prepare(
-        'SELECT id FROM checkpoints WHERE project_id = ? ORDER BY created_at DESC LIMIT -1 OFFSET ?',
+        'SELECT id FROM checkpoints WHERE project_id = ? ORDER BY created_at DESC, rowid DESC LIMIT -1 OFFSET ?',
       )
       .all(projectId, CHECKPOINT_LIMIT) as Array<{ id: string }>;
     for (const row of rows) {
