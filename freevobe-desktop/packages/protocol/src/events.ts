@@ -12,6 +12,8 @@ export type AgentPhase =
   | 'connecting'
   | 'building-context'
   | 'thinking'
+  /** Första token dröjer: Ollama laddar in modellen i minnet. */
+  | 'loading-model'
   | 'waiting-approval'
   | 'executing-tool'
   | 'reflecting'

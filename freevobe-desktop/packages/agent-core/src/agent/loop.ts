@@ -18,7 +18,12 @@ import type { IndexedFile, ProjectIndexer } from '../context/indexer.js';
 import { activateSkills, type Skill } from '../skills/loader.js';
 import type { RuleBundle } from '../rules/loader.js';
 import { ToolCallAccumulator, parseTextualToolCalls } from '../ollama/openai.js';
-import type { ChatToolCall, ChatTransport, ChatTurnMessage } from '../ollama/types.js';
+import type {
+  ChatChunk,
+  ChatToolCall,
+  ChatTransport,
+  ChatTurnMessage,
+} from '../ollama/types.js';
 import { describeError } from '../util/errors.js';
 import { createId } from '../util/ids.js';
 import { buildSystemPrompt } from './prompt.js';
@@ -53,7 +58,15 @@ export interface AgentLoopOptions {
   autoApprove?: Partial<Record<ApprovalCategory, boolean>>;
   browser?: BrowserDriver;
   osLabel?: string;
+  /**
+   * Hur länge ett modellsvar får dröja innan chatten säger att modellen laddas in.
+   * En varm modell svarar inom några hundra millisekunder, så standardvärdet syns bara när
+   * Ollama faktiskt måste läsa in modellen först.
+   */
+  firstTokenNoticeMs?: number;
 }
+
+const DEFAULT_FIRST_TOKEN_NOTICE_MS = 1_500;
 
 export interface RunInput {
   runId: string;
@@ -398,12 +411,31 @@ export class AgentLoop {
     let content = '';
     let reasoning = '';
 
-    for await (const chunk of this.options.transport.chat({
+    const stream = this.options.transport.chat({
       model: input.model,
       messages,
       tools: this.options.registry.specsForModel(),
       signal: input.signal,
-    })) {
+    })[Symbol.asyncIterator]();
+
+    const first = await this.awaitFirstChunk(stream);
+    let step: IteratorResult<ChatChunk>;
+    if (first.kind === 'slow') {
+      yield {
+        type: 'status',
+        runId: input.runId,
+        phase: 'loading-model',
+        message: `Laddar ${input.model}`,
+      };
+      step = await first.pending;
+    } else if (first.kind === 'error') {
+      throw first.error;
+    } else {
+      step = first.result;
+    }
+
+    while (!step.done) {
+      const chunk: ChatChunk = step.value;
       if (chunk.contentDelta) {
         content += chunk.contentDelta;
         yield { type: 'assistant_delta', runId: input.runId, text: chunk.contentDelta };
@@ -421,9 +453,45 @@ export class AgentLoop {
           completionTokens: chunk.usage.completionTokens,
         };
       }
+
+      step = await stream.next();
     }
 
     return { content, reasoning, toolCalls: accumulator.list() };
+  }
+
+  /**
+   * Hämtar första chunken, men väntar inte i tysthet: Ollama laddar in hela modellen innan
+   * första token kommer, och en kall 7B kan ta en minut. Då säger chatten att modellen laddas i
+   * stället för att stå tom, så väntetiden aldrig ser ut som en hängning.
+   */
+  private async awaitFirstChunk(
+    stream: AsyncIterator<ChatChunk>,
+  ): Promise<
+    | { kind: 'chunk'; result: IteratorResult<ChatChunk> }
+    | { kind: 'error'; error: unknown }
+    | { kind: 'slow'; pending: Promise<IteratorResult<ChatChunk>> }
+  > {
+    const pending = stream.next();
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const noticeMs = this.options.firstTokenNoticeMs ?? DEFAULT_FIRST_TOKEN_NOTICE_MS;
+
+    const delayed = new Promise<'slow'>((resolve) => {
+      timer = setTimeout(() => resolve('slow'), noticeMs);
+    });
+
+    const outcome = await Promise.race([
+      // Både värde och fel tas om hand, så att en sen avvisning inte blir en obehandlad promise.
+      pending.then(
+        (result) => ({ kind: 'chunk' as const, result }),
+        (error: unknown) => ({ kind: 'error' as const, error }),
+      ),
+      delayed.then(() => ({ kind: 'slow' as const })),
+    ]);
+    if (timer !== undefined) clearTimeout(timer);
+
+    if (outcome.kind === 'slow') return { kind: 'slow', pending };
+    return outcome;
   }
 
   /** Hämtar indexerade filer, eller bygger en repo map från disk första gången. */

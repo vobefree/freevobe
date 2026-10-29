@@ -68,6 +68,7 @@ export function ChatView() {
   const reasoningText = useAppStore((state) => state.reasoningText);
   const isRunning = useAppStore((state) => state.isRunning);
   const phase = useAppStore((state) => state.phase);
+  const selectedModel = useAppStore((state) => state.selectedModel);
   const givesBack = useAppStore((state) => state.settings?.givesBack ?? null);
   const sessionId = useAppStore((state) => state.sessionId);
   const plans = useAppStore((state) => state.plans);
@@ -145,6 +146,32 @@ export function ChatView() {
 
         {/* Planen ligger sist i flödet: då syns den när den läggs fram, utan att scrolla upp. */}
         {currentPlan ? <PlanCard plan={currentPlan} /> : null}
+
+        {/*
+         * Tyst väntan är det värsta en lokal modell kan bjuda på: Ollama läser in hela modellen
+         * innan första token kommer. Bubblan visar fasen direkt, och när det är modellinläsningen
+         * som tar tid står det också varför.
+         */}
+        {isRunning && !streamingText ? (
+          <article data-testid="chat-waiting" className="mr-2 rounded-lg px-3.5 py-2.5">
+            <header className="mb-1 flex items-center gap-2">
+              <span className="text-[11px] font-semibold tracking-wide text-ember uppercase">
+                Freevobe
+              </span>
+              <span className="text-[10px] text-slate-500">
+                {PHASE_LABELS[phase as keyof typeof PHASE_LABELS] ?? phase}
+              </span>
+              <span className="h-2 w-2 animate-pulse rounded-full bg-ember" />
+            </header>
+            {phase === 'loading-model' ? (
+              <p className="text-xs text-slate-500">
+                {t('chat.waitingHint', {
+                  model: selectedModel || t('topbar.noModel'),
+                })}
+              </p>
+            ) : null}
+          </article>
+        ) : null}
 
         {streamingText ? (
           <article className="mr-2 rounded-lg px-3.5 py-2.5">

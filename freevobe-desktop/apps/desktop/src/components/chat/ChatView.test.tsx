@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, render } from '@testing-library/react';
+import { cleanup, render, screen } from '@testing-library/react';
 import { DEFAULT_AUTO_APPROVE } from '@freevobe/protocol';
 import type { AppSettings, ChatMessage } from '@freevobe/protocol';
 import { ChatView } from './ChatView';
@@ -107,5 +107,49 @@ describe('ChatView med Gives Back', () => {
     const { container } = render(<ChatView />);
     expect(container.querySelectorAll('[data-testid="message-user"]').length).toBe(10);
     expect(container.querySelectorAll('[data-testid="message-assistant"]').length).toBe(10);
+  });
+});
+
+describe('ChatView under väntan på modellen', () => {
+  beforeEach(() => {
+    setState(1, enabled);
+    useAppStore.setState({
+      isRunning: true,
+      phase: 'thinking',
+      streamingText: '',
+      selectedModel: 'qwen2.5-coder:7b',
+    });
+  });
+
+  afterEach(() => {
+    cleanup();
+    useAppStore.setState({ settings: null, sessionId: null, messages: [], isRunning: false });
+  });
+
+  it('visar en väntebubbla så fort körningen startar', () => {
+    render(<ChatView />);
+    expect(screen.getByTestId('chat-waiting')).toBeTruthy();
+  });
+
+  it('säger att modellen laddas och vilken modell det gäller', () => {
+    useAppStore.setState({ phase: 'loading-model' });
+    render(<ChatView />);
+    const waiting = screen.getByTestId('chat-waiting');
+    expect(waiting.textContent).toContain('Laddar modellen');
+    expect(waiting.textContent).toContain('qwen2.5-coder:7b');
+  });
+
+  it('förklarar bara väntan när det är modellinläsningen som tar tid', () => {
+    render(<ChatView />);
+    const waiting = screen.getByTestId('chat-waiting');
+    expect(waiting.textContent).toContain('Tänker');
+    expect(waiting.textContent).not.toContain('kall modell');
+  });
+
+  it('tar bort väntebubblan när texten strömmar in', () => {
+    useAppStore.setState({ phase: 'loading-model', streamingText: 'Jag börjar' });
+    render(<ChatView />);
+    expect(screen.queryByTestId('chat-waiting')).toBeNull();
+    expect(screen.getByText('Jag börjar')).toBeTruthy();
   });
 });

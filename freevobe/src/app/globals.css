@@ -140,6 +140,10 @@ html.light {
 html {
   scroll-behavior: smooth;
   background: var(--bg);
+  /* Dekorativa glödar är bredare än fönstret. Utan det här blir 2 px kvar som en
+     horisontell scrollbar längst ner på mobilen. `clip` behåller sticky-menyn, till skillnad
+     från `hidden` som gör html till scrollcontainer. */
+  overflow-x: clip;
 }
 
 body {

@@ -51,6 +51,10 @@ interface SliceOptions {
   maxIterations?: number;
   supportsTools?: boolean;
   abortAfter?: number;
+  /** Fördröjer första byten, som när Ollama laddar in modellen. */
+  chatDelayMs?: number;
+  /** Hur länge loopen väntar innan den säger att modellen laddas. */
+  firstTokenNoticeMs?: number;
   /** Godkänd plan som ska gälla som kontrakt i körningen. */
   plan?: Plan;
 }
@@ -62,7 +66,10 @@ interface SliceResult {
 }
 
 async function runSlice(options: SliceOptions): Promise<SliceResult> {
-  fake = await startFakeOllama({ turns: options.turns });
+  fake = await startFakeOllama({
+    turns: options.turns,
+    ...(options.chatDelayMs !== undefined ? { chatDelayMs: options.chatDelayMs } : {}),
+  });
   const events: AgentEvent[] = [];
   const approvals: ApprovalRequest[] = [];
 
@@ -102,6 +109,9 @@ async function runSlice(options: SliceOptions): Promise<SliceResult> {
     skills,
     repoMapProvider: () => buildRepoMap(root),
     ...(options.maxIterations !== undefined ? { maxIterations: options.maxIterations } : {}),
+    ...(options.firstTokenNoticeMs !== undefined
+      ? { firstTokenNoticeMs: options.firstTokenNoticeMs }
+      : {}),
     browserAutomationEnabled: false,
   });
 
@@ -477,5 +487,42 @@ describe('vertikal slice: Ollama → chatt → läs fil → ändra → diff → 
     expect(
       result.toolResultContents.some((content) => content.includes('export function halsa')),
     ).toBe(true);
+  });
+});
+
+describe('modellinläsning syns i chatten', () => {
+  it('säger att modellen laddas när första token dröjer', async () => {
+    const result = await runSlice({
+      permissionMode: 'auto-edit',
+      turns: [{ content: 'Klart.' }],
+      chatDelayMs: 120,
+      firstTokenNoticeMs: 20,
+    });
+
+    const phases = result.events
+      .filter((event) => event.type === 'status')
+      .map((event) => (event.type === 'status' ? event.phase : ''));
+    expect(phases).toContain('loading-model');
+
+    // Aviseringen kommer innan första tecknet, så chatten hinner visa vänteläget.
+    const notice = result.events.findIndex(
+      (event) => event.type === 'status' && event.phase === 'loading-model',
+    );
+    const firstDelta = result.events.findIndex((event) => event.type === 'assistant_delta');
+    expect(notice).toBeGreaterThanOrEqual(0);
+    expect(firstDelta).toBeGreaterThan(notice);
+  });
+
+  it('säger ingenting när modellen svarar direkt', async () => {
+    const result = await runSlice({
+      permissionMode: 'auto-edit',
+      turns: [{ content: 'Klart.' }],
+      firstTokenNoticeMs: 400,
+    });
+
+    const phases = result.events
+      .filter((event) => event.type === 'status')
+      .map((event) => (event.type === 'status' ? event.phase : ''));
+    expect(phases).not.toContain('loading-model');
   });
 });

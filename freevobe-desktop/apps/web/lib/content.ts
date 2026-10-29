@@ -57,6 +57,15 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '0.2.2',
+    date: '2026-10-29',
+    highlights: [
+      'Chatten står inte längre tom medan Ollama läser in modellen: en väntebubbla visar fasen och, om första token dröjer, att just din modell laddas.',
+      'Förklaringen talar om att en kall modell kan ta upp till en minut – så väntetiden ser aldrig ut som en hängning.',
+      'Språkväljaren på webbplatsen visar vilket språk som är aktivt och behåller sidan du står på när du byter.',
+    ],
+  },
+  {
     version: '0.2.1',
     date: '2026-10-29',
     highlights: [
