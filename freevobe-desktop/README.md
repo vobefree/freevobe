@@ -62,7 +62,7 @@ styra en webbläsare – allt på din egen dator.
 ollama pull qwen2.5-coder:7b
 
 # 2. Klona och installera
-git clone https://github.com/freevobe-desktop/freevobe.git
+git clone https://github.com/vobefree/freevobe.git
 cd freevobe
 npm install
 
@@ -89,6 +89,11 @@ npm run doctor
 ✓ Testkommando: vitest run
 ✓ Ollama: http://localhost:11434 (v0.40.5), 2 modeller
 ```
+
+Första svaret från en modell kan dröja: Ollama laddar in hela modellen innan första token kommer, vilket tar
+15–90 sekunder för en 7B-modell på en vanlig laptop. Hälso- och modellfrågorna ger upp efter 15 sekunder, men ett
+chattsvar får upp till 20 minuter – annars skulle en kall modell se ut som en frånkopplad Ollama. Om gränsen ändå
+nås står det i felet att tiden tog slut, inte att servern är onåbar.
 
 ## Så ser en körning ut
 

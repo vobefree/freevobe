@@ -1,6 +1,6 @@
 [package]
 name = "freevobe-desktop"
-version = "0.2.0"
+version = "0.2.1"
 description = "Freevobe – lokal-first vibecoding med Ollama"
 authors = ["Freevobe"]
 edition = "2021"

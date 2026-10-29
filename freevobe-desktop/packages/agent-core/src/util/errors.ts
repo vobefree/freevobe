@@ -19,9 +19,26 @@ export class FreevobeError extends Error {
   }
 }
 
+/** "90 sekunder", "20 minuter" – kort och läsbart i felmeddelandet. */
+function describeDuration(ms: number): string {
+  if (ms >= 60_000) {
+    const minutes = Math.round(ms / 60_000);
+    return minutes === 1 ? '1 minut' : `${minutes} minuter`;
+  }
+  const seconds = Math.max(1, Math.round(ms / 1_000));
+  return seconds === 1 ? '1 sekund' : `${seconds} sekunder`;
+}
+
 export class OllamaUnavailableError extends FreevobeError {
-  constructor(baseUrl: string, detail?: string) {
-    super('ollama_unavailable', `Kan inte nå Ollama på ${baseUrl}.`, {
+  /**
+   * `timeoutMs` sätts när det är vår egen tidsgräns som tog slut. Då svarar Ollama visserligen,
+   * men modellen är inte inläst än – och då är "kan inte nå" ett missvisande svar.
+   */
+  constructor(baseUrl: string, detail?: string, options: { timeoutMs?: number } = {}) {
+    const message = options.timeoutMs
+      ? `Ollama svarade inte inom ${describeDuration(options.timeoutMs)} på ${baseUrl}. Modellen kan fortfarande laddas – försök igen eller välj en mindre modell.`
+      : `Kan inte nå Ollama på ${baseUrl}.`;
+    super('ollama_unavailable', message, {
       detail,
       helpUrl: 'https://freevobe.dev/docs/ollama',
     });

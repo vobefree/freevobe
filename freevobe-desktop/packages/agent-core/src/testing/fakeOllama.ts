@@ -40,6 +40,8 @@ export interface FakeOllamaOptions {
   chatFails?: boolean;
   /** Sant → /api/tags blockerar i `hangMs` millisekunder (testar timeouts). */
   hangMs?: number;
+  /** Fördröjer första byten på chatten, som när Ollama laddar in modellen (testar tidsgränser). */
+  chatDelayMs?: number;
 }
 
 export interface FakeOllamaHandle {
@@ -152,6 +154,10 @@ export async function startFakeOllama(options: FakeOllamaOptions = {}): Promise<
 
         const turn = turns[turnIndex] ?? turns[turns.length - 1] ?? { content: 'klart' };
         turnIndex += 1;
+
+        if (options.chatDelayMs) {
+          await new Promise((resolve) => setTimeout(resolve, options.chatDelayMs));
+        }
 
         response.writeHead(200, {
           'content-type': 'text/event-stream',

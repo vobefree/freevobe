@@ -1,6 +1,6 @@
 {
   "name": "freevobe",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "private": true,
   "description": "Freevobe – lokal-first vibecoding desktop app med Ollama, agent-loop, skills, MCP och subagents.",
   "license": "MIT",

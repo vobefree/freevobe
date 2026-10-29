@@ -57,6 +57,15 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '0.2.1',
+    date: '2026-10-29',
+    highlights: [
+      'Långsam modellinläsning räknas inte längre som att Ollama är frånkopplad: ett chattsvar får upp till 20 minuter på sig, medan hälsofrågorna fortsätter svara snabbt.',
+      'När tidsgränsen ändå nås står det att tiden tog slut och att modellen kan laddas – inte att servern är onåbar.',
+      'Ett avbrott du själv gör rapporteras som avbruten körning i stället för ett nätverksfel.',
+    ],
+  },
+  {
     version: '0.2.0',
     date: '2026-10-29',
     highlights: [

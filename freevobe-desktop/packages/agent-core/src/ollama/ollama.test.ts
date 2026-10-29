@@ -134,6 +134,46 @@ describe('OllamaClient.chat', () => {
     }
   });
 
+  it('ger chatten längre tid än hälso-kollen när modellen måste laddas in', async () => {
+    // Kall modell: Ollama svarar först efter en stund. Hälso-gränsen på 50 ms får inte döda chatten.
+    const slow = await startFakeOllama({
+      chatDelayMs: 300,
+      turns: [{ content: 'klart' }],
+    });
+    try {
+      const client = new OllamaClient({
+        baseUrl: slow.url,
+        timeoutMs: 50,
+        streamTimeoutMs: 5_000,
+      });
+      const chunks = await collect(
+        client.chat({ model: 'x', messages: [{ role: 'user', content: 'hej' }] }),
+      );
+      expect(chunks.map((chunk) => chunk.contentDelta ?? '').join('')).toBe('klart');
+    } finally {
+      await slow.close();
+    }
+  });
+
+  it('säger att tiden tog slut i stället för att Ollama är otillgänglig', async () => {
+    const slow = await startFakeOllama({ chatDelayMs: 400, turns: [{ content: 'klart' }] });
+    try {
+      const client = new OllamaClient({ baseUrl: slow.url, streamTimeoutMs: 50 });
+      const error = await collect(
+        client.chat({ model: 'x', messages: [{ role: 'user', content: 'hej' }] }),
+      ).then(
+        () => null,
+        (cause: unknown) => cause as Error & { code?: string },
+      );
+
+      expect(error?.code).toBe('ollama_unavailable');
+      expect(error?.message).toContain('svarade inte inom');
+      expect(error?.message).not.toContain('Kan inte nå Ollama');
+    } finally {
+      await slow.close();
+    }
+  });
+
   it('avbryts via AbortSignal', async () => {
     const client = new OllamaClient({ baseUrl: fake.url });
     const controller = new AbortController();

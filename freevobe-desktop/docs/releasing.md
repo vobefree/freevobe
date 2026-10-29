@@ -30,7 +30,7 @@ npm run tauri build -- --bundles appimage,deb  # Linux
 ```
 
 Artefakterna hamnar i `apps/desktop/src-tauri/target/release/bundle/` och får namn efter
-`productName` och `version` i `tauri.conf.json` (t.ex. `Freevobe_0.2.0_x64-setup.exe`).
+`productName` och `version` i `tauri.conf.json` (t.ex. `Freevobe_0.2.1_x64-setup.exe`).
 
 ## Bygg i CI
 
@@ -43,10 +43,10 @@ Filerna döps om till exakt de namn nedladdningssidan letar efter:
 
 | Plattform             | Filnamn                                                                 |
 | --------------------- | ----------------------------------------------------------------------- |
-| Windows               | `Freevobe_v0.2.0_x64-setup.exe`                                         |
-| macOS (Apple Silicon) | `Freevobe_v0.2.0_aarch64.dmg`                                           |
-| macOS (Intel)         | `Freevobe_v0.2.0_x64.dmg`                                               |
-| Linux                 | `Freevobe_v0.2.0_amd64.AppImage`                                        |
+| Windows               | `Freevobe_v0.2.1_x64-setup.exe`                                         |
+| macOS (Apple Silicon) | `Freevobe_v0.2.1_aarch64.dmg`                                           |
+| macOS (Intel)         | `Freevobe_v0.2.1_x64.dmg`                                               |
+| Linux                 | `Freevobe_v0.2.1_amd64.AppImage`                                        |
 | Android (mobilappen)  | `Freevobe-Mobile_1.0.0.apk` (appen egen version ur `app.json`)          |
 | Webbläsare (Learn)    | `freevobe-learn.html` – hela appen i en fil, spelar offline             |
 | Alla filer            | `SHA256SUMS.txt` – kontrollsummor, se [Kontrollsummor](#kontrollsummor) |
@@ -64,7 +64,7 @@ gamla namnet.
 | -------------- | ---------------------------------------------------------------------------------------------------------- | ------------------------------- |
 | Windows        | `Freevobe` i Start-menyn och i listan över installerade program, `Freevobe.exe` i `Program Files\Freevobe` | `productName`, `mainBinaryName` |
 | macOS          | `Freevobe.app` i Applications, i Dock och i avsluta-menyn                                                  | `productName`                   |
-| Linux          | `Freevobe` i appmenyn (AppImage och deb), `freevobe_0.2.0_amd64.deb`                                       | `productName`                   |
+| Linux          | `Freevobe` i appmenyn (AppImage och deb), `freevobe_0.2.1_amd64.deb`                                       | `productName`                   |
 | Alla           | paket-ID `dev.freevobe.desktop` – medvetet kvar, se nedan                                                  | `identifier`                    |
 
 Paket-ID:t byttes aldrig vid namnbytet. Det styr Windows appdata, macOS bundle-ID och .deb-paketets
@@ -146,7 +146,7 @@ verktyg (t.ex. Azure Trusted Signing) eller en signeringstjänst.
 
 ```powershell
 # Kontrollera en nedladdad fil
-Get-AuthenticodeSignature .\Freevobe_v0.2.0_x64-setup.exe | Format-List Status, SignerCertificate
+Get-AuthenticodeSignature .\Freevobe_v0.2.1_x64-setup.exe | Format-List Status, SignerCertificate
 ```
 
 ### macOS (Developer ID och notarisering)
@@ -166,8 +166,8 @@ Get-AuthenticodeSignature .\Freevobe_v0.2.0_x64-setup.exe | Format-List Status, 
 
 ```bash
 # Kontrollera en nedladdad fil
-spctl --assess --type install -vv Freevobe_v0.2.0_aarch64.dmg   # accepted, source=Notarized Developer ID
-xcrun stapler validate Freevobe_v0.2.0_aarch64.dmg
+spctl --assess --type install -vv Freevobe_v0.2.1_aarch64.dmg   # accepted, source=Notarized Developer ID
+xcrun stapler validate Freevobe_v0.2.1_aarch64.dmg
 ```
 
 ### Android (nyckellager)
@@ -236,12 +236,12 @@ Den laddar ner filerna, summerar dem och skriver in resultatet – ingen ombyggn
 ```bash
 # macOS och Linux
 sha256sum -c SHA256SUMS.txt            # shasum -a 256 -c SHA256SUMS.txt på macOS
-shasum -a 256 Freevobe_v0.2.0_aarch64.dmg
+shasum -a 256 Freevobe_v0.2.1_aarch64.dmg
 ```
 
 ```powershell
 # Windows
-Get-FileHash .\Freevobe_v0.2.0_x64-setup.exe -Algorithm SHA256
+Get-FileHash .\Freevobe_v0.2.1_x64-setup.exe -Algorithm SHA256
 ```
 
 Stämmer inte summan ska filen inte installeras. Nedladdningssidan visar samma värden under

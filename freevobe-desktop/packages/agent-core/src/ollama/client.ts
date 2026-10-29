@@ -7,8 +7,10 @@ import { TransportError, type ChatChunk, type ChatRequest, type ChatTransport } 
 export interface OllamaClientOptions {
   baseUrl?: string;
   fetchImpl?: typeof fetch;
-  /** Tidsgräns per HTTP-anrop. Streamade svar får en egen, generösare gräns. */
+  /** Tidsgräns för hälso- och modellfrågor. Streamade svar får en egen, generösare gräns. */
   timeoutMs?: number;
+  /** Tidsgräns för ett streamat chattsvar, inklusive tiden det tar att ladda in modellen. */
+  streamTimeoutMs?: number;
   /** Max antal modeller att hämta detaljer för (varje modell kräver ett /api/show-anrop). */
   maxModelDetails?: number;
 }
@@ -23,6 +25,12 @@ export interface OllamaModelDetails {
 }
 
 const DEFAULT_TIMEOUT_MS = 15_000;
+/**
+ * Ollama laddar in modellen i minnet först, och då kommer inga svar att läsa förrän hela modellen
+ * är på plats – en kall 7B-modell kan ta en minut eller mer. Chatten får därför en egen, generös
+ * gräns; en hängd anslutning fångas ändå, och användaren kan avbryta själv.
+ */
+const DEFAULT_STREAM_TIMEOUT_MS = 20 * 60_000;
 const DETAIL_CONCURRENCY = 4;
 const HELPER_URL = 'https://freevobe.dev/docs/ollama';
 
@@ -47,12 +55,14 @@ export class OllamaClient implements ChatTransport {
   readonly baseUrl: string;
   private readonly fetchImpl: typeof fetch;
   private readonly timeoutMs: number;
+  private readonly streamTimeoutMs: number;
   private readonly maxModelDetails: number;
 
   constructor(options: OllamaClientOptions = {}) {
     this.baseUrl = (options.baseUrl ?? DEFAULT_OLLAMA_URL).replace(/\/+$/, '');
     this.fetchImpl = options.fetchImpl ?? globalThis.fetch;
     this.timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
+    this.streamTimeoutMs = options.streamTimeoutMs ?? DEFAULT_STREAM_TIMEOUT_MS;
     this.maxModelDetails = options.maxModelDetails ?? 50;
   }
 
@@ -147,9 +157,12 @@ export class OllamaClient implements ChatTransport {
         '/v1/chat/completions',
         { method: 'POST', body: JSON.stringify(buildOpenAIBody(request)) },
         request.signal,
+        this.streamTimeoutMs,
       );
     } catch (error) {
-      if (error instanceof TransportError) throw error;
+      // request() har redan gjort om anslutningsfel till ett begripligt fel; kasta vidare det i
+      // stället för att slå in det en gång till och tappa förklaringen (t.ex. att tiden tog slut).
+      if (error instanceof TransportError || error instanceof OllamaUnavailableError) throw error;
       throw new OllamaUnavailableError(
         this.baseUrl,
         error instanceof Error ? error.message : String(error),
@@ -183,8 +196,9 @@ export class OllamaClient implements ChatTransport {
     pathname: string,
     init: RequestInit,
     signal?: AbortSignal,
+    timeoutMs: number = this.timeoutMs,
   ): Promise<Response> {
-    const timeout = AbortSignal.timeout(this.timeoutMs);
+    const timeout = AbortSignal.timeout(timeoutMs);
     const composite = signal ? AbortSignal.any([signal, timeout]) : timeout;
 
     let response: Response;
@@ -198,10 +212,15 @@ export class OllamaClient implements ChatTransport {
         signal: composite,
       });
     } catch (error) {
-      throw new OllamaUnavailableError(
-        this.baseUrl,
-        error instanceof Error ? error.message : String(error),
-      );
+      // Användarens eget avbrott ska inte se ut som ett nätverksfel – loopen rapporterar det som
+      // "aborted" när signalen är satt, så felet får bubbla upp orört.
+      if (signal?.aborted) throw error;
+      const detail = error instanceof Error ? error.message : String(error);
+      // Vår egen tidsgräns tog slut: Ollama svarar, men har inte hunnit ladda modellen än.
+      if (timeout.aborted) {
+        throw new OllamaUnavailableError(this.baseUrl, detail, { timeoutMs });
+      }
+      throw new OllamaUnavailableError(this.baseUrl, detail);
     }
 
     if (!response.ok) {
