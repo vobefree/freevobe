@@ -200,6 +200,10 @@ jobs:
     name: macOS (.dmg, Apple Silicon)
     needs: verify
     runs-on: macos-latest
+    # En arm64-runner som står i kö och till sist avbokas får inte stoppa de andra filerna från att
+    # publiceras – samma skäl som för Intel-jobbet nedan. Filen kan läggas till i efterhand genom att
+    # köra workflowen igen när körarna är tillbaka.
+    continue-on-error: true
     # Koden-signering och notarisering. Alla är valfria: utan dem blir appen osignerad och Gatekeeper
     # varnar vid start, men releasen publiceras ändå. Se docs/releasing.md. Namnen har FREEVOBE_-
     # prefix och flyttas till sina riktiga namn av signeringssteget – bara när de har ett värde.
@@ -593,7 +597,9 @@ jobs:
     needs: [learn, windows, macos, macos_intel, linux, android]
     # En manuell körning används för att testa bygget och ska bara lämna artefakter – den får inte
     # skapa eller skriva om en release (en körning från en gren har inget taggnamn att publicera på).
-    if: github.event_name == 'push'
+    # cancelled() fångar en avbruten körning; en misslyckad men tillåten plattform (continue-on-error)
+    # får däremot inte hindra de filer som faktiskt byggdes från att publiceras.
+    if: github.event_name == 'push' && !cancelled()
     runs-on: ubuntu-latest
     steps:
       # Skriptet hämtas hit: jobbet checkar annars inte ut repot, och kontrollsummorna räknas i

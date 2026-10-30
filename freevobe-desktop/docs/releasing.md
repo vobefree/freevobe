@@ -82,6 +82,11 @@ Jobbet kör i samma workflow men med `continue-on-error`, så en indragen runner
 filen i stället för att stoppa resten av releasen. Redan publicerad release utan Intel-fil? Kör
 workflowen `macOS Intel (.dmg)` manuellt med taggen som indata – då byggs bara den filen.
 
+Apple Silicon-jobbet har samma skydd. GitHub avbokar ibland en arm64-kö efter cirka 15 minuter när
+körarna inte räcker till, och utan `continue-on-error` stryks då hela releasen. Blir `.dmg`-filen
+för Apple Silicon utan efter en sådan körning publiceras resten ändå – kör workflowen igen från
+taggen när körarna är tillbaka, så laddas filen upp till samma release.
+
 Android-appen byggs i samma workflow med Gradle (`expo prebuild` + `assembleRelease`) och kräver
 inget EAS-konto. Signeringen sköts av ett eget nyckellager via en config-plugin – se
 [Android](#android-nyckellager).
