@@ -165,6 +165,14 @@ body {
   border-radius: 4px;
 }
 
+/*
+ * En listbox flyttar fokus mellan raderna med aria-activedescendant, och markerar då raden i
+ * stället för rutan. Ring runt hela panelen blir dubbel information och ser ut som en ram.
+ */
+[role='listbox']:focus-visible {
+  outline: none;
+}
+
 @layer components {
   /* Sidans rytm: samma maxbredd och luft i varje sektion. */
   .vf-shell {
