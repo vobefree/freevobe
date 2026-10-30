@@ -278,6 +278,10 @@ publicerats utan uppdateringsfiler och sett grön ut, medan ingen installerad ap
 sig. En manuell körning utan tagg går fortfarande att göra utan nyckel. Kör om taggen när nyckeln
 är på plats – jobben laddar upp filerna till samma release i stället för att skapa en ny.
 
+På macOS måste bygget innehålla `app`-targetet (`--bundles app,dmg`). Med bara `dmg` skapas
+`.app`-filen ändå för att kunna göra skivan, men uppdateringsarkivet `.app.tar.gz` uteblir – och då
+stannar jobbet med "Inga uppdateringsfiler för macOS byggdes".
+
 Nyckeln är skapad en gång och får inte bytas utan att `pubkey` byts samtidigt: en uppdatering som är
 signerad med en annan nyckel avvisas, och då måste användarna ladda ner en ny installer för hand.
 Tappa inte bort den privata nyckeln.

@@ -353,11 +353,13 @@ jobs:
             echo '::warning::TAURI_SIGNING_PRIVATE_KEY saknas – inga uppdateringsfiler byggs, så appen erbjuder ingen automatisk uppdatering (se docs/releasing.md).'
           fi
           echo "FREEVOBE_TAURI_UPDATER_CONFIG=$config" >> "$GITHUB_ENV"
+      # `app` måste vara med i listan: med bara `dmg` bygger Tauri appen på vägen men skapar
+      # ingen .app.tar.gz, eftersom uppdateringsarkivet hör till app-targetet.
       - name: Bygg installeraren
         working-directory: freevobe-desktop
         run: >-
           npm run tauri --workspace @freevobe/desktop -- build
-          --target aarch64-apple-darwin --bundles dmg --config "$FREEVOBE_TAURI_UPDATER_CONFIG"
+          --target aarch64-apple-darwin --bundles app,dmg --config "$FREEVOBE_TAURI_UPDATER_CONFIG"
       - name: Döp artefakten till nedladdningssidans filnamn
         shell: bash
         working-directory: freevobe-desktop
@@ -516,11 +518,12 @@ jobs:
             echo '::warning::TAURI_SIGNING_PRIVATE_KEY saknas – inga uppdateringsfiler byggs, så appen erbjuder ingen automatisk uppdatering (se docs/releasing.md).'
           fi
           echo "FREEVOBE_TAURI_UPDATER_CONFIG=$config" >> "$GITHUB_ENV"
+      # Samma skäl som för Apple Silicon: uppdateringsarkivet skapas bara när `app` byggs.
       - name: Bygg installeraren
         working-directory: freevobe-desktop
         run: >-
           npm run tauri --workspace @freevobe/desktop -- build
-          --target x86_64-apple-darwin --bundles dmg --config "$FREEVOBE_TAURI_UPDATER_CONFIG"
+          --target x86_64-apple-darwin --bundles app,dmg --config "$FREEVOBE_TAURI_UPDATER_CONFIG"
       - name: Döp artefakten till nedladdningssidans filnamn
         shell: bash
         working-directory: freevobe-desktop
