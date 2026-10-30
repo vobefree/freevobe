@@ -301,7 +301,8 @@ npm run tauri build  # bygger installeraren för din plattform
 ```
 
 Appen uppdaterar sig själv: den frågar `latest.json` i den senaste releasen, verifierar signaturen och startar om i
-den nya versionen. Det kräver att uppdateringsnyckeln finns som hemlighet i CI (`TAURI_SIGNING_PRIVATE_KEY`) – se
+den nya versionen. Det börjar gälla från 0.2.6 – 0.2.5 och äldre saknar kontrollen och måste installeras om en
+sista gång för hand. Uppdateringsnyckeln måste finnas som hemlighet i CI (`TAURI_SIGNING_PRIVATE_KEY`) – se
 [Release](docs/releasing.md#automatisk-uppdatering).
 
 ## Begränsningar och TODO
