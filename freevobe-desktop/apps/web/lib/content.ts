@@ -57,6 +57,15 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '0.2.4',
+    date: '2026-10-30',
+    highlights: [
+      'Chatten visar aldrig rå JSON: text som kan visa sig vara ett verktygsanrop hålls tillbaka medan den strömmar och släpps först när den är färdig.',
+      'Prosa strömmar som vanligt – färdiga JSON-block som inte är anrop släpps igenom direkt, och hela svaret kommer ändå som ett vanligt meddelande.',
+      'Gäller naken JSON, ```json-staket och <tool_call>, även när modellen uppger att den har verktygsstöd.',
+    ],
+  },
+  {
     version: '0.2.3',
     date: '2026-10-30',
     highlights: [
