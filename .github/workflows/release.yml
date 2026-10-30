@@ -52,6 +52,23 @@ jobs:
             exit 1
           fi
           echo "Version $version stämmer med taggen $GITHUB_REF_NAME."
+      # En release utan uppdateringsnyckel publiceras ändå, men då kan ingen installerad app
+      # uppdatera sig – och det syns bara som en varning långt inne i ett byggjobb. Kontrollen
+      # ligger här, före byggena, så att det tar tre minuter i stället för trekvart att upptäcka.
+      - name: Uppdateringsnyckeln måste finnas vid en tagg
+        env:
+          FREEVOBE_TAURI_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+        run: |
+          set -euo pipefail
+          if [ "${GITHUB_EVENT_NAME}" != "push" ]; then
+            echo "Manuell körning – hoppar över kontrollen av uppdateringsnyckeln."
+            exit 0
+          fi
+          if [ -z "${FREEVOBE_TAURI_PRIVATE_KEY:-}" ]; then
+            echo "::error::TAURI_SIGNING_PRIVATE_KEY saknas. Utan den byggs inga uppdateringsfiler, så releasen skulle sakna automatisk uppdatering. Lägg in nyckeln under Settings → Secrets and variables → Actions och kör taggen igen."
+            exit 1
+          fi
+          echo "Uppdateringsnyckeln finns – bygget blir uppdateringsbart."
       - run: npm ci
         working-directory: freevobe-desktop
       - name: Typecheck, lint och tester

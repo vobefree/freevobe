@@ -271,8 +271,12 @@ och startar om sig själv. Allt som behövs finns i repot:
 `bundle.createUpdaterArtifacts` står kvar som `false` i `tauri.conf.json`. Slås det på utan privat
 nyckel fäller Tauri bygget, och då kan ingen bygga appen lokalt. Workflowen skickar i stället in
 `{"bundle":{"createUpdaterArtifacts":true}}` som en extra konfiguration när hemligheten finns, och
-stannar med ett tydligt fel om uppdateringsfilerna då inte blev byggda. Saknas hemligheten byggs
-releasen som förut, bara utan automatisk uppdatering – körningen varnar om det.
+stannar med ett tydligt fel om uppdateringsfilerna då inte blev byggda.
+
+Vid en tagg kräver workflowen att hemligheten finns redan i `verify`-jobbet: annars hade releasen
+publicerats utan uppdateringsfiler och sett grön ut, medan ingen installerad app kunde uppdatera
+sig. En manuell körning utan tagg går fortfarande att göra utan nyckel. Kör om taggen när nyckeln
+är på plats – jobben laddar upp filerna till samma release i stället för att skapa en ny.
 
 Nyckeln är skapad en gång och får inte bytas utan att `pubkey` byts samtidigt: en uppdatering som är
 signerad med en annan nyckel avvisas, och då måste användarna ladda ner en ny installer för hand.
