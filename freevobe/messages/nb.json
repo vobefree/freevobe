@@ -310,7 +310,14 @@
     "metaDescription": "Last ned Freevobe for Windows, macOS eller Linux, eller Android-appen til telefonen. Installasjonsfilene publiseres på GitHub Releases.",
     "title": "Last ned Freevobe",
     "body": "Velg plattform – knappen nedenfor vet allerede hvilken. Freevobe kjører offline og snakker med Ollama-installasjonen på din egen maskin.",
-    "signed": "Byggene er signert der plattformen tillater det. Kildekoden er MIT-lisensiert.",
+    "signed": "Filene er ikke kodesignert ennå – kontroller SHA256-summen i releasen. Kildekoden er MIT-lisensiert.",
+    "windows": {
+      "title": "Hvis Windows varsler om ukjent utgiver",
+      "body": "Windows-installasjonen er ikke kodesignert ennå, så SmartScreen viser «Windows har beskyttet PC-en» og ukjent utgiver – selv om filen kommer rett fra prosjektets GitHub-release. Du kan kontrollere den selv: SHA256-summen står ved siden av filen i releasen.",
+      "step1": "Klikk på «Mer informasjon» i ruten – knappen «Kjør likevel» vises først etter det.",
+      "step2": "Klikk på «Kjør likevel». Deretter installeres appen som vanlig.",
+      "step3": "Vil du være sikker først? Sammenlign filens SHA256 med summen i releasen før du kjører den."
+    },
     "requirements": {
       "title": "Før du installerer",
       "ollama": "Ollama",

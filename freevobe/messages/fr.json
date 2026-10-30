@@ -310,7 +310,14 @@
     "metaDescription": "Téléchargez Freevobe pour Windows, macOS ou Linux, ou l'app Android pour votre téléphone. Les installateurs sont publiés sur GitHub Releases.",
     "title": "Télécharger Freevobe",
     "body": "Choisissez votre plateforme : le bouton ci-dessous la connaît déjà. Freevobe fonctionne hors ligne et parle à l'installation Ollama de votre machine.",
-    "signed": "Les builds sont signés lorsque la plateforme le permet. Le code source est sous licence MIT.",
+    "signed": "Les fichiers ne sont pas encore signés — vérifiez l'empreinte SHA256 dans la release. Le code source est sous licence MIT.",
+    "windows": {
+      "title": "Si Windows signale un éditeur inconnu",
+      "body": "L'installateur Windows n'est pas encore signé, donc SmartScreen affiche « Windows a protégé votre PC » et un éditeur inconnu — alors que le fichier vient directement de la release GitHub du projet. Vous pouvez le vérifier : l'empreinte SHA256 figure à côté du fichier dans la release.",
+      "step1": "Cliquez sur « Informations complémentaires » dans la fenêtre : le bouton « Exécuter quand même » n'apparaît qu'après.",
+      "step2": "Cliquez sur « Exécuter quand même ». L'application s'installe ensuite normalement.",
+      "step3": "Vous préférez vérifier avant ? Comparez l'empreinte SHA256 du fichier avec celle de la release avant de le lancer."
+    },
     "requirements": {
       "title": "Avant d'installer",
       "ollama": "Ollama",

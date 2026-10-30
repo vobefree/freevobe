@@ -310,7 +310,14 @@
     "metaDescription": "下載適用於 Windows、macOS 或 Linux 的 Freevobe，或手機上的 Android 應用。安裝檔發佈於 GitHub Releases。",
     "title": "下載 Freevobe",
     "body": "選擇你的平台——下面的按鈕已經知道是哪個。Freevobe 可離線執行，並與你自己機器上的 Ollama 通訊。",
-    "signed": "在平台允許的情況下，安裝檔預設已簽章。原始碼使用 MIT 授權。",
+    "signed": "檔案尚未程式碼簽章——請對照發佈頁的 SHA256 校驗值。原始碼使用 MIT 授權。",
+    "windows": {
+      "title": "如果 Windows 提示未知發佈者",
+      "body": "Windows 安裝檔尚未程式碼簽章，因此 SmartScreen 會顯示「Windows 已保護您的電腦」與未知發佈者——儘管檔案直接來自本專案的 GitHub 發佈頁。你可以自行核驗：發佈頁上該檔案旁列出了 SHA256 校驗值。",
+      "step1": "在對話方塊中點「更多資訊」——「仍要執行」按鈕要在此之後才會出現。",
+      "step2": "點「仍要執行」，接著應用程式會照常安裝。",
+      "step3": "想先確認？執行前把檔案的 SHA256 與發佈頁上的校驗值比對一下。"
+    },
     "requirements": {
       "title": "安裝之前",
       "ollama": "Ollama",

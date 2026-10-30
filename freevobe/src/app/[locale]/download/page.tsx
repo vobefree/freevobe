@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { ExternalLink } from 'lucide-react';
+import { ExternalLink, ShieldAlert } from 'lucide-react';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { DownloadButton } from '@/components/download/download-button';
 import { PlatformButtons } from '@/components/download/platform-buttons';
@@ -76,6 +76,29 @@ export default async function DownloadPage({ params }: { params: Promise<{ local
         <Reveal delay={0.25}>
           <p className="mt-4 text-[11.5px] text-muted">{t('signed')}</p>
         </Reveal>
+      </section>
+
+      {/* Så länge Windows-installern är osignerad möts varje Windows-användare av SmartScreen.
+          Panelen förklarar varför och hur man går vidare, i stället för att lämna dem vid varningen. */}
+      <section className="vf-shell max-w-4xl pb-4">
+        <div className="vf-panel p-5">
+          <h2 className="flex items-center gap-2 text-sm font-semibold tracking-tight">
+            <ShieldAlert className="size-4 shrink-0 text-accent-soft" aria-hidden="true" />
+            {t('windows.title')}
+          </h2>
+          <p className="mt-2 text-[12.5px] leading-relaxed text-muted">{t('windows.body')}</p>
+          <ol className="mt-3 space-y-2 text-[12.5px] leading-relaxed text-muted">
+            <li>
+              <span className="font-medium text-fg">1.</span> {t('windows.step1')}
+            </li>
+            <li>
+              <span className="font-medium text-fg">2.</span> {t('windows.step2')}
+            </li>
+            <li>
+              <span className="font-medium text-fg">3.</span> {t('windows.step3')}
+            </li>
+          </ol>
+        </div>
       </section>
 
       <section className="vf-shell max-w-4xl pb-4">

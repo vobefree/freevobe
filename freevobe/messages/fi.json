@@ -310,7 +310,14 @@
     "metaDescription": "Lataa Freevobe Windowsille, macOS:lle tai Linuxille tai Android-sovellus puhelimeesi. Asennustiedostot julkaistaan GitHub Releases -sivulla.",
     "title": "Lataa Freevobe",
     "body": "Valitse alusta – alla oleva painike tietää sen jo. Freevobe toimii offline ja keskustelee oman koneesi Ollama-asennuksen kanssa.",
-    "signed": "Asennukset on allekirjoitettu, kun alusta sen sallii. Lähdekoodi on MIT-lisensoitu.",
+    "signed": "Tiedostoja ei ole vielä allekirjoitettu – tarkista SHA256-tiiviste julkaisusta. Lähdekoodi on MIT-lisensoitu.",
+    "windows": {
+      "title": "Jos Windows varoittaa tuntemattomasta julkaisijasta",
+      "body": "Windows-asennusohjelmaa ei ole vielä allekirjoitettu, joten SmartScreen näyttää ”Windows suojeli tietokonettasi” ja tuntemattoman julkaisijan – vaikka tiedosto tulee suoraan projektin GitHub-julkaisusta. Voit tarkistaa sen itse: SHA256-tiiviste on julkaisussa tiedoston vieressä.",
+      "step1": "Napsauta valintaikkunassa ”Lisätietoja” – ”Suorita silti” -painike ilmestyy vasta sen jälkeen.",
+      "step2": "Napsauta ”Suorita silti”. Sen jälkeen sovellus asentuu tavalliseen tapaan.",
+      "step3": "Haluatko varmistaa ensin? Vertaa tiedoston SHA256-tiivistettä julkaisussa olevaan ennen kuin suoritat sen."
+    },
     "requirements": {
       "title": "Ennen asennusta",
       "ollama": "Ollama",
