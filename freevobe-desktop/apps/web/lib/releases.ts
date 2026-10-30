@@ -74,12 +74,13 @@ export function assetUrl(file: string): string {
  * publiceras – saknas en summa visas filen utan kontrollrad i stället för med en gissning.
  */
 export const RELEASE_SHA256: Record<string, string> = {
-  'Freevobe_v0.2.4_x64-setup.exe':
-    '0a931d0b0b1618d52a19b49a066a2cdaeb8e62b5273f91e06b38b4693bc57cd7',
-  'Freevobe_v0.2.4_aarch64.dmg': '02cd7f7e8dd8137ae19a1686973130ac9235b2cf53972bc3ed84382316a1c1de',
-  'Freevobe_v0.2.4_x64.dmg': 'f1cf812587fb4d484efdf1a298cf77a4bc663e92c736eb5e525d41d9d6978c75',
-  'Freevobe_v0.2.4_amd64.AppImage':
-    '676ac5b20616bba93263f44478a93be1c753ac3e7cc77fca6acb1cc8aa148ca9',
-  'Freevobe-Mobile_1.0.0.apk': 'c948f0e4f201b660d198550666dd12bffb9ee7376245f682cc151e9eacba358d',
+  'Freevobe_v0.2.5_x64-setup.exe':
+    'f8205e9a3f8246618e469fb7c48bc1e4a0c485a33849983afa1c17ec65a5826a',
+  // Apple Silicon-dmg:n saknas i 0.2.5: GitHub avbokade arm64-kön båda gångerna. Filen läggs till
+  // med workflowen `macOS Apple Silicon (.dmg)` och summan fylls i när den finns i releasen.
+  'Freevobe_v0.2.5_x64.dmg': 'd425dd18559eea3d355b89e99ae1554b35ce4852d54009c2dab705b7b1da4158',
+  'Freevobe_v0.2.5_amd64.AppImage':
+    '1c080d79a9635b5ecf0edb90101363f3bb25aa10ed36947e4e6921f463a9588e',
+  'Freevobe-Mobile_1.0.0.apk': '09540a6e314ecc01a42478b27c85558df85dbc9b35ed88e3938d7f1edc62203d',
   'freevobe-learn.html': 'bbc3db03bb13d96c2c597090b48752ee6dc1a24db3e7a7a28287b32a52e8d0cb',
 };
