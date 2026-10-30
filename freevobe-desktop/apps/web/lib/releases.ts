@@ -74,12 +74,12 @@ export function assetUrl(file: string): string {
  * publiceras – saknas en summa visas filen utan kontrollrad i stället för med en gissning.
  */
 export const RELEASE_SHA256: Record<string, string> = {
-  'Freevobe_v0.2.3_x64-setup.exe':
-    'bdc18933389589309be3bf1c89b5e4a879405e9f0311a9a83b2f0e6ff4fd2414',
-  'Freevobe_v0.2.3_aarch64.dmg': 'cff2ac65f3f6c65842d6f4cc841f3cd4f614b581cccbd2a265a3f8178468e7ca',
-  'Freevobe_v0.2.3_x64.dmg': '033e81a6a2de7399d710a4e72f631855ace1ef045a08a4612e4f12f255519e8e',
-  'Freevobe_v0.2.3_amd64.AppImage':
-    'adec56bf6cf9768ec831219d066c7155877286e553ced9a5b9d29c78ddfba8bd',
-  'Freevobe-Mobile_1.0.0.apk': '5cb1b49e145f3faea34c27e25177920723d770d662007a9659fec47d773e22aa',
+  'Freevobe_v0.2.4_x64-setup.exe':
+    '0a931d0b0b1618d52a19b49a066a2cdaeb8e62b5273f91e06b38b4693bc57cd7',
+  'Freevobe_v0.2.4_aarch64.dmg': '02cd7f7e8dd8137ae19a1686973130ac9235b2cf53972bc3ed84382316a1c1de',
+  'Freevobe_v0.2.4_x64.dmg': 'f1cf812587fb4d484efdf1a298cf77a4bc663e92c736eb5e525d41d9d6978c75',
+  'Freevobe_v0.2.4_amd64.AppImage':
+    '676ac5b20616bba93263f44478a93be1c753ac3e7cc77fca6acb1cc8aa148ca9',
+  'Freevobe-Mobile_1.0.0.apk': 'c948f0e4f201b660d198550666dd12bffb9ee7376245f682cc151e9eacba358d',
   'freevobe-learn.html': 'bbc3db03bb13d96c2c597090b48752ee6dc1a24db3e7a7a28287b32a52e8d0cb',
 };
