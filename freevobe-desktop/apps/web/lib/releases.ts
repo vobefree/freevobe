@@ -74,6 +74,12 @@ export function assetUrl(file: string): string {
  * publiceras – saknas en summa visas filen utan kontrollrad i stället för med en gissning.
  */
 export const RELEASE_SHA256: Record<string, string> = {
-  // v0.2.1-filerna byggs av release-workflowen. Summorna fylls i när releasen är publicerad –
-  // tills dess visas filen utan kontrollrad i stället för med en gissning.
+  'Freevobe_v0.2.2_x64-setup.exe':
+    '1dc56ae101fa0cce19d37053f64df9cedfea7e9613ab52ad10490b534596eb4f',
+  'Freevobe_v0.2.2_aarch64.dmg': '10d291dbdb49de3c542883f2c29700354e0fdc6451cd58b23519f4827da69f66',
+  'Freevobe_v0.2.2_x64.dmg': '36a609c2a5fa4896f63b435dc8c34993ea5d1bd078a097bb4f0c9877c26dffca',
+  'Freevobe_v0.2.2_amd64.AppImage':
+    'fb378ba8923068cf9a88ecdbef8e21f81eb3a8154ea9014b9a8b0c4b8c586f25',
+  'Freevobe-Mobile_1.0.0.apk': '2e0aaf6ec1060f3d14bddf22977a27eb29fd922eb1fd06213ba57dc401a5761f',
+  'freevobe-learn.html': 'bbc3db03bb13d96c2c597090b48752ee6dc1a24db3e7a7a28287b32a52e8d0cb',
 };
