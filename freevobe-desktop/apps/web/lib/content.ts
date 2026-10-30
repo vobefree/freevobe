@@ -57,6 +57,15 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '0.2.5',
+    date: '2026-10-30',
+    highlights: [
+      'Standardmodellen är nu qwen2.5-coder:7b. Den tidigare standardmodellen är en resonemangsmodell som inte klarar verktygsanrop – den svarade med en beskrivning i stället för att skriva filen.',
+      'Modeller som hittar på egna JSON-format (files, actions, command) får dem tolkade som riktiga verktygsanrop, så ändringen utförs i stället för att stanna som text i chatten.',
+      'Instruktionen för hur en ändring utförs ligger sist i prompten, närmast samtalet – och en befintlig installation flyttas automatiskt till den nya standardmodellen.',
+    ],
+  },
+  {
     version: '0.2.4',
     date: '2026-10-30',
     highlights: [
