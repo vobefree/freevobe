@@ -92,8 +92,8 @@ Statusen gäller version 0.2.0 (2026-10-29).
 - Plan/Act-kontraktet gäller filvägar, inte innehåll, och grindar bara filändringar – kommando som rör andra filer
   fångas av behörighetsläget. En plan måste läggas fram av modellen.
 - Verktygsanrop som modellen skriver som text i stället för i `tool_calls` tolkas (naken JSON, ```json-staket och
-  `<tool_call>`), även när modellen uppger verktygsstöd. Anropet tas bort ur chatten och körs som vanligt, men
-  texten strömmar fram en kort stund innan den töms – modeller som blandar prosa och JSON i samma svar får sin
-  prosatext kvar som meddelande.
+  `<tool_call>`), även när modellen uppger verktygsstöd. Anropet hålls tillbaka medan det strömmar och tas bort ur
+  chatten innan det körs. Staketets första rad (```json) kan synas, och ett anrop över 4 000 tecken hinner visa sin
+  början innan gränsen slår till – då tömmer `assistant_reset` bubblan när anropet körs.
 - Kontextmotorn skickar filhuvuden och symboler för stora filer; mycket stora filer kapas och märks som trunkerade.
 - Webbläsarautomation kräver att Playwrights webbläsare är nedladdade (`npx playwright install chromium`).

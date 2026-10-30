@@ -103,7 +103,10 @@ Saknas rubrik eller steg får modellen ett fel tillbaka och kan rätta sig.
 Anropet behöver inte komma som ett riktigt verktygsanrop. Lokala modeller skriver det ofta som
 JSON i texten – naket, i ett ```json-staket eller i `<tool_call>` – även när de uppger stöd för
 verktyg. Agent-loopen tolkar då blocket, tar bort det ur svaret och kör anropet som vanligt, så
-samma plan hamnar i chatten i stället för rå JSON.
+samma plan hamnar i chatten i stället för rå JSON. Medan svaret strömmar håller `ContentStreamGuard`
+tillbaka allt som börjar som ett JSON-block, så att anropet aldrig hinner synas i chatten; färdiga
+block som inte är anrop släpps igenom direkt, och hela texten kommer ändå som `assistant_message`
+när varvet är slut.
 
 ## Händelser
 

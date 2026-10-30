@@ -489,11 +489,17 @@ describe('vertikal slice: Ollama → chatt → läs fil → ändra → diff → 
     expect(proposed).toBeDefined();
     if (proposed?.type === 'plan_proposed') expect(proposed.plan.title).toBe('Hemsida för Klippet');
 
-    // Ingen pratbubbla med rå JSON, och den strömmade texten töms.
+    // Ingen pratbubbla med rå JSON, och inget av anropet strömmas ut i chatten.
     const texts = result.events
       .filter((event) => event.type === 'assistant_message')
       .map((event) => (event.type === 'assistant_message' ? event.text : ''));
     expect(texts.join('\n')).not.toContain('propose_plan');
+    const streamed = result.events
+      .filter((event) => event.type === 'assistant_delta')
+      .map((event) => (event.type === 'assistant_delta' ? event.text : ''))
+      .join('');
+    expect(streamed).not.toContain('propose_plan');
+    expect(streamed).not.toContain('"name"');
     expect(types(result.events)).toContain('assistant_reset');
     const finished = result.events.at(-1);
     expect(finished?.type === 'run_finished' && finished.reason).toBe('plan-ready');

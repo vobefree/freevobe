@@ -22,6 +22,7 @@ import {
   parseTextualToolCalls,
   stripTextualToolCalls,
 } from '../ollama/openai.js';
+import { ContentStreamGuard } from '../ollama/textGuard.js';
 import type {
   ChatChunk,
   ChatToolCall,
@@ -428,6 +429,11 @@ export class AgentLoop {
     messages: ChatTurnMessage[],
   ): AsyncGenerator<AgentEvent, ChatTurnResult> {
     const accumulator = new ToolCallAccumulator();
+    // Håller tillbaka text som kan visa sig vara ett verktygsanrop, så att rå JSON aldrig
+    // hinner synas i chatten medan modellen skriver den.
+    const guard = new ContentStreamGuard({
+      isToolName: (name) => this.options.registry.has(name),
+    });
     let content = '';
     let reasoning = '';
 
@@ -458,7 +464,10 @@ export class AgentLoop {
       const chunk: ChatChunk = step.value;
       if (chunk.contentDelta) {
         content += chunk.contentDelta;
-        yield { type: 'assistant_delta', runId: input.runId, text: chunk.contentDelta };
+        const visible = guard.push(chunk.contentDelta);
+        if (visible !== '') {
+          yield { type: 'assistant_delta', runId: input.runId, text: visible };
+        }
       }
       if (chunk.reasoningDelta) {
         reasoning += chunk.reasoningDelta;
