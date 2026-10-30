@@ -61,6 +61,8 @@ export function buildSystemPrompt(input: SystemPromptInput): string {
       '4. Kör tester eller ett verifierande kommando.',
       '5. Sammanfatta kort: vad du ändrade, vad du verifierade, vad som återstår.',
       '',
+      'Att beskriva en fil i text eller JSON skapar den inte. Bara verktygsanropen ändrar något.',
+      '',
       '## Verktygsregler',
       '- Använd ett verktyg i taget och läs resultatet innan nästa steg.',
       '- edit_file kräver exakt textmatchning. Läs filen igen om strängen inte hittas.',
@@ -81,8 +83,8 @@ export function buildSystemPrompt(input: SystemPromptInput): string {
       `- ${PERMISSION_TEXT[input.permissionMode]}`,
       input.testCommand ? `- Testkommando: ${input.testCommand}` : '- Testkommando: okänt',
       input.supportsTools
-        ? '- Modellen stödjer verktygsanrop.'
-        : '- Modellen saknar inbyggt verktygsstöd. Om du behöver ett verktyg: skriv ett JSON-block i ett ```json-staket med {"name": "...", "arguments": {...}}.',
+        ? '- Modellen stödjer verktygsanrop – använd dem i stället för att beskriva ändringen i text.'
+        : '- Modellen saknar inbyggt verktygsstöd. Anropa då ett verktyg genom att skriva exakt ett JSON-block i ett ```json-staket: {"name": "write_file", "arguments": {"path": "...", "content": "..."}}. Hitta aldrig på egna nycklar som "files" eller "actions".',
     ].join('\n'),
   );
 
@@ -148,6 +150,19 @@ export function buildSystemPrompt(input: SystemPromptInput): string {
   if (input.contextBlock.trim()) {
     sections.push(`## Filinnehåll\n${input.contextBlock}`);
   }
+
+  // Sist i prompten, närmast samtalet: lokala modeller tappar instruktioner som ligger långt
+  // upp i en lång kontext, och då blir svaret en beskrivning i stället för ett verktygsanrop.
+  sections.push(
+    [
+      '## Så utför du ändringen (viktigast)',
+      '- En fil skapas eller ändras bara av ett verktygsanrop. Text, en punktlista eller ett eget JSON-format utför ingenting.',
+      '- Anropa verktyget direkt: create_file/write_file med {"path", "content"}, edit_file med {"path", "oldString", "newString"}, run_terminal_command med {"command"}.',
+      '- Använd aldrig egna nycklar som "files", "filename", "actions" eller "operation" – de är inte verktygsanrop.',
+      '- Fråga inte om lov först när uppgiften redan är tydlig; appen visar diffen och godkännandet.',
+      '- När ett verktyg har svarat: sammanfatta i egna ord. Klistra aldrig in råsvar som <tool_response> i chatten.',
+    ].join('\n'),
+  );
 
   return sections.join('\n\n');
 }

@@ -153,7 +153,7 @@ Allt ovan emitteras som `AgentEvent` (protocol-paketet) över SSE så UI:t kan r
 | Konstant                      | Värde                                   |
 | ----------------------------- | --------------------------------------- |
 | Ollama base URL               | `http://localhost:11434`                |
-| Default modell                | `deepseek-r1:8b`                        |
+| Default modell                | `qwen2.5-coder:7b` (verktygsstöd)       |
 | Agent-server port             | `4319` (fallback 4320… om upptagen)     |
 | Max agent-iterationer per tur | `12`                                    |
 | Kontextbudget                 | `24000` tecken                          |

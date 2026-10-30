@@ -42,7 +42,12 @@ export const DEFAULT_AUTO_APPROVE: Record<ApprovalCategory, boolean> = {
 };
 
 export const DEFAULT_OLLAMA_URL = 'http://localhost:11434';
-export const DEFAULT_MODEL = 'deepseek-r1:8b';
+/**
+ * Standardmodellen är en kodmodell med pålitligt verktygsstöd. En ren resonemangsmodell (som
+ * deepseek-r1) beskriver ofta ändringen i text i stället för att anropa verktygen, och då skapas
+ * ingenting. Användaren kan välja annan modell i inställningarna.
+ */
+export const DEFAULT_MODEL = 'qwen2.5-coder:7b';
 export const AGENT_SERVER_PORT = 4319;
 export const DEFAULT_CONTEXT_BUDGET_CHARS = 24_000;
 export const DEFAULT_MAX_ITERATIONS = 12;

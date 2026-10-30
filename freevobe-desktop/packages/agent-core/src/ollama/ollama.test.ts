@@ -233,6 +233,79 @@ describe('argumentparsning', () => {
     expect(calls[0]?.args).toMatchObject({ title: 'Klippet' });
   });
 
+  it('gör verktygsanrop av modellens eget JSON-format', () => {
+    // Felet som rapporterades: modellen beskrev filen som {"files": [...]} och ingenting skapades.
+    const content = [
+      '```json',
+      '{',
+      '  "files": [{"filename": "hello.txt", "content": "hej från agenten"}],',
+      '  "actions": [{"action": "create_file", "file": "hello.txt", "content": "hej från agenten"}]',
+      '}',
+      '```',
+    ].join('\n');
+
+    const calls = parseTextualToolCalls(content);
+    expect(calls).toHaveLength(1);
+    expect(calls[0]).toMatchObject({
+      name: 'write_file',
+      args: { path: 'hello.txt', content: 'hej från agenten' },
+    });
+  });
+
+  it('tolkar egna åtgärdsnamn som riktiga verktyg', () => {
+    const content = [
+      '{"tool": "write", "file": "README.md", "text": "# Hej"}',
+      '{"action": "run", "command": "cat README.md"}',
+    ].join('\n');
+
+    const calls = parseTextualToolCalls(content);
+    expect(calls).toHaveLength(2);
+    expect(calls[0]).toMatchObject({
+      name: 'write_file',
+      args: { path: 'README.md', content: '# Hej' },
+    });
+    expect(calls[1]).toMatchObject({
+      name: 'run_terminal_command',
+      args: { command: 'cat README.md' },
+    });
+  });
+
+  it('tar "command" som åtgärd när värdet är ett verb, inte ett skal-kommando', () => {
+    const content = [
+      '```json',
+      '{ "command": "create_file", "path": "hello.txt", "content": "hej" }',
+      '```',
+    ].join('\n');
+
+    const calls = parseTextualToolCalls(content);
+    expect(calls).toHaveLength(1);
+    expect(calls[0]).toMatchObject({
+      name: 'write_file',
+      args: { path: 'hello.txt', content: 'hej' },
+    });
+  });
+
+  it('hittar argumenten även när de ligger i ett nästlat objekt', () => {
+    const content =
+      '{"tool": "edit_file", "arguments": {"path": "src/a.ts", "oldString": "a", "newString": "b"}}';
+
+    const calls = parseTextualToolCalls(content, {
+      isToolName: (name) => ['edit_file', 'write_file'].includes(name),
+    });
+    expect(calls).toHaveLength(1);
+    expect(calls[0]).toMatchObject({
+      name: 'edit_file',
+      args: { path: 'src/a.ts', oldString: 'a', newString: 'b' },
+    });
+  });
+
+  it('lämnar verktyg som saknas i registret orörda när inget eget format känns igen', () => {
+    const content = '{"name": "min_egen_funktion", "arguments": {"fileName": "a.ts"}}';
+    expect(parseTextualToolCalls(content, { isToolName: (name) => name === 'read_file' })).toEqual(
+      [],
+    );
+  });
+
   it('hoppar över block vars namn inte är ett verktyg', () => {
     const content = '{"name": "min_egen_funktion", "arguments": {"x": 1}}';
     expect(parseTextualToolCalls(content, { isToolName: (name) => name === 'read_file' })).toEqual(

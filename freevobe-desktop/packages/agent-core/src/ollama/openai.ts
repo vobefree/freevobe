@@ -404,6 +404,239 @@ function parseJsonLoose(raw: string): unknown {
   return undefined;
 }
 
+/**
+ * Verb som lokala modeller använder i stället för verktygsnamn när de hittar på ett eget
+ * JSON-format ("action": "create_file", "operation": "write" och liknande).
+ */
+const WRITE_VERBS = new Set([
+  'create_file',
+  'createfile',
+  'create',
+  'write_file',
+  'writefile',
+  'write',
+  'new_file',
+  'newfile',
+  'add_file',
+  'addfile',
+  'save_file',
+  'savefile',
+  'save',
+  'generate_file',
+]);
+const EDIT_VERBS = new Set([
+  'edit_file',
+  'editfile',
+  'edit',
+  'update_file',
+  'update',
+  'modify',
+  'replace',
+  'change',
+  'patch',
+  'fix',
+]);
+const DELETE_VERBS = new Set([
+  'delete_file',
+  'deletefile',
+  'delete',
+  'remove_file',
+  'remove',
+  'unlink',
+]);
+const RUN_VERBS = new Set([
+  'run_terminal_command',
+  'run_command',
+  'runcommand',
+  'run',
+  'command',
+  'execute',
+  'exec',
+  'terminal',
+  'shell',
+  'bash',
+  'cmd',
+]);
+const READ_VERBS = new Set(['read_file', 'readfile', 'read', 'view', 'open', 'cat']);
+
+/**
+ * Ett objekt och de nästlade objekt modeller lägger argumenten i ("arguments", "params" …).
+ * Sökningen går i den ordningen, så yttersta nivån vinner.
+ */
+function looseSources(entry: Record<string, unknown>): Array<Record<string, unknown>> {
+  const sources: Array<Record<string, unknown>> = [entry];
+  for (const key of ['arguments', 'args', 'params', 'parameters', 'input']) {
+    const value = entry[key];
+    if (isRecord(value)) sources.push(value);
+  }
+  return sources;
+}
+
+/** Sökvägen ur de nycklar modeller använder för filnamn. */
+function loosePath(sources: Array<Record<string, unknown>>): string | null {
+  for (const source of sources) {
+    for (const key of ['path', 'file', 'filename', 'filePath', 'file_path', 'target', 'name']) {
+      const value = source[key];
+      if (typeof value !== 'string' || value.trim() === '') continue;
+      // `name` är bara en sökväg när den ser ut som en fil – annars är det ett steg eller ett verktyg.
+      if (key === 'name' && !/\.[a-z0-9]+$/i.test(value.trim())) continue;
+      return value.trim();
+    }
+  }
+  return null;
+}
+
+/** Filinnehållet ur de nycklar modeller använder i stället för `content`. */
+function looseContent(sources: Array<Record<string, unknown>>): string | null {
+  for (const source of sources) {
+    for (const key of [
+      'content',
+      'contents',
+      'text',
+      'body',
+      'code',
+      'newContent',
+      'new_content',
+      'newString',
+    ]) {
+      const value = source[key];
+      if (typeof value === 'string') return value;
+    }
+  }
+  return null;
+}
+
+function normalizeVerb(raw: unknown): string | null {
+  if (typeof raw !== 'string') return null;
+  const verb = raw.trim().toLowerCase().replace(/[\s-]+/g, '_');
+  return verb === '' ? null : verb;
+}
+
+/** Sant när strängen är en åtgärd ("create_file") och inte ett kommando att köra. */
+function isVerb(value: string): boolean {
+  const verb = normalizeVerb(value);
+  if (!verb) return false;
+  return (
+    WRITE_VERBS.has(verb) ||
+    EDIT_VERBS.has(verb) ||
+    DELETE_VERBS.has(verb) ||
+    RUN_VERBS.has(verb) ||
+    READ_VERBS.has(verb)
+  );
+}
+
+function looseCommand(sources: Array<Record<string, unknown>>): string | null {
+  for (const source of sources) {
+    for (const key of ['command', 'cmd', 'shell', 'script']) {
+      const value = source[key];
+      if (typeof value !== 'string' || value.trim() === '') continue;
+      // `"command": "create_file"` är en åtgärd, inte ett skal-kommando.
+      if (isVerb(value)) continue;
+      return value.trim();
+    }
+  }
+  return null;
+}
+
+/**
+ * Läser ett eget JSON-format – `{"files": [...]}`, `{"actions": [...]}` eller ett enskilt
+ * `{"action": "create_file", ...}` – och gör riktiga verktygsanrop av det.
+ *
+ * Lokala modeller hittar på egna scheman i stället för att anropa verktygen, och då hände
+ * ingenting: filen skapades aldrig trots att modellen beskrev den. Nycklarna matchas mot de
+ * namn verktygen faktiskt har, så ett block som beskriver en fil blir en skrivning.
+ */
+function looseCallsFromValue(
+  value: unknown,
+  options: TextualToolCallOptions,
+): Array<{ name: string; args: Record<string, unknown> }> {
+  const calls: Array<{ name: string; args: Record<string, unknown> }> = [];
+
+  const add = (name: string, args: Record<string, unknown>) => {
+    if (options.isToolName && !options.isToolName(name)) return;
+    calls.push({ name, args });
+  };
+
+  const visitFile = (file: unknown) => {
+    if (!isRecord(file)) return;
+    const sources = looseSources(file);
+    const filePath = loosePath(sources);
+    const content = looseContent(sources);
+    if (filePath && content !== null) add('write_file', { path: filePath, content });
+  };
+
+  const visitAction = (action: unknown) => {
+    if (!isRecord(action)) return;
+    const sources = looseSources(action);
+    // Verbnyckeln kan heta nästan vad som helst. `command` räknas bara som verb när värdet är en
+    // känd åtgärd – annars är det ett skal-kommando.
+    const verb = normalizeVerb(
+      action.action ??
+        action.operation ??
+        action.op ??
+        action.tool ??
+        action.type ??
+        action.kind ??
+        action.intent ??
+        (typeof action.command === 'string' && isVerb(action.command) ? action.command : null),
+    );
+    if (!verb) return;
+
+    const filePath = loosePath(sources);
+    const content = looseContent(sources);
+
+    if (WRITE_VERBS.has(verb) && filePath && content !== null) {
+      add('write_file', { path: filePath, content });
+      return;
+    }
+    if (EDIT_VERBS.has(verb) && filePath) {
+      const pick = (keys: string[]): string | undefined => {
+        for (const source of sources) {
+          const found = keys
+            .map((key) => source[key])
+            .find((candidate): candidate is string => typeof candidate === 'string');
+          if (found !== undefined) return found;
+        }
+        return undefined;
+      };
+      const oldString = pick(['oldString', 'old_string', 'search', 'find']);
+      const newString = pick(['newString', 'new_string', 'replace']);
+      if (oldString !== undefined && oldString !== '' && newString !== undefined) {
+        add('edit_file', { path: filePath, oldString, newString });
+        return;
+      }
+      if (content !== null) {
+        add('write_file', { path: filePath, content });
+        return;
+      }
+    }
+    if (DELETE_VERBS.has(verb) && filePath) {
+      add('delete_file', { path: filePath });
+      return;
+    }
+    const command = looseCommand(sources);
+    if (RUN_VERBS.has(verb) && command) {
+      add('run_terminal_command', { command });
+      return;
+    }
+    if (READ_VERBS.has(verb) && filePath) add('read_file', { path: filePath });
+  };
+
+  for (const entry of Array.isArray(value) ? value : [value]) {
+    if (!isRecord(entry)) continue;
+    if (Array.isArray(entry.files)) entry.files.forEach(visitFile);
+    const actions = Array.isArray(entry.actions)
+      ? entry.actions
+      : Array.isArray(entry.steps)
+        ? entry.steps
+        : [];
+    actions.forEach(visitAction);
+    visitAction(entry);
+  }
+
+  return calls;
+}
+
 /** Läser ut verktygsanrop ur ett tolkat JSON-värde (objekt, lista eller OpenAI-format). */
 function callsFromValue(
   value: unknown,
@@ -418,9 +651,25 @@ function callsFromValue(
     const name = [entry.name, entry.tool, fn?.name].find(
       (candidate): candidate is string => typeof candidate === 'string' && candidate.trim() !== '',
     );
-    if (!name) continue;
+    // `name` och `function.name` är uttryckliga verktygsnamn. Ett namn som bara står under
+    // `tool`/`action` är oftast en åtgärd i modellens eget format ("tool": "write"), och då
+    // ska den tolkas som ett verktyg i stället för att skickas vidare som ett okänt namn.
+    const nameFromActionKey = typeof entry.name !== 'string' && typeof fn?.name !== 'string';
+    const loose = looseCallsFromValue(entry, options);
+
+    if (!name) {
+      calls.push(...loose);
+      continue;
+    }
     const trimmedName = name.trim();
-    if (options.isToolName && !options.isToolName(trimmedName)) continue;
+    if (options.isToolName && !options.isToolName(trimmedName)) {
+      calls.push(...loose);
+      continue;
+    }
+    if (nameFromActionKey && loose.length > 0) {
+      calls.push(...loose);
+      continue;
+    }
 
     const rawArgs = entry.arguments ?? entry.args ?? entry.parameters ?? fn?.arguments ?? {};
     const args =

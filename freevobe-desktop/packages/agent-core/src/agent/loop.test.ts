@@ -526,6 +526,38 @@ describe('vertikal slice: Ollama → chatt → läs fil → ändra → diff → 
     expect(first?.type === 'assistant_message' && first.text).toBe('Jag läser filen.');
   });
 
+  it('skapar filen när modellen beskriver den i ett eget JSON-format', async () => {
+    // Rapporterat fel: modellen svarade med {"files": [...]} – en beskrivning, inte ett anrop –
+    // och chatten visade bara text medan filen aldrig skapades.
+    const result = await runSlice({
+      permissionMode: 'auto-edit',
+      turns: [
+        {
+          content: [
+            '```json',
+            '{"files": [{"filename": "anteckningar.txt", "content": "hej"}],',
+            ' "actions": [{"action": "create_file", "file": "anteckningar.txt", "content": "hej"}]}',
+            '```',
+          ].join('\n'),
+        },
+        { content: 'Klart. Jag skapade anteckningar.txt.' },
+      ],
+    });
+
+    expect(await fs.readFile(path.join(root, 'anteckningar.txt'), 'utf8')).toBe('hej\n');
+    expect(types(result.events)).toContain('file_changed');
+    expect(result.toolResultContents.some((content) => content.includes('anteckningar.txt'))).toBe(
+      true,
+    );
+
+    // Rå JSON ska aldrig ha strömmats ut i chatten.
+    const streamed = result.events
+      .filter((event) => event.type === 'assistant_delta')
+      .map((event) => (event.type === 'assistant_delta' ? event.text : ''))
+      .join('');
+    expect(streamed).not.toContain('filename');
+  });
+
   it('hanterar modeller utan verktygsstöd via textuella anrop', async () => {
     const result = await runSlice({
       permissionMode: 'auto-edit',

@@ -206,6 +206,19 @@ export const MIGRATIONS: Migration[] = [
       `CREATE INDEX IF NOT EXISTS idx_connectors_project ON connectors(project_id)`,
     ],
   },
+  {
+    version: 7,
+    name: 'byt_standardmodell',
+    statements: [
+      // deepseek-r1 beskriver ändringar i text och hittar på egna JSON-anrop i stället för att
+      // använda verktygen, så ingenting skapades. Vem som helst som fortfarande står på den gamla
+      // standardmodellen flyttas till kodmodellen med verktygsstöd. Ett eget val av deepseek-r1
+      // ligger kvar som det är – bara det exakta gamla standardvärdet byts.
+      `UPDATE settings SET value = '"qwen2.5-coder:7b"' WHERE key = 'defaultModel' AND value = '"deepseek-r1:8b"'`,
+      `UPDATE sessions SET model = 'qwen2.5-coder:7b' WHERE model = 'deepseek-r1:8b'`,
+      `UPDATE projects SET last_model = 'qwen2.5-coder:7b' WHERE last_model = 'deepseek-r1:8b'`,
+    ],
+  },
 ];
 
 export class FreevobeDatabase {
