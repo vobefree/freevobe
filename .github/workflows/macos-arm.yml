@@ -1,0 +1,174 @@
+# Bygger Apple Silicon-varianten av macOS-installeraren och lägger den i en befintlig release.
+#
+# Release-workflowen bygger den här filen automatiskt när en tagg pushas. Den här filen finns för
+# att kunna lägga till filen i en release som redan är publicerad, utan att bygga om allt – samma
+# skäl som `macos-intel.yml` finns för Intel-Macarna. GitHub avbokar ibland en arm64-kö efter cirka
+# femton minuter när körarna inte räcker till; då publiceras resten av releasen och den här filen
+# kan byggas i efterhand.
+#
+# Runnern är `macos-14` och inte `macos-latest`: båda är arm64, men de ligger i olika bildpooler, så
+# en kö som står stilla i den ena kan komma igenom i den andra.
+name: macOS Apple Silicon (.dmg)
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release-tagg att lägga filen i (t.ex. v0.2.5)'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: macos-arm-${{ inputs.tag }}
+  cancel-in-progress: false
+
+env:
+  # Samma version som sidecar-binären är verifierad med (Node:s SEA kräver >= 22.5).
+  NODE_VERSION: 24
+
+jobs:
+  macos-arm:
+    name: macOS (.dmg, Apple Silicon)
+    runs-on: macos-14
+    # Koden-signering och notarisering, samma hemligheter som `macos`-jobbet i release.yml. Alla är
+    # valfria: utan dem blir appen osignerad och Gatekeeper varnar vid start. FREEVOBE_-prefixet
+    # finns för att en tom APPLE_*-variabel får Tauri att försöka signera med ett tomt certifikat.
+    env:
+      FREEVOBE_APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+      FREEVOBE_APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+      FREEVOBE_APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+      FREEVOBE_APPLE_ID: ${{ secrets.APPLE_ID }}
+      FREEVOBE_APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+      FREEVOBE_APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+      FREEVOBE_APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
+      FREEVOBE_APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+      FREEVOBE_APPLE_API_KEY_P8_BASE64: ${{ secrets.APPLE_API_KEY_P8_BASE64 }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Filen byggs från taggen, inte från main: versionen i tauri.conf.json måste vara den som
+          # releasen publicerades med, annars heter dmg:n något annat än releasen.
+          ref: ${{ inputs.tag }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: freevobe-desktop/package-lock.json
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-darwin
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: freevobe-desktop/apps/desktop/src-tauri
+      - run: npm ci
+        working-directory: freevobe-desktop
+      - name: Bygg agenten och sidecar-binären
+        working-directory: freevobe-desktop
+        run: npm run sidecar:build
+      - name: Förbered signering
+        id: signing
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Tauri läser APPLE_*-variablerna själv under bygget, så de behöver sina riktiga namn – men
+          # bara när de har ett värde: en tom APPLE_CERTIFICATE eller APPLE_SIGNING_IDENTITY tolkas
+          # som "signera med ett tomt certifikat" och fäller bygget.
+          expose() {
+            local name="$1"
+            local value="${2:-}"
+            [ -n "$value" ] || return 0
+            printf '%s=%s\n' "$name" "$(printf '%s' "$value" | tr -d '\n')" >> "$GITHUB_ENV"
+          }
+          # Notarisering med App Store Connect-nyckel kräver .p8-filen på disk. Den skickas in som
+          # base64 och läggs i runnerkontots tempkatalog – aldrig i repot.
+          if [ -n "${FREEVOBE_APPLE_API_KEY_P8_BASE64:-}" ]; then
+            printf '%s' "$FREEVOBE_APPLE_API_KEY_P8_BASE64" | tr -d '\n' \
+              | openssl base64 -d -A > "$RUNNER_TEMP/AuthKey.p8"
+            chmod 600 "$RUNNER_TEMP/AuthKey.p8"
+            expose APPLE_API_KEY_PATH "$RUNNER_TEMP/AuthKey.p8"
+          fi
+          expose APPLE_CERTIFICATE "${FREEVOBE_APPLE_CERTIFICATE:-}"
+          expose APPLE_CERTIFICATE_PASSWORD "${FREEVOBE_APPLE_CERTIFICATE_PASSWORD:-}"
+          expose APPLE_SIGNING_IDENTITY "${FREEVOBE_APPLE_SIGNING_IDENTITY:-}"
+          expose APPLE_ID "${FREEVOBE_APPLE_ID:-}"
+          expose APPLE_PASSWORD "${FREEVOBE_APPLE_PASSWORD:-}"
+          expose APPLE_TEAM_ID "${FREEVOBE_APPLE_TEAM_ID:-}"
+          expose APPLE_API_KEY "${FREEVOBE_APPLE_API_KEY:-}"
+          expose APPLE_API_ISSUER "${FREEVOBE_APPLE_API_ISSUER:-}"
+          if [ -n "${FREEVOBE_APPLE_CERTIFICATE:-}" ]; then
+            echo "signed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "signed=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::APPLE_CERTIFICATE saknas – appen blir osignerad och Gatekeeper varnar vid start (se docs/releasing.md)."
+          fi
+          if [ -n "${FREEVOBE_APPLE_ID:-}" ] || [ -n "${FREEVOBE_APPLE_API_KEY:-}" ]; then
+            echo "notary=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "notary=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::Inga notariseringsuppgifter (APPLE_ID eller APPLE_API_KEY) – dmg:n lämnas onotariserad."
+          fi
+
+      - name: Bygg installeraren
+        working-directory: freevobe-desktop
+        run: >-
+          npm run tauri --workspace @freevobe/desktop -- build
+          --target aarch64-apple-darwin --bundles dmg
+      - name: Döp artefakten till nedladdningssidans filnamn
+        shell: bash
+        working-directory: freevobe-desktop
+        run: |-
+          set -euo pipefail
+          mkdir -p dist-release
+          cp apps/desktop/src-tauri/target/aarch64-apple-darwin/release/bundle/dmg/*.dmg \
+            "dist-release/Freevobe_${{ inputs.tag }}_aarch64.dmg"
+          ls -l dist-release
+      - name: Notarisera och häfta fast biljetten på dmg:n
+        if: steps.signing.outputs.signed == 'true' && steps.signing.outputs.notary == 'true'
+        shell: bash
+        working-directory: freevobe-desktop
+        run: |-
+          set -euo pipefail
+          dmg=$(ls dist-release/*.dmg)
+          # Tauri notariserar och häftar appen, men inte dmg-filen (tauri-apps/tauri#7533). Utan
+          # biljett på själva filen varnar Gatekeeper den som laddar ner den.
+          if [ -n "${APPLE_API_KEY_PATH:-}" ]; then
+            auth=(--key "$APPLE_API_KEY_PATH" --key-id "$APPLE_API_KEY" --issuer "$APPLE_API_ISSUER")
+          else
+            auth=(--apple-id "$APPLE_ID" --password "$APPLE_PASSWORD" --team-id "$APPLE_TEAM_ID")
+          fi
+          result=$(xcrun notarytool submit "$dmg" "${auth[@]}" --wait --output-format json)
+          printf '%s\n' "$result"
+          if ! printf '%s' "$result" | grep -Eq '"status" *: *"Accepted"'; then
+            echo "::error::Notariseringen av $dmg godkändes inte."
+            exit 1
+          fi
+          xcrun stapler staple "$dmg"
+          xcrun stapler validate "$dmg"
+          echo "Biljetten är fast häftad på $dmg."
+      - name: Lägg filen i releasen
+        shell: bash
+        working-directory: freevobe-desktop
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |-
+          set -euo pipefail
+          gh release upload "${{ inputs.tag }}" dist-release/* \
+            --repo "$GITHUB_REPOSITORY" --clobber
+          gh release view "${{ inputs.tag }}" --repo "$GITHUB_REPOSITORY" \
+            --json assets --jq '.assets[].name'
+      # Filen läggs i en release som redan är publicerad, så kontrollsumman för den måste in i
+      # releasefilen och i anteckningarna – annars saknar nedladdningssidan summan för Apple Silicon.
+      - name: Uppdatera kontrollsummorna
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |-
+          set -euo pipefail
+          tag="${{ inputs.tag }}"
+          bash .github/scripts/release-checksums.sh add "$tag" \
+            freevobe-desktop/dist-release/*.dmg freevobe-desktop/dist-release/SHA256SUMS.txt
+          bash .github/scripts/release-checksums.sh body "$tag" \
+            freevobe-desktop/dist-release/SHA256SUMS.txt
