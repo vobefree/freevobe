@@ -648,5 +648,11 @@
   "connectors.scope.emails.send": "Enviar correo",
   "connectors.scope.zones.read": "Zonas (lectura)",
   "connectors.scope.workers.write": "Workers (escritura)",
-  "connectors.scope.unknown": "Permiso personalizado"
+  "connectors.scope.unknown": "Permiso personalizado",
+  "update.available": "Freevobe {{version}} está disponible",
+  "update.current": "Estás usando {{version}}.",
+  "update.install": "Actualizar y reiniciar",
+  "update.later": "Más tarde",
+  "update.downloading": "Descargando la actualización…",
+  "update.failed": "No se pudo instalar la actualización."
 }

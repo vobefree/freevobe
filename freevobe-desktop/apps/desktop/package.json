@@ -16,6 +16,7 @@
     "@freevobe/protocol": "*",
     "@monaco-editor/react": "^4.6.0",
     "@tauri-apps/api": "^2.12.0",
+    "@tauri-apps/plugin-process": "^2.4.0",
     "@tauri-apps/plugin-shell": "^2.5.0",
     "@tauri-apps/plugin-updater": "^2.14.0",
     "@xterm/addon-fit": "^0.10.0",

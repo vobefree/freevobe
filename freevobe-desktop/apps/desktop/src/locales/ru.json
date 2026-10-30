@@ -648,5 +648,11 @@
   "connectors.scope.emails.send": "Отправка почты",
   "connectors.scope.zones.read": "Зоны (чтение)",
   "connectors.scope.workers.write": "Workers (запись)",
-  "connectors.scope.unknown": "Особое разрешение"
+  "connectors.scope.unknown": "Особое разрешение",
+  "update.available": "Freevobe {{version}} готов",
+  "update.current": "У вас версия {{version}}.",
+  "update.install": "Обновить и перезапустить",
+  "update.later": "Позже",
+  "update.downloading": "Загрузка обновления…",
+  "update.failed": "Не удалось установить обновление."
 }

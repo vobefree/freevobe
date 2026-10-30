@@ -6,6 +6,7 @@ import { LeftPanel } from './panels/LeftPanel';
 import { CenterPanel } from './panels/CenterPanel';
 import { RightPanel } from './panels/RightPanel';
 import { ChatView } from './chat/ChatView';
+import { UpdateBanner } from './UpdateBanner';
 import { PERMISSION_LABELS, PHASE_LABELS, formatNumber, shortPath } from '../lib/format';
 import { formatSek, type AgentPhase } from '@freevobe/protocol';
 
@@ -277,6 +278,7 @@ export function AppShell() {
       </div>
 
       <StatusBar />
+      <UpdateBanner />
     </div>
   );
 }

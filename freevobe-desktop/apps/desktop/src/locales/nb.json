@@ -648,5 +648,11 @@
   "connectors.scope.emails.send": "Sende e-post",
   "connectors.scope.zones.read": "Soner (les)",
   "connectors.scope.workers.write": "Workers (skriv)",
-  "connectors.scope.unknown": "Tilpasset tillatelse"
+  "connectors.scope.unknown": "Tilpasset tillatelse",
+  "update.available": "Freevobe {{version}} er klar",
+  "update.current": "Du kjører {{version}}.",
+  "update.install": "Oppdater og start på nytt",
+  "update.later": "Senere",
+  "update.downloading": "Laster ned oppdateringen…",
+  "update.failed": "Oppdateringen kunne ikke installeres."
 }

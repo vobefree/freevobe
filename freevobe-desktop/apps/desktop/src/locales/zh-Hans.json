@@ -648,5 +648,11 @@
   "connectors.scope.emails.send": "发送邮件",
   "connectors.scope.zones.read": "区域（读取）",
   "connectors.scope.workers.write": "Workers（写入）",
-  "connectors.scope.unknown": "自定义权限"
+  "connectors.scope.unknown": "自定义权限",
+  "update.available": "Freevobe {{version}} 已就绪",
+  "update.current": "当前版本 {{version}}。",
+  "update.install": "更新并重启",
+  "update.later": "稍后",
+  "update.downloading": "正在下载更新…",
+  "update.failed": "无法安装更新。"
 }

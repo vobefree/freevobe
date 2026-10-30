@@ -648,5 +648,11 @@
   "connectors.scope.emails.send": "Lähetä sähköpostia",
   "connectors.scope.zones.read": "Vyöhykkeet (luku)",
   "connectors.scope.workers.write": "Workers (kirjoitus)",
-  "connectors.scope.unknown": "Mukautettu oikeus"
+  "connectors.scope.unknown": "Mukautettu oikeus",
+  "update.available": "Freevobe {{version}} on valmis",
+  "update.current": "Käytössäsi on {{version}}.",
+  "update.install": "Päivitä ja käynnistä uudelleen",
+  "update.later": "Myöhemmin",
+  "update.downloading": "Ladataan päivitystä…",
+  "update.failed": "Päivitystä ei voitu asentaa."
 }

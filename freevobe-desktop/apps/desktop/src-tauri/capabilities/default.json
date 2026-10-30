@@ -9,7 +9,8 @@
     "core:window:allow-set-title",
     "core:webview:allow-internal-toggle-devtools",
     "shell:allow-open",
-    "updater:default"
+    "updater:default",
+    "process:allow-restart"
   ],
   "platforms": ["linux", "macOS", "windows"]
 }

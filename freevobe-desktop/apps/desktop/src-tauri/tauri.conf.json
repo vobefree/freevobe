@@ -79,9 +79,8 @@
   },
   "plugins": {
     "updater": {
-      "active": false,
-      "endpoints": ["https://releases.freevobe.dev/{{target}}/{{arch}}/{{current_version}}"],
-      "pubkey": "TAURI-UPDATER-PUBKEY-PLACEHOLDER-Se README (signering ar inte konfigurerad an)",
+      "endpoints": ["https://github.com/vobefree/freevobe/releases/latest/download/latest.json"],
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDA3RDM0NUY1QkJGRjE1MDgKUldRSUZmKzc5VVhUQjJuWDRDbEJZZ2FOWm5CcnhXU3BVblZSUkI4a1JrcHg2NlJHSFNvMUgwOE4K",
       "windows": {
         "installMode": "passive"
       }

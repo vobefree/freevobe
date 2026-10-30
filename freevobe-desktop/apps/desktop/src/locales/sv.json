@@ -648,5 +648,11 @@
   "connectors.scope.emails.send": "Skicka e-post",
   "connectors.scope.zones.read": "Zoner (läs)",
   "connectors.scope.workers.write": "Workers (skriv)",
-  "connectors.scope.unknown": "Anpassad behörighet"
+  "connectors.scope.unknown": "Anpassad behörighet",
+  "update.available": "Freevobe {{version}} finns att hämta",
+  "update.current": "Du kör {{version}}.",
+  "update.install": "Uppdatera och starta om",
+  "update.later": "Senare",
+  "update.downloading": "Laddar ner uppdateringen…",
+  "update.failed": "Uppdateringen kunde inte installeras."
 }
