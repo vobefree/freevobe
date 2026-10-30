@@ -46,6 +46,9 @@ jobs:
       FREEVOBE_APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
       FREEVOBE_APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
       FREEVOBE_APPLE_API_KEY_P8_BASE64: ${{ secrets.APPLE_API_KEY_P8_BASE64 }}
+      # Nyckeln som signerar uppdateringsfilerna (se docs/releasing.md).
+      FREEVOBE_TAURI_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+      FREEVOBE_TAURI_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -111,11 +114,32 @@ jobs:
             echo "::warning::Inga notariseringsuppgifter (APPLE_ID eller APPLE_API_KEY) – dmg:n lämnas onotariserad."
           fi
 
+      - name: Slå på uppdateringsfiler
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Utan nyckel byggs inga uppdateringsfiler; då uppdaterar filen bara nedladdningssidan.
+          config="$RUNNER_TEMP/tauri-updater.conf.json"
+          if [ -n "${FREEVOBE_TAURI_PRIVATE_KEY:-}" ]; then
+            printf '{"bundle":{"createUpdaterArtifacts":true}}\n' > "$config"
+            printf 'TAURI_SIGNING_PRIVATE_KEY=%s\n' \
+              "$(printf '%s' "$FREEVOBE_TAURI_PRIVATE_KEY" | tr -d '\r\n')" >> "$GITHUB_ENV"
+            if [ -n "${FREEVOBE_TAURI_PRIVATE_KEY_PASSWORD:-}" ]; then
+              printf 'TAURI_SIGNING_PRIVATE_KEY_PASSWORD=%s\n' \
+                "$FREEVOBE_TAURI_PRIVATE_KEY_PASSWORD" >> "$GITHUB_ENV"
+            fi
+            echo 'FREEVOBE_UPDATER_ARTIFACTS=true' >> "$GITHUB_ENV"
+          else
+            echo 'FREEVOBE_UPDATER_ARTIFACTS=false' >> "$GITHUB_ENV"
+            printf '{}\n' > "$config"
+            echo '::warning::TAURI_SIGNING_PRIVATE_KEY saknas – inga uppdateringsfiler byggs.'
+          fi
+          echo "FREEVOBE_TAURI_UPDATER_CONFIG=$config" >> "$GITHUB_ENV"
       - name: Bygg installeraren
         working-directory: freevobe-desktop
         run: >-
           npm run tauri --workspace @freevobe/desktop -- build
-          --target aarch64-apple-darwin --bundles dmg
+          --target aarch64-apple-darwin --bundles dmg --config "$FREEVOBE_TAURI_UPDATER_CONFIG"
       - name: Döp artefakten till nedladdningssidans filnamn
         shell: bash
         working-directory: freevobe-desktop
@@ -124,6 +148,12 @@ jobs:
           mkdir -p dist-release
           cp apps/desktop/src-tauri/target/aarch64-apple-darwin/release/bundle/dmg/*.dmg \
             "dist-release/Freevobe_${{ inputs.tag }}_aarch64.dmg"
+          # Uppdateringen installerar en .app.tar.gz, inte dmg:n.
+          shopt -s nullglob
+          for bundle in apps/desktop/src-tauri/target/aarch64-apple-darwin/release/bundle/macos/*.app.tar.gz; do
+            cp "$bundle" "dist-release/Freevobe_${{ inputs.tag }}_aarch64.app.tar.gz"
+            cp "$bundle.sig" "dist-release/Freevobe_${{ inputs.tag }}_aarch64.app.tar.gz.sig"
+          done
           ls -l dist-release
       - name: Notarisera och häfta fast biljetten på dmg:n
         if: steps.signing.outputs.signed == 'true' && steps.signing.outputs.notary == 'true'
@@ -148,6 +178,31 @@ jobs:
           xcrun stapler staple "$dmg"
           xcrun stapler validate "$dmg"
           echo "Biljetten är fast häftad på $dmg."
+      # latest.json i releasen måste också få den nya plattformen – annars erbjuds ingen uppdatering
+      # till Apple Silicon trots att filen finns.
+      - name: Hämta releasens latest.json
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/latest"
+          gh release download "${{ inputs.tag }}" --repo "$GITHUB_REPOSITORY" \
+            --pattern latest.json --dir "$RUNNER_TEMP/latest" || true
+      - name: Skriv in den nya filen i latest.json
+        shell: bash
+        working-directory: freevobe-desktop
+        run: |
+          set -euo pipefail
+          version=$(node -p "require('./apps/desktop/src-tauri/tauri.conf.json').version")
+          # bash på macOS är 3.2, där en tom array under `set -u` räknas som obunden.
+          if [ -f "$RUNNER_TEMP/latest/latest.json" ]; then
+            merge=(--merge "$RUNNER_TEMP/latest/latest.json")
+          else
+            merge=()
+          fi
+          node ../.github/scripts/updater-json.mjs dist-release "$version" \
+            "${{ inputs.tag }}" "$GITHUB_REPOSITORY" ${merge[@]+"${merge[@]}"}
       - name: Lägg filen i releasen
         shell: bash
         working-directory: freevobe-desktop

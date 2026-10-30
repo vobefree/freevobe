@@ -1,7 +1,8 @@
 # Release
 
 Målet är installerare för Windows, macOS och Linux. Signeringen slås på med hemligheter (se
-[Signering](#signering)) och automatisk uppdatering **är avstängd tills du konfigurerat den**.
+[Signering](#signering)). Automatisk uppdatering är på så snart uppdateringsnyckeln finns som
+hemlighet – se [Automatisk uppdatering](#automatisk-uppdatering).
 
 ## Förberedelser
 
@@ -255,28 +256,40 @@ _Verify your download_, med en kopieringsknapp per fil.
 
 ## Automatisk uppdatering
 
-Koden är förberedd men avstängd:
+Den installerade appen frågar GitHub Releases efter en nyare version, laddar ner den signerade filen
+och startar om sig själv. Allt som behövs finns i repot:
 
-```json
-"plugins": {
-  "updater": {
-    "active": false,
-    "endpoints": ["https://releases.freevobe.dev/{{target}}/{{arch}}/{{current_version}}"],
-    "pubkey": "…"
-  }
-}
+| Del                | Var                                                                                                                                              |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Publik nyckel      | `plugins.updater.pubkey` i `tauri.conf.json`                                                                                                     |
+| Adress             | `plugins.updater.endpoints` – `https://github.com/vobefree/freevobe/releases/latest/download/latest.json`                                        |
+| Privat nyckel      | hemligheterna `TAURI_SIGNING_PRIVATE_KEY` (innehållet i nyckelfilen) och `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` (bara om nyckeln har ett lösenord) |
+| Signerade filer    | `Freevobe_<tagg>_x64-setup.exe.sig` (Windows), `Freevobe_<tagg>_<ark>.app.tar.gz` + `.sig` (macOS), `Freevobe_<tagg>_amd64.AppImage.sig` (Linux) |
+| `latest.json`      | skrivs av `.github/scripts/updater-json.mjs` i release-jobbet, efter kontrollsummorna                                                            |
+| Kontrollen i appen | `apps/desktop/src/lib/updater.ts` och bannern `UpdateBanner` – frågar fyra sekunder efter start                                                  |
+
+`bundle.createUpdaterArtifacts` står kvar som `false` i `tauri.conf.json`. Slås det på utan privat
+nyckel fäller Tauri bygget, och då kan ingen bygga appen lokalt. Workflowen skickar i stället in
+`{"bundle":{"createUpdaterArtifacts":true}}` som en extra konfiguration när hemligheten finns, och
+stannar med ett tydligt fel om uppdateringsfilerna då inte blev byggda. Saknas hemligheten byggs
+releasen som förut, bara utan automatisk uppdatering – körningen varnar om det.
+
+Nyckeln är skapad en gång och får inte bytas utan att `pubkey` byts samtidigt: en uppdatering som är
+signerad med en annan nyckel avvisas, och då måste användarna ladda ner en ny installer för hand.
+Tappa inte bort den privata nyckeln.
+
+Behöver du ändå en ny nyckel (det gör alla installerade appar manuellt uppdaterade):
+
+```bash
+npm run tauri signer generate -w ~/.tauri/freevobe-updater.key
 ```
 
-Aktivera i fyra steg:
+Den publika nyckeln ligger bredvid som `freevobe-updater.key.pub` och klistras in i `pubkey`. Den
+privata nyckelfilen läggs som hemlighet – aldrig i repot.
 
-1. `npm run tauri signer generate` – spara den privata nyckeln som hemlighet (`TAURI_SIGNING_PRIVATE_KEY`,
-   `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`).
-2. Klistra in den publika nyckeln i `pubkey`.
-3. Sätt `active: true` och en riktig `endpoints`-URL.
-4. Sätt `bundle.createUpdaterArtifacts: true` i `tauri.conf.json` så att uppdateringspaketen byggs.
-
-Testa alltid en uppdatering mellan två riktiga versioner innan den slås på för användare: kontrollera signaturkontroll,
-återställning efter avbruten nedladdning och att appen startar om korrekt.
+Testa alltid mellan två riktiga versioner innan en release lämnar datorn: installera den gamla,
+publicera den nya, och kontrollera att bannern dyker upp, att signaturen verifieras, att
+nedladdningen går att avbryta och att appen startar om i den nya versionen.
 
 ## Sidecar (agentbinären)
 

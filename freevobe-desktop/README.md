@@ -300,13 +300,14 @@ npm run icons        # appikoner
 npm run tauri build  # bygger installeraren för din plattform
 ```
 
-Automatisk uppdatering är förberedd men **avstängd** (`plugins.updater.active = false`) tills en release-server och
-signeringsnycklar finns. Se [Release](docs/releasing.md).
+Appen uppdaterar sig själv: den frågar `latest.json` i den senaste releasen, verifierar signaturen och startar om i
+den nya versionen. Det kräver att uppdateringsnyckeln finns som hemlighet i CI (`TAURI_SIGNING_PRIVATE_KEY`) – se
+[Release](docs/releasing.md#automatisk-uppdatering).
 
 ## Begränsningar och TODO
 
 - [ ] **Signering**: workflowen signerar, notariserar och verifierar filerna när certifikaten finns som hemligheter (`WINDOWS_CERTIFICATE`, `APPLE_*`, `ANDROID_KEYSTORE_BASE64`). Utan dem varnar operativsystemet vid installation. Se [Release](docs/releasing.md#signering).
-- [ ] **Auto-uppdate**: sätt `plugins.updater.active = true`, lägg in `pubkey` och en riktig `endpoints`-URL.
+- [ ] **Auto-uppdate**: klar i koden; aktiveras genom att lägga in uppdateringsnyckeln som hemlighet i CI.
 - [ ] **Release-server**: GitHub Releases används som standard; egen server om du vill ha kanaler (beta/stable).
 - [ ] **Telemetri**: medvetet avstängt (`telemetry: false`) och kan inte slås på från gränssnittet.
 - [ ] **Pro-funktioner**: delade skills mellan projekt, team-minne och fjärrstyrda agenter bakom en betald licens.

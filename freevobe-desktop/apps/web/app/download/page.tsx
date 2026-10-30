@@ -82,8 +82,8 @@ export default function DownloadPage() {
             osignerad, inte skadlig.
           </li>
           <li>
-            • Automatisk uppdatering är förberedd men avstängd tills en release-server är
-            konfigurerad. Nya versioner hämtas manuellt härifrån.
+            • Appen uppdaterar sig själv: när en ny version publiceras erbjuder den att ladda ner
+            och starta om. Den här sidan behövs bara för den första installationen.
           </li>{' '}
           <li>
             • APK:n kräver att skrivbordsappen körs på samma nätverk och att du parar ihop dem.

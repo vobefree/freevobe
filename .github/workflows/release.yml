@@ -94,6 +94,10 @@ jobs:
       # namn av signeringssteget – bara när de har ett värde. Skälet står där.
       FREEVOBE_WINDOWS_CERTIFICATE: ${{ secrets.WINDOWS_CERTIFICATE }}
       FREEVOBE_WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
+      # Nyckeln som signerar uppdateringsfilerna (se docs/releasing.md). Utan den byggs inga
+      # uppdateringsfiler, och appen erbjuder då ingen automatisk uppdatering.
+      FREEVOBE_TAURI_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+      FREEVOBE_TAURI_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -120,36 +124,50 @@ jobs:
           $configPath = Join-Path $env:RUNNER_TEMP 'tauri-signing.conf.json'
           "FREEVOBE_TAURI_CONFIG=$configPath" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
 
-          if ([string]::IsNullOrWhiteSpace($env:FREEVOBE_WINDOWS_CERTIFICATE)) {
-            '{}' | Set-Content -Path $configPath -Encoding utf8
-            "FREEVOBE_WINDOWS_SIGNED=false" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
-            Write-Host "::warning::WINDOWS_CERTIFICATE saknas – installeraren blir osignerad och SmartScreen varnar vid start (se docs/releasing.md)."
-            exit 0
+          # Två saker hamnar i samma delvisa config: certifikatet och uppdateringsfilerna. Tauri
+          # djupmergar in den i tauri.conf.json (RFC 7396), så resten av bundle-inställningarna behålls.
+          $config = @{ bundle = @{} }
+
+          # Uppdateringsfilerna signeras med en egen nyckel. Tauri läser den under sitt riktiga namn,
+          # och en tom variabel fäller bygget – därför skrivs den bara när den har ett värde.
+          if ([string]::IsNullOrWhiteSpace($env:FREEVOBE_TAURI_PRIVATE_KEY)) {
+            "FREEVOBE_UPDATER_ARTIFACTS=false" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+            Write-Host "::warning::TAURI_SIGNING_PRIVATE_KEY saknas – inga uppdateringsfiler byggs, så appen erbjuder ingen automatisk uppdatering (se docs/releasing.md)."
+          } else {
+            $key = $env:FREEVOBE_TAURI_PRIVATE_KEY -replace '\s', ''
+            "TAURI_SIGNING_PRIVATE_KEY=$key" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+            if (-not [string]::IsNullOrWhiteSpace($env:FREEVOBE_TAURI_PRIVATE_KEY_PASSWORD)) {
+              "TAURI_SIGNING_PRIVATE_KEY_PASSWORD=$($env:FREEVOBE_TAURI_PRIVATE_KEY_PASSWORD)" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+            }
+            $config.bundle['createUpdaterArtifacts'] = $true
+            "FREEVOBE_UPDATER_ARTIFACTS=true" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+            Write-Host 'Uppdateringsfiler slås på.'
           }
 
-          # Certifikatet skickas in som base64 (radbrytningar tillåtna) och importeras i runnerkontots
-          # arkiv – det är så Tauri hittar det, via tumavtrycket.
-          $pfx = Join-Path $env:RUNNER_TEMP 'codesign.pfx'
-          [IO.File]::WriteAllBytes($pfx, [Convert]::FromBase64String(($env:FREEVOBE_WINDOWS_CERTIFICATE -replace '\s', '')))
-          $password = ConvertTo-SecureString -String $env:FREEVOBE_WINDOWS_CERTIFICATE_PASSWORD -Force -AsPlainText
-          $cert = Import-PfxCertificate -FilePath $pfx -CertStoreLocation Cert:\CurrentUser\My -Password $password
-          Remove-Item $pfx -Force
+          if ([string]::IsNullOrWhiteSpace($env:FREEVOBE_WINDOWS_CERTIFICATE)) {
+            "FREEVOBE_WINDOWS_SIGNED=false" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+            Write-Host "::warning::WINDOWS_CERTIFICATE saknas – installeraren blir osignerad och SmartScreen varnar vid start (se docs/releasing.md)."
+          } else {
+            # Certifikatet skickas in som base64 (radbrytningar tillåtna) och importeras i runnerkontots
+            # arkiv – det är så Tauri hittar det, via tumavtrycket.
+            $pfx = Join-Path $env:RUNNER_TEMP 'codesign.pfx'
+            [IO.File]::WriteAllBytes($pfx, [Convert]::FromBase64String(($env:FREEVOBE_WINDOWS_CERTIFICATE -replace '\s', '')))
+            $password = ConvertTo-SecureString -String $env:FREEVOBE_WINDOWS_CERTIFICATE_PASSWORD -Force -AsPlainText
+            $cert = Import-PfxCertificate -FilePath $pfx -CertStoreLocation Cert:\CurrentUser\My -Password $password
+            Remove-Item $pfx -Force
 
-          # Skrivs som en delvis config som Tauri djupmergar in (RFC 7396), så bundle.windows.nsis i
-          # tauri.conf.json behålls. Tidsstämpeln krävs för att signaturen ska gälla även efter det att
-          # certifikatet gått ut; DigiCert fungerar för de flesta utfärdare – byt vid behov.
-          @{
-            bundle = @{
-              windows = @{
-                certificateThumbprint = $cert.Thumbprint
-                digestAlgorithm = 'sha256'
-                timestampUrl = 'http://timestamp.digicert.com'
-              }
+            # Tidsstämpeln krävs för att signaturen ska gälla även efter det att certifikatet gått ut;
+            # DigiCert fungerar för de flesta utfärdare – byt vid behov.
+            $config.bundle['windows'] = @{
+              certificateThumbprint = $cert.Thumbprint
+              digestAlgorithm = 'sha256'
+              timestampUrl = 'http://timestamp.digicert.com'
             }
-          } | ConvertTo-Json -Depth 4 | Set-Content -Path $configPath -Encoding utf8
+            "FREEVOBE_WINDOWS_SIGNED=true" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+            Write-Host "Importerade $($cert.Subject) ($($cert.Thumbprint))."
+          }
 
-          "FREEVOBE_WINDOWS_SIGNED=true" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
-          Write-Host "Importerade $($cert.Subject) ($($cert.Thumbprint))."
+          $config | ConvertTo-Json -Depth 4 | Set-Content -Path $configPath -Encoding utf8
 
       - name: Bygg installeraren
         shell: pwsh
@@ -165,6 +183,18 @@ jobs:
           mkdir -p dist-release
           cp apps/desktop/src-tauri/target/release/bundle/nsis/*-setup.exe \
             "dist-release/Freevobe_${GITHUB_REF_NAME}_x64-setup.exe"
+          # Signaturen hör ihop med filen den signerar, så den får samma namn som releasen ger exe:n.
+          if compgen -G "apps/desktop/src-tauri/target/release/bundle/nsis/*-setup.exe.sig" >/dev/null; then
+            cp apps/desktop/src-tauri/target/release/bundle/nsis/*-setup.exe.sig \
+              "dist-release/Freevobe_${GITHUB_REF_NAME}_x64-setup.exe.sig"
+          fi
+          # Utan signaturen kan uppdateringen inte verifieras. Då är det bättre att bygget stannar
+          # här än att releasen tyst saknar automatisk uppdatering.
+          if [ "${FREEVOBE_UPDATER_ARTIFACTS:-false}" = 'true' ] \
+            && ! compgen -G 'dist-release/*-setup.exe.sig' >/dev/null; then
+            echo '::error::Inga uppdateringsfiler för Windows byggdes trots att TAURI_SIGNING_PRIVATE_KEY finns.'
+            exit 1
+          fi
           ls -l dist-release
       - name: Verifiera signaturen
         shell: pwsh
@@ -217,6 +247,9 @@ jobs:
       FREEVOBE_APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
       FREEVOBE_APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
       FREEVOBE_APPLE_API_KEY_P8_BASE64: ${{ secrets.APPLE_API_KEY_P8_BASE64 }}
+      # Nyckeln som signerar uppdateringsfilerna (se docs/releasing.md).
+      FREEVOBE_TAURI_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+      FREEVOBE_TAURI_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -279,11 +312,35 @@ jobs:
             echo "::warning::Inga notariseringsuppgifter (APPLE_ID eller APPLE_API_KEY) – dmg:n lämnas onotariserad."
           fi
 
+      - name: Slå på uppdateringsfiler
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Tauri läser uppdateringsnyckeln under sitt riktiga namn, och en tom variabel fäller
+          # bygget – därför skrivs den bara när den har ett värde. Utan nyckel byggs inga
+          # uppdateringsfiler, och då erbjuder appen ingen uppdatering.
+          config="$RUNNER_TEMP/tauri-updater.conf.json"
+          if [ -n "${FREEVOBE_TAURI_PRIVATE_KEY:-}" ]; then
+            printf '{"bundle":{"createUpdaterArtifacts":true}}\n' > "$config"
+            printf 'TAURI_SIGNING_PRIVATE_KEY=%s\n' \
+              "$(printf '%s' "$FREEVOBE_TAURI_PRIVATE_KEY" | tr -d '\r\n')" >> "$GITHUB_ENV"
+            if [ -n "${FREEVOBE_TAURI_PRIVATE_KEY_PASSWORD:-}" ]; then
+              printf 'TAURI_SIGNING_PRIVATE_KEY_PASSWORD=%s\n' \
+                "$FREEVOBE_TAURI_PRIVATE_KEY_PASSWORD" >> "$GITHUB_ENV"
+            fi
+            echo 'FREEVOBE_UPDATER_ARTIFACTS=true' >> "$GITHUB_ENV"
+            echo 'Uppdateringsfiler slås på.'
+          else
+            echo 'FREEVOBE_UPDATER_ARTIFACTS=false' >> "$GITHUB_ENV"
+            printf '{}\n' > "$config"
+            echo '::warning::TAURI_SIGNING_PRIVATE_KEY saknas – inga uppdateringsfiler byggs, så appen erbjuder ingen automatisk uppdatering (se docs/releasing.md).'
+          fi
+          echo "FREEVOBE_TAURI_UPDATER_CONFIG=$config" >> "$GITHUB_ENV"
       - name: Bygg installeraren
         working-directory: freevobe-desktop
         run: >-
           npm run tauri --workspace @freevobe/desktop -- build
-          --target aarch64-apple-darwin --bundles dmg
+          --target aarch64-apple-darwin --bundles dmg --config "$FREEVOBE_TAURI_UPDATER_CONFIG"
       - name: Döp artefakten till nedladdningssidans filnamn
         shell: bash
         working-directory: freevobe-desktop
@@ -292,6 +349,17 @@ jobs:
           mkdir -p dist-release
           cp apps/desktop/src-tauri/target/aarch64-apple-darwin/release/bundle/dmg/*.dmg \
             "dist-release/Freevobe_${GITHUB_REF_NAME}_aarch64.dmg"
+          # Uppdateringen installerar en .app.tar.gz, inte dmg:n.
+          shopt -s nullglob
+          for bundle in apps/desktop/src-tauri/target/aarch64-apple-darwin/release/bundle/macos/*.app.tar.gz; do
+            cp "$bundle" "dist-release/Freevobe_${GITHUB_REF_NAME}_aarch64.app.tar.gz"
+            cp "$bundle.sig" "dist-release/Freevobe_${GITHUB_REF_NAME}_aarch64.app.tar.gz.sig"
+          done
+          if [ "${FREEVOBE_UPDATER_ARTIFACTS:-false}" = 'true' ] \
+            && ! compgen -G 'dist-release/*.app.tar.gz.sig' >/dev/null; then
+            echo '::error::Inga uppdateringsfiler för macOS byggdes trots att TAURI_SIGNING_PRIVATE_KEY finns.'
+            exit 1
+          fi
           ls -l dist-release
       - name: Notarisera och häfta fast biljetten på dmg:n
         if: steps.signing.outputs.signed == 'true' && steps.signing.outputs.notary == 'true'
@@ -342,6 +410,9 @@ jobs:
       FREEVOBE_APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
       FREEVOBE_APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
       FREEVOBE_APPLE_API_KEY_P8_BASE64: ${{ secrets.APPLE_API_KEY_P8_BASE64 }}
+      # Nyckeln som signerar uppdateringsfilerna (se docs/releasing.md).
+      FREEVOBE_TAURI_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+      FREEVOBE_TAURI_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -404,11 +475,35 @@ jobs:
             echo "::warning::Inga notariseringsuppgifter (APPLE_ID eller APPLE_API_KEY) – dmg:n lämnas onotariserad."
           fi
 
+      - name: Slå på uppdateringsfiler
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Tauri läser uppdateringsnyckeln under sitt riktiga namn, och en tom variabel fäller
+          # bygget – därför skrivs den bara när den har ett värde. Utan nyckel byggs inga
+          # uppdateringsfiler, och då erbjuder appen ingen uppdatering.
+          config="$RUNNER_TEMP/tauri-updater.conf.json"
+          if [ -n "${FREEVOBE_TAURI_PRIVATE_KEY:-}" ]; then
+            printf '{"bundle":{"createUpdaterArtifacts":true}}\n' > "$config"
+            printf 'TAURI_SIGNING_PRIVATE_KEY=%s\n' \
+              "$(printf '%s' "$FREEVOBE_TAURI_PRIVATE_KEY" | tr -d '\r\n')" >> "$GITHUB_ENV"
+            if [ -n "${FREEVOBE_TAURI_PRIVATE_KEY_PASSWORD:-}" ]; then
+              printf 'TAURI_SIGNING_PRIVATE_KEY_PASSWORD=%s\n' \
+                "$FREEVOBE_TAURI_PRIVATE_KEY_PASSWORD" >> "$GITHUB_ENV"
+            fi
+            echo 'FREEVOBE_UPDATER_ARTIFACTS=true' >> "$GITHUB_ENV"
+            echo 'Uppdateringsfiler slås på.'
+          else
+            echo 'FREEVOBE_UPDATER_ARTIFACTS=false' >> "$GITHUB_ENV"
+            printf '{}\n' > "$config"
+            echo '::warning::TAURI_SIGNING_PRIVATE_KEY saknas – inga uppdateringsfiler byggs, så appen erbjuder ingen automatisk uppdatering (se docs/releasing.md).'
+          fi
+          echo "FREEVOBE_TAURI_UPDATER_CONFIG=$config" >> "$GITHUB_ENV"
       - name: Bygg installeraren
         working-directory: freevobe-desktop
         run: >-
           npm run tauri --workspace @freevobe/desktop -- build
-          --target x86_64-apple-darwin --bundles dmg
+          --target x86_64-apple-darwin --bundles dmg --config "$FREEVOBE_TAURI_UPDATER_CONFIG"
       - name: Döp artefakten till nedladdningssidans filnamn
         shell: bash
         working-directory: freevobe-desktop
@@ -417,6 +512,17 @@ jobs:
           mkdir -p dist-release
           cp apps/desktop/src-tauri/target/x86_64-apple-darwin/release/bundle/dmg/*.dmg \
             "dist-release/Freevobe_${GITHUB_REF_NAME}_x64.dmg"
+          # Uppdateringen installerar en .app.tar.gz, inte dmg:n.
+          shopt -s nullglob
+          for bundle in apps/desktop/src-tauri/target/x86_64-apple-darwin/release/bundle/macos/*.app.tar.gz; do
+            cp "$bundle" "dist-release/Freevobe_${GITHUB_REF_NAME}_x64.app.tar.gz"
+            cp "$bundle.sig" "dist-release/Freevobe_${GITHUB_REF_NAME}_x64.app.tar.gz.sig"
+          done
+          if [ "${FREEVOBE_UPDATER_ARTIFACTS:-false}" = 'true' ] \
+            && ! compgen -G 'dist-release/*.app.tar.gz.sig' >/dev/null; then
+            echo '::error::Inga uppdateringsfiler för macOS byggdes trots att TAURI_SIGNING_PRIVATE_KEY finns.'
+            exit 1
+          fi
           ls -l dist-release
       - name: Notarisera och häfta fast biljetten på dmg:n
         if: steps.signing.outputs.signed == 'true' && steps.signing.outputs.notary == 'true'
@@ -451,6 +557,10 @@ jobs:
     name: Linux (.AppImage)
     needs: verify
     runs-on: ubuntu-22.04
+    env:
+      # Nyckeln som signerar uppdateringsfilerna (se docs/releasing.md).
+      FREEVOBE_TAURI_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+      FREEVOBE_TAURI_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
     steps:
       - uses: actions/checkout@v4
       - name: Systemberoenden för Tauri
@@ -471,9 +581,35 @@ jobs:
       - name: Bygg agenten och sidecar-binären
         working-directory: freevobe-desktop
         run: npm run sidecar:build
+      - name: Slå på uppdateringsfiler
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Tauri läser uppdateringsnyckeln under sitt riktiga namn, och en tom variabel fäller
+          # bygget – därför skrivs den bara när den har ett värde. Utan nyckel byggs inga
+          # uppdateringsfiler, och då erbjuder appen ingen uppdatering.
+          config="$RUNNER_TEMP/tauri-updater.conf.json"
+          if [ -n "${FREEVOBE_TAURI_PRIVATE_KEY:-}" ]; then
+            printf '{"bundle":{"createUpdaterArtifacts":true}}\n' > "$config"
+            printf 'TAURI_SIGNING_PRIVATE_KEY=%s\n' \
+              "$(printf '%s' "$FREEVOBE_TAURI_PRIVATE_KEY" | tr -d '\r\n')" >> "$GITHUB_ENV"
+            if [ -n "${FREEVOBE_TAURI_PRIVATE_KEY_PASSWORD:-}" ]; then
+              printf 'TAURI_SIGNING_PRIVATE_KEY_PASSWORD=%s\n' \
+                "$FREEVOBE_TAURI_PRIVATE_KEY_PASSWORD" >> "$GITHUB_ENV"
+            fi
+            echo 'FREEVOBE_UPDATER_ARTIFACTS=true' >> "$GITHUB_ENV"
+            echo 'Uppdateringsfiler slås på.'
+          else
+            echo 'FREEVOBE_UPDATER_ARTIFACTS=false' >> "$GITHUB_ENV"
+            printf '{}\n' > "$config"
+            echo '::warning::TAURI_SIGNING_PRIVATE_KEY saknas – inga uppdateringsfiler byggs, så appen erbjuder ingen automatisk uppdatering (se docs/releasing.md).'
+          fi
+          echo "FREEVOBE_TAURI_UPDATER_CONFIG=$config" >> "$GITHUB_ENV"
       - name: Bygg installeraren
         working-directory: freevobe-desktop
-        run: npm run tauri --workspace @freevobe/desktop -- build --bundles appimage
+        run: >-
+          npm run tauri --workspace @freevobe/desktop -- build --bundles appimage
+          --config "$FREEVOBE_TAURI_UPDATER_CONFIG"
       - name: Döp artefakten till nedladdningssidans filnamn
         shell: bash
         working-directory: freevobe-desktop
@@ -482,6 +618,21 @@ jobs:
           mkdir -p dist-release
           cp apps/desktop/src-tauri/target/release/bundle/appimage/*.AppImage \
             "dist-release/Freevobe_${GITHUB_REF_NAME}_amd64.AppImage"
+          # Linux-uppdateringen hämtar AppImage-filen själv; signaturen ska heta som den.
+          if compgen -G 'apps/desktop/src-tauri/target/release/bundle/appimage/*.AppImage.sig' >/dev/null; then
+            cp apps/desktop/src-tauri/target/release/bundle/appimage/*.AppImage.sig \
+              "dist-release/Freevobe_${GITHUB_REF_NAME}_amd64.AppImage.sig"
+          elif compgen -G 'apps/desktop/src-tauri/target/release/bundle/appimage/*.AppImage.tar.gz.sig' >/dev/null; then
+            cp apps/desktop/src-tauri/target/release/bundle/appimage/*.AppImage.tar.gz \
+              "dist-release/Freevobe_${GITHUB_REF_NAME}_amd64.AppImage.tar.gz"
+            cp apps/desktop/src-tauri/target/release/bundle/appimage/*.AppImage.tar.gz.sig \
+              "dist-release/Freevobe_${GITHUB_REF_NAME}_amd64.AppImage.tar.gz.sig"
+          fi
+          if [ "${FREEVOBE_UPDATER_ARTIFACTS:-false}" = 'true' ] \
+            && ! compgen -G 'dist-release/*.AppImage*.sig' >/dev/null; then
+            echo '::error::Inga uppdateringsfiler för Linux byggdes trots att TAURI_SIGNING_PRIVATE_KEY finns.'
+            exit 1
+          fi
           ls -l dist-release
       - uses: actions/upload-artifact@v4
         with:
@@ -612,6 +763,14 @@ jobs:
       - name: Beräkna SHA-256 för filerna
         shell: bash
         run: bash .github/scripts/release-checksums.sh compute artifacts
+      # latest.json är filen appen läser för att hitta en ny version. Den skrivs efter
+      # kontrollsummorna: den är metadata om filerna, inte en fil att ladda ner och summera.
+      - name: Skriv latest.json för uppdateringen
+        shell: bash
+        run: |
+          set -euo pipefail
+          version=$(node -p "require('./freevobe-desktop/apps/desktop/src-tauri/tauri.conf.json').version")
+          node .github/scripts/updater-json.mjs artifacts "$version" "$GITHUB_REF_NAME" "$GITHUB_REPOSITORY"
       - name: Ladda upp filerna till releasen för taggen
         shell: bash
         env:
