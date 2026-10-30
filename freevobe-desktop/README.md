@@ -307,7 +307,7 @@ den nya versionen. Det kräver att uppdateringsnyckeln finns som hemlighet i CI 
 ## Begränsningar och TODO
 
 - [ ] **Signering**: workflowen signerar, notariserar och verifierar filerna när certifikaten finns som hemligheter (`WINDOWS_CERTIFICATE`, `APPLE_*`, `ANDROID_KEYSTORE_BASE64`). Utan dem varnar operativsystemet vid installation. Se [Release](docs/releasing.md#signering).
-- [ ] **Auto-uppdate**: klar i koden; aktiveras genom att lägga in uppdateringsnyckeln som hemlighet i CI.
+- [x] **Auto-uppdatering**: på från 0.2.6 – nyckeln ligger som hemlighet i CI, `latest.json` skrivs av workflowen och appen verifierar signaturen innan den installerar.
 - [ ] **Release-server**: GitHub Releases används som standard; egen server om du vill ha kanaler (beta/stable).
 - [ ] **Telemetri**: medvetet avstängt (`telemetry: false`) och kan inte slås på från gränssnittet.
 - [ ] **Pro-funktioner**: delade skills mellan projekt, team-minne och fjärrstyrda agenter bakom en betald licens.

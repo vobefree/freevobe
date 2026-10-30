@@ -10,7 +10,7 @@
  */
 
 const REPO_FALLBACK = 'vobefree/freevobe';
-const TAG_FALLBACK = 'v0.2.5';
+const TAG_FALLBACK = 'v0.2.6';
 
 /**
  * GitHub-repo på formen "agare/repo". Tål att man klistrar in en hel URL.

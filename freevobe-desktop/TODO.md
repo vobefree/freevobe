@@ -55,10 +55,13 @@ Statusen gäller version 0.2.0 (2026-10-29).
 
 ### Auto-uppdatering
 
-- [ ] Sätt `plugins.updater.active = true` i `apps/desktop/src-tauri/tauri.conf.json`.
-- [ ] Generera nyckelpar med `npm run tauri signer generate` och lägg in den publika nyckeln i `pubkey`.
-- [ ] Peka `endpoints` mot en riktig release-server (GitHub Releases fungerar, men en egen server ger kanaler).
-- [ ] Testa en riktig uppdatering mellan två versioner innan den slås på för användare.
+- [x] Nyckelparet är generat, den publika halvan ligger i `pubkey` och den privata som hemligheten
+      `TAURI_SIGNING_PRIVATE_KEY` i CI.
+- [x] `endpoints` pekar mot `latest.json` i den senaste GitHub-releasen.
+- [x] Workflowen bygger signerade uppdateringsfiler och skriver `latest.json` – från och med 0.2.6.
+- [ ] Bevisa kedjan mellan två versioner: installera 0.2.6, publicera sedan 0.2.7 och se att bannern
+      dyker upp, att signaturen verifieras och att appen startar om i den nya versionen.
+- [ ] Egen server om du vill ha kanaler (beta/stable) i stället för bara `latest`.
 
 ### Telemetri och Pro
 

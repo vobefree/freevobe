@@ -57,6 +57,15 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '0.2.6',
+    date: '2026-10-30',
+    highlights: [
+      'Appen uppdaterar sig själv: fyra sekunder efter start frågar den efter en nyare version, laddar ner den signerade filen och startar om. Nedladdningssidan behövs bara för den första installationen.',
+      'Signaturen kontrolleras innan något installeras. En fil som inte är signerad med appens egen nyckel avvisas, och ett misslyckat försök syns i stället för att bannern tyst försvinner.',
+      'Alla installerade 0.2.6 och senare uppdateras automatiskt; 0.2.5 och äldre måste installeras om för hand en sista gång.',
+    ],
+  },
+  {
     version: '0.2.5',
     date: '2026-10-30',
     highlights: [
