@@ -90,9 +90,10 @@ Statusen gäller version 0.2.0 (2026-10-29).
 ### Kända begränsningar
 
 - Plan/Act-kontraktet gäller filvägar, inte innehåll, och grindar bara filändringar – kommando som rör andra filer
-  fångas av behörighetsläget. En plan måste läggas fram av modellen; utan tool calling fungerar Plan-läget bara som
-  ett läs-läge.
-- Modeller utan tool calling kan bara användas i chatten. Appen varnar tydligt, men en textbaserad reservväg för
-  verktygsanrop finns bara delvis (`parseTextualToolCalls`).
+  fångas av behörighetsläget. En plan måste läggas fram av modellen.
+- Verktygsanrop som modellen skriver som text i stället för i `tool_calls` tolkas (naken JSON, ```json-staket och
+  `<tool_call>`), även när modellen uppger verktygsstöd. Anropet tas bort ur chatten och körs som vanligt, men
+  texten strömmar fram en kort stund innan den töms – modeller som blandar prosa och JSON i samma svar får sin
+  prosatext kvar som meddelande.
 - Kontextmotorn skickar filhuvuden och symboler för stora filer; mycket stora filer kapas och märks som trunkerade.
 - Webbläsarautomation kräver att Playwrights webbläsare är nedladdade (`npx playwright install chromium`).

@@ -100,6 +100,11 @@ skrivrätt). Om `files` saknas härleds kontraktet från stegen. Steg som skicka
 fungerar också, och dubbletter/sökvägar normaliseras (`\` → `/`, `./` och inledande `/` tas bort).
 Saknas rubrik eller steg får modellen ett fel tillbaka och kan rätta sig.
 
+Anropet behöver inte komma som ett riktigt verktygsanrop. Lokala modeller skriver det ofta som
+JSON i texten – naket, i ett ```json-staket eller i `<tool_call>` – även när de uppger stöd för
+verktyg. Agent-loopen tolkar då blocket, tar bort det ur svaret och kör anropet som vanligt, så
+samma plan hamnar i chatten i stället för rå JSON.
+
 ## Händelser
 
 | Händelse        | Betyder                                           |

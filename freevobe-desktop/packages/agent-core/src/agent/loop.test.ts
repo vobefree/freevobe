@@ -467,6 +467,59 @@ describe('vertikal slice: Ollama → chatt → läs fil → ändra → diff → 
     expect(result.events.some((event) => event.type === 'tests')).toBe(true);
   });
 
+  it('kör ett textuellt plan-anrop även när modellen uppger verktygsstöd', async () => {
+    // Felet som rapporterades: modellen svarade med rå JSON i chatten och inget hände, trots
+    // att den (enligt /api/show) har verktygsstöd.
+    const result = await runSlice({
+      mode: 'plan',
+      permissionMode: 'ask',
+      turns: [
+        {
+          content: [
+            '{"name": "propose_plan", "arguments": {"title": "Hemsida för Klippet", "steps": [',
+            '{"title": "Bygg sidan", "files": ["index.html"]}]}',
+          ].join(''),
+        },
+        // Ska aldrig nås: planen avslutar Plan-läget.
+        { content: 'Här är planen.' },
+      ],
+    });
+
+    const proposed = result.events.find((event) => event.type === 'plan_proposed');
+    expect(proposed).toBeDefined();
+    if (proposed?.type === 'plan_proposed') expect(proposed.plan.title).toBe('Hemsida för Klippet');
+
+    // Ingen pratbubbla med rå JSON, och den strömmade texten töms.
+    const texts = result.events
+      .filter((event) => event.type === 'assistant_message')
+      .map((event) => (event.type === 'assistant_message' ? event.text : ''));
+    expect(texts.join('\n')).not.toContain('propose_plan');
+    expect(types(result.events)).toContain('assistant_reset');
+    const finished = result.events.at(-1);
+    expect(finished?.type === 'run_finished' && finished.reason).toBe('plan-ready');
+  });
+
+  it('kör textuella verktygsanrop även när modellen uppger verktygsstöd', async () => {
+    const result = await runSlice({
+      permissionMode: 'auto-edit',
+      turns: [
+        {
+          content: [
+            'Jag läser filen.',
+            '<tool_call>{"name":"read_file","arguments":{"path":"src/halsa.ts"}}</tool_call>',
+          ].join('\n'),
+        },
+        { content: 'Klart.' },
+      ],
+    });
+
+    expect(
+      result.toolResultContents.some((content) => content.includes('export function halsa')),
+    ).toBe(true);
+    const first = result.events.find((event) => event.type === 'assistant_message');
+    expect(first?.type === 'assistant_message' && first.text).toBe('Jag läser filen.');
+  });
+
   it('hanterar modeller utan verktygsstöd via textuella anrop', async () => {
     const result = await runSlice({
       permissionMode: 'auto-edit',

@@ -57,6 +57,15 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '0.2.3',
+    date: '2026-10-30',
+    highlights: [
+      'Verktygsanrop som modellen skriver som JSON i texten tolkas nu även när modellen uppger att den har verktygsstöd – tidigare stannade Plan-läget på rå JSON och inget hände.',
+      'Naken JSON, ```json-staket, <tool_call>-block och JSON som klippts av mitt i ett svar känns igen; anropet tas bort ur chatten och körs som vanligt.',
+      'En plan som lagts fram i texten blir ett riktigt planförslag som går att godkänna i stället för ett dött svar.',
+    ],
+  },
+  {
     version: '0.2.2',
     date: '2026-10-29',
     highlights: [

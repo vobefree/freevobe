@@ -17,7 +17,11 @@ import { embed } from '../context/embedding.js';
 import type { IndexedFile, ProjectIndexer } from '../context/indexer.js';
 import { activateSkills, type Skill } from '../skills/loader.js';
 import type { RuleBundle } from '../rules/loader.js';
-import { ToolCallAccumulator, parseTextualToolCalls } from '../ollama/openai.js';
+import {
+  ToolCallAccumulator,
+  parseTextualToolCalls,
+  stripTextualToolCalls,
+} from '../ollama/openai.js';
 import type {
   ChatChunk,
   ChatToolCall,
@@ -210,31 +214,47 @@ export class AgentLoop {
         }
         const turn: ChatTurnResult = step.value;
         let toolCalls = turn.toolCalls;
+        let content = turn.content;
+        let textualCall = false;
 
-        if (toolCalls.length === 0 && input.supportsTools === false) {
-          toolCalls = parseTextualToolCalls(turn.content).map((call) => ({
-            id: createId('call'),
-            name: call.name,
-            args: call.args,
-            rawArguments: JSON.stringify(call.args),
-          }));
+        // Lokala modeller skriver ibland anropet som JSON i texten i stället för att fylla i
+        // tool_calls – även när de uppger stöd för verktyg. Då tolkas blocket här, annars
+        // stannar körningen på rå JSON och inget händer.
+        if (toolCalls.length === 0 && content.trim() !== '') {
+          const parsed = parseTextualToolCalls(content, {
+            isToolName: (name) => this.options.registry.has(name),
+          });
+          if (parsed.length > 0) {
+            toolCalls = parsed.map((call) => ({
+              id: createId('call'),
+              name: call.name,
+              args: call.args,
+              rawArguments: JSON.stringify(call.args),
+            }));
+            content = stripTextualToolCalls(content, parsed);
+            textualCall = true;
+          }
         }
 
-        if (turn.content.trim() !== '' || turn.toolCalls.length > 0) {
+        if (content.trim() !== '' || toolCalls.length > 0) {
           messages.push({
             role: 'assistant',
-            content: turn.content,
-            ...(turn.toolCalls.length > 0 ? { toolCalls: turn.toolCalls } : {}),
+            content,
+            ...(toolCalls.length > 0 ? { toolCalls } : {}),
           });
           // Ett varv som bara innehåller verktygsanrop har ingen text – då ska chatten inte få
           // en tom pratbubbla (t.ex. när modellen bara lägger fram en plan).
-          if (turn.content.trim() !== '') {
+          if (content.trim() !== '') {
             yield {
               type: 'assistant_message',
               runId,
-              text: turn.content,
+              text: content,
               messageId: createId('msg'),
             };
+          } else if (textualCall) {
+            // Anropet strömmades som text. Utan den här händelsen blir rå JSON kvar i bubblan
+            // tills körningen tar slut.
+            yield { type: 'assistant_reset', runId };
           }
         }
 

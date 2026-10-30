@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { startFakeOllama, type FakeOllamaHandle } from '../testing/fakeOllama.js';
 import { OllamaClient } from './client.js';
-import { ToolCallAccumulator, parseArguments, parseTextualToolCalls } from './openai.js';
+import { ToolCallAccumulator, parseArguments, parseTextualToolCalls, stripTextualToolCalls } from './openai.js';
 import type { ChatChunk } from './types.js';
 import { TransportError } from './types.js';
 
@@ -208,7 +208,47 @@ describe('argumentparsning', () => {
 
     const calls = parseTextualToolCalls(content);
     expect(calls).toHaveLength(2);
-    expect(calls[0]).toEqual({ name: 'read_file', args: { path: 'README.md' } });
-    expect(calls[1]).toEqual({ name: 'search_files', args: { query: 'ollama' } });
+    expect(calls[0]).toMatchObject({ name: 'read_file', args: { path: 'README.md' } });
+    expect(calls[1]).toMatchObject({ name: 'search_files', args: { query: 'ollama' } });
+  });
+
+  it('tolkar naken JSON utan staket, som lokala modeller skriver den', () => {
+    const content = [
+      'Här är planen:',
+      '{"name": "propose_plan", "arguments": {"title": "Klippet", "steps": [{"title": "Bygg sidan"}]}}',
+    ].join('\n');
+
+    const calls = parseTextualToolCalls(content);
+    expect(calls).toHaveLength(1);
+    expect(calls[0]?.name).toBe('propose_plan');
+    expect(calls[0]?.args).toMatchObject({ title: 'Klippet' });
+  });
+
+  it('lagar JSON som klippts av mitt i (max_tokens)', () => {
+    const content =
+      '{"name": "propose_plan", "arguments": {"title": "Klippet", "steps": [{"title": "Bygg sidan"}]}';
+
+    const calls = parseTextualToolCalls(content);
+    expect(calls.map((call) => call.name)).toEqual(['propose_plan']);
+    expect(calls[0]?.args).toMatchObject({ title: 'Klippet' });
+  });
+
+  it('hoppar över block vars namn inte är ett verktyg', () => {
+    const content = '{"name": "min_egen_funktion", "arguments": {"x": 1}}';
+    expect(parseTextualToolCalls(content, { isToolName: (name) => name === 'read_file' })).toEqual(
+      [],
+    );
+  });
+
+  it('tar bort anropet ur texten så att bara förklaringen blir kvar', () => {
+    const content = [
+      'Jag kollar filen.',
+      '```json',
+      '{"name":"read_file","arguments":{"path":"README.md"}}',
+      '```',
+    ].join('\n');
+
+    const calls = parseTextualToolCalls(content);
+    expect(stripTextualToolCalls(content, calls)).toBe('Jag kollar filen.');
   });
 });

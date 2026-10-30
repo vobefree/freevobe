@@ -126,6 +126,11 @@ export type AgentEvent =
   | { type: 'assistant_delta'; runId: string; text: string }
   | { type: 'reasoning_delta'; runId: string; text: string }
   | { type: 'assistant_message'; runId: string; text: string; messageId: string }
+  /**
+   * Strömmad text visade sig vara ett verktygsanrop och inte ett svar. Chatten tömmer bubblan i
+   * stället för att lämna rå JSON kvar på skärmen.
+   */
+  | { type: 'assistant_reset'; runId: string }
   | {
       type: 'plan';
       runId: string;

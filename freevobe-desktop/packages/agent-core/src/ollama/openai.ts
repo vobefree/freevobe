@@ -245,46 +245,229 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 export interface TextualToolCall {
   name: string;
   args: Record<string, unknown>;
+  /**
+   * Texten anropet skrevs i. Loopen tar bort den ur svaret innan det visas, så att chatten visar
+   * modellens förklaring i stället för rå JSON.
+   */
+  source: string;
+}
+
+export interface TextualToolCallOptions {
+  /** Namnen på de verktyg som finns. Ett block med okänt namn lämnas som text. */
+  isToolName?: (name: string) => boolean;
+}
+
+interface Candidate {
+  text: string;
+  source: string;
+  start: number;
+  end: number;
 }
 
 /**
- * Reservväg för modeller utan inbyggt tool calling: de skriver ofta anropet som JSON i texten.
- * Vi känner igen ```json-fenced JSON med `name`/`tool` + `arguments`/`args`, och `<tool_call>`-block.
+ * Letar upp JSON-block i texten: ```-staket, `<tool_call>`-taggar och naken JSON. Modeller som
+ * inte kan tool calling lägger anropet i texten, och de gör det i alla tre formerna.
  */
-export function parseTextualToolCalls(content: string): TextualToolCall[] {
-  const calls: TextualToolCall[] = [];
-  const candidates: string[] = [];
+function findCandidates(content: string): Candidate[] {
+  const found: Candidate[] = [];
+  const patterns = [
+    /```(?:json|tool_call)?\s*([\s\S]*?)```/g,
+    /<tool_call>\s*([\s\S]*?)\s*<\/tool_call>/g,
+  ];
 
-  const fenced = /```(?:json|tool_call)?\s*\n([\s\S]*?)```/g;
-  let match: RegExpExecArray | null;
-  while ((match = fenced.exec(content)) !== null) {
-    if (match[1]) candidates.push(match[1].trim());
-  }
-  const tagged = /<tool_call>\s*([\s\S]*?)\s*<\/tool_call>/g;
-  while ((match = tagged.exec(content)) !== null) {
-    if (match[1]) candidates.push(match[1].trim());
+  for (const pattern of patterns) {
+    let match: RegExpExecArray | null;
+    while ((match = pattern.exec(content)) !== null) {
+      const text = (match[1] ?? '').trim();
+      if (text === '') continue;
+      found.push({
+        text,
+        source: match[0],
+        start: match.index,
+        end: match.index + match[0].length,
+      });
+    }
   }
 
-  for (const candidate of candidates) {
-    let parsed: unknown;
-    try {
-      parsed = JSON.parse(candidate);
-    } catch {
+  // Naken JSON: modellen skriver anropet utan staket. Vi letar upp varje `{` som inte redan
+  // ligger i ett hittat block och läser ett balanserat objekt därifrån.
+  let index = 0;
+  while (index < content.length) {
+    const char = content[index];
+    if (char !== '{') {
+      index += 1;
       continue;
     }
-    if (!isRecord(parsed)) continue;
-    const name =
-      typeof parsed.name === 'string'
-        ? parsed.name
-        : typeof parsed.tool === 'string'
-          ? parsed.tool
-          : undefined;
+    if (found.some((candidate) => index >= candidate.start && index < candidate.end)) {
+      index += 1;
+      continue;
+    }
+
+    const extracted = extractJsonValue(content, index);
+    if (extracted) {
+      found.push({
+        text: extracted.text.trim(),
+        source: extracted.text,
+        start: index,
+        end: extracted.end,
+      });
+      index = extracted.end;
+      continue;
+    }
+
+    // Trunkerat svar (t.ex. när modellen nått max_tokens): resten är JSON som saknar sina
+    // avslutande klamrar. Den lagas när den parsas.
+    const rest = content.slice(index).trim();
+    if (rest.startsWith('{')) {
+      found.push({ text: rest, source: content.slice(index), start: index, end: content.length });
+    }
+    return found;
+  }
+
+  return found;
+}
+
+/** Läser ett balanserat JSON-objekt eller -fält från `start`. null om det aldrig stängs. */
+function extractJsonValue(content: string, start: number): { text: string; end: number } | null {
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+
+  for (let index = start; index < content.length; index += 1) {
+    const char = content[index];
+    if (inString) {
+      if (escaped) escaped = false;
+      else if (char === '\\') escaped = true;
+      else if (char === '"') inString = false;
+      continue;
+    }
+    if (char === '"') {
+      inString = true;
+      continue;
+    }
+    if (char === '{' || char === '[') {
+      depth += 1;
+      continue;
+    }
+    if (char === '}' || char === ']') {
+      depth -= 1;
+      if (depth === 0) return { text: content.slice(start, index + 1), end: index + 1 };
+    }
+  }
+
+  return null;
+}
+
+/** Stänger klamrar och citattecken som saknas i ett avklippt JSON-svar. */
+function closeUnbalanced(text: string): string {
+  const closers: string[] = [];
+  let inString = false;
+  let escaped = false;
+
+  for (const char of text) {
+    if (inString) {
+      if (escaped) escaped = false;
+      else if (char === '\\') escaped = true;
+      else if (char === '"') inString = false;
+      continue;
+    }
+    if (char === '"') inString = true;
+    else if (char === '{') closers.push('}');
+    else if (char === '[') closers.push(']');
+    else if (char === '}' || char === ']') closers.pop();
+  }
+
+  const tail = closers.reverse().join('');
+  return inString ? `${text}"${tail}` : `${text}${tail}`;
+}
+
+/** JSON.parse med de lagningar lokala modeller brukar kräva: staket, trailing-komman, avklippta klamrar. */
+function parseJsonLoose(raw: string): unknown {
+  const trimmed = raw.trim();
+  const withoutFence = trimmed.replace(/^```(?:json|tool_call)?/i, '').replace(/```$/, '').trim();
+  const attempts = [
+    trimmed,
+    withoutFence,
+    trimmed.replace(/,\s*([}\]])/g, '$1'),
+    withoutFence.replace(/,\s*([}\]])/g, '$1'),
+  ];
+  attempts.push(closeUnbalanced(attempts[3] ?? withoutFence));
+  attempts.push(closeUnbalanced(attempts[2] ?? trimmed));
+
+  for (const attempt of attempts) {
+    try {
+      return JSON.parse(attempt);
+    } catch {
+      // Nästa försök.
+    }
+  }
+  return undefined;
+}
+
+/** Läser ut verktygsanrop ur ett tolkat JSON-värde (objekt, lista eller OpenAI-format). */
+function callsFromValue(
+  value: unknown,
+  options: TextualToolCallOptions,
+): Array<{ name: string; args: Record<string, unknown> }> {
+  const entries = Array.isArray(value) ? value : [value];
+  const calls: Array<{ name: string; args: Record<string, unknown> }> = [];
+
+  for (const entry of entries) {
+    if (!isRecord(entry)) continue;
+    const fn = isRecord(entry.function) ? entry.function : undefined;
+    const name = [entry.name, entry.tool, fn?.name].find(
+      (candidate): candidate is string => typeof candidate === 'string' && candidate.trim() !== '',
+    );
     if (!name) continue;
-    const rawArgs = parsed.arguments ?? parsed.args ?? parsed.parameters ?? {};
+    const trimmedName = name.trim();
+    if (options.isToolName && !options.isToolName(trimmedName)) continue;
+
+    const rawArgs = entry.arguments ?? entry.args ?? entry.parameters ?? fn?.arguments ?? {};
     const args =
       typeof rawArgs === 'string' ? parseArguments(rawArgs) : isRecord(rawArgs) ? rawArgs : {};
-    calls.push({ name, args });
+    calls.push({ name: trimmedName, args });
   }
 
   return calls;
+}
+
+/**
+ * Reservväg för modeller som skriver anropet som text i stället för att fylla i tool_calls.
+ * Det händer även modeller som uppger verktygsstöd, så loopen använder alltid den här vägen när
+ * ett svar saknar riktiga anrop.
+ */
+export function parseTextualToolCalls(
+  content: string,
+  options: TextualToolCallOptions = {},
+): TextualToolCall[] {
+  const calls: TextualToolCall[] = [];
+  const seen = new Set<string>();
+
+  for (const candidate of findCandidates(content)) {
+    const value = parseJsonLoose(candidate.text);
+    if (value === undefined) continue;
+
+    for (const call of callsFromValue(value, options)) {
+      const key = `${call.name}:${JSON.stringify(call.args)}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      calls.push({ ...call, source: candidate.source });
+    }
+  }
+
+  return calls;
+}
+
+/** Tar bort verktygsanropen ur texten så att bara modellens förklaring blir kvar. */
+export function stripTextualToolCalls(content: string, calls: TextualToolCall[]): string {
+  let text = content;
+  for (const call of calls) {
+    if (call.source !== '') text = text.replace(call.source, '');
+  }
+
+  return text
+    .replace(/```(?:json|tool_call)?\s*```/g, '')
+    .replace(/[ \t]+\n/g, '\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
 }

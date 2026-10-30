@@ -7,7 +7,7 @@
  */
 
 export const RELEASE_REPO = 'vobefree/freevobe';
-export const RELEASE_TAG = 'v0.2.2';
+export const RELEASE_TAG = 'v0.2.3';
 
 /** Mobilappens egen version (`freevobe-mobile/app.json`), inte releasetaggens. */
 export const MOBILE_VERSION = '1.0.0';

@@ -338,6 +338,9 @@ export const useAppStore = create<AppState>((set, get) => {
               logEntry(`Planen ${event.status === 'approved' ? 'godkändes' : 'avvisades'}.`),
             ].slice(-LOG_LIMIT),
           };
+        case 'assistant_reset':
+          // Den strömmade texten var ett verktygsanrop, inte ett svar.
+          return { streamingText: '' };
         case 'assistant_message':
           return {
             streamingText: '',
