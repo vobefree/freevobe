@@ -116,7 +116,14 @@ export default async function LocaleLayout({
   };
 
   return (
-    <html lang={locale} className={`${inter.variable} ${jetbrainsMono.variable}`}>
+    // `themeBootstrapScript` lägger till klassen `light` på <html> innan React hydrerar, så att
+    // sidan aldrig blinkar vitt. Skillnaden mot serverns HTML är avsiktlig – utan den här raden
+    // rapporterar React den som en hydreringsfel i konsolen.
+    <html
+      lang={locale}
+      className={`${inter.variable} ${jetbrainsMono.variable}`}
+      suppressHydrationWarning
+    >
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeBootstrapScript }} />
         {/* Scroll-animationerna sätter opacity via JavaScript. Utan JS ska all text synas direkt. */}
