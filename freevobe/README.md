@@ -111,6 +111,12 @@ används `https://freevobe.dev`.
 Cachening och content-type för den extensionslösa delningsbilden styrs deklarativt i
 [`public/_headers`](public/_headers) – den hamnar automatiskt i exporten.
 
+`deploy:prepare` stryker exportens RSC-payloads (`*/index.txt`) när den kopierar till
+`deploy/public/`. Med tolv språk blir paketet annars strax över 10 MiB, vilket är taket hos värden
+som tar emot `deploy/`. Sidorna blir identiska, men klick mellan dem gör en vanlig sidladdning i
+stället för en klientnavigering. Bygger värden själv från `out/` – som Vercel gör – finns
+payloadarna kvar.
+
 ### Nedladdningslänkar
 
 Alla nedladdningslänkar kommer från [`src/config/release.ts`](src/config/release.ts) – ingen annan fil
