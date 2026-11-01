@@ -73,6 +73,92 @@ export interface AgentLoopOptions {
 
 const DEFAULT_FIRST_TOKEN_NOTICE_MS = 1_500;
 
+/** Verktyg som faktiskt skriver till disk. En beställning är bara levererad när ett av dem kört. */
+const FILE_WRITE_TOOL_NAMES = new Set(['write_file', 'create_file', 'edit_file']);
+
+/**
+ * Knuffen som skickas tillbaka till modellen när den svarade med kod i chatten i stället för att
+ * skriva filer. Lokala modeller fastnar lätt i "förklara"-läge efter ett misslyckat kommando.
+ */
+const DELIVERY_NUDGE =
+  'Du svarade med text och kodblock, men skapade inga filer. Uppgiften är inte levererad förrän filerna finns i projektet. ' +
+  'Anropa nu write_file (eller create_file) och skriv filerna som behövs, till exempel index.html med hela sidan, style.css och app.js. ' +
+  'Använd inte npx, npm, create-react-app eller vite – en statisk sida som fungerar utan byggsteg är rätt svar. ' +
+  'Be inte användaren klistra in kod eller köra kommandon.';
+
+/**
+ * Sant när användaren beställer något som ska byggas och ligga i projektet – en hemsida, ett spel,
+ * en app. Rena frågor ("hur bygger jag en hemsida?") räknas inte: de ska besvaras i chatten.
+ */
+const DELIVERABLE_SUBJECTS = [
+  'hemsida',
+  'webbsida',
+  'webbplats',
+  'webbapp',
+  'webbapplikation',
+  'sajt',
+  'site',
+  'website',
+  'webbsite',
+  'landningssida',
+  'startsida',
+  'portfolio',
+  'spel',
+  'game',
+  'dashboard',
+  'prototyp',
+];
+
+const DELIVERABLE_VERBS = [
+  'skapa',
+  'skapar',
+  'bygg',
+  'bygger',
+  'gör',
+  'göra',
+  'ta fram',
+  'kan jag få',
+  'jag vill ha',
+  'vi vill ha',
+  'behöver',
+  'fixa',
+  'ordna',
+  'sätt ihop',
+  'make',
+  'build',
+  'create',
+  'want',
+];
+
+/** Rena frågor om hur man gör något ska besvaras i chatten, inte bli en beställning. */
+const QUESTION_STARTS = [
+  'hur',
+  'varför',
+  'vad',
+  'vilken',
+  'vilka',
+  'vilket',
+  'förklara',
+  'berätta',
+  'skillnad',
+];
+
+/**
+ * Ordgräns som fungerar för svenska: \b i JavaScript räknar bara ASCII-tecken som ordtecken,
+ * så "kan jag få" och "gör" matchades aldrig av ett vanligt \b.
+ */
+function containsPhrase(text: string, phrase: string): boolean {
+  const escaped = phrase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return new RegExp(`(?:^|[^\\p{L}])${escaped}(?![\\p{L}])`, 'u').test(text);
+}
+
+export function looksLikeBuildRequest(message: string): boolean {
+  const text = message.toLowerCase();
+  if (!DELIVERABLE_SUBJECTS.some((subject) => containsPhrase(text, subject))) return false;
+  if (!DELIVERABLE_VERBS.some((verb) => containsPhrase(text, verb))) return false;
+  return !QUESTION_STARTS.some((start) => new RegExp(`^${start}(?![\\p{L}])`, 'u').test(text.trim()));
+}
+
 export interface RunInput {
   runId: string;
   sessionId: string;
@@ -189,6 +275,13 @@ export class AgentLoop {
       // Antal tomma varv i följd. Modellen får en tydlig knuff att svara innan körningen ger upp.
       let emptyTurns = 0;
 
+      // En beställning på en sida, ett spel eller en app får inte sluta som en beskrivning i
+      // chatten. Då hade användaren fått kodblock att klistra in själv, vilket inte är en leverans.
+      const expectsDeliverable =
+        input.mode === 'execute' && looksLikeBuildRequest(input.userMessage);
+      let wroteDeliverable = false;
+      let deliveryNudges = 0;
+
       const policyContext: PolicyContext = {
         root: this.options.rules.root,
         mode: input.permissionMode,
@@ -304,6 +397,27 @@ export class AgentLoop {
         emptyTurns = 0;
 
         if (toolCalls.length === 0) {
+          // Modellen svarade bara i text. Beställde användaren något som ska byggas är det underkänt:
+          // uppgiften kastas tillbaka till modellen med kravet på filer, och först om den inte lyder
+          // blir det ett synligt fel. En tyst överlämning till användaren får aldrig ske.
+          if (expectsDeliverable && !wroteDeliverable && deliveryNudges < 2) {
+            deliveryNudges += 1;
+            messages.push({ role: 'user', content: DELIVERY_NUDGE });
+            continue;
+          }
+
+          if (expectsDeliverable && !wroteDeliverable) {
+            yield {
+              type: 'error',
+              runId,
+              code: 'no_deliverable',
+              message:
+                'Modellen svarade bara med text och skapade inga filer, så uppgiften blev inte levererad. Prova en starkare kodmodell med verktygsstöd, eller dela upp uppgiften i mindre steg.',
+            };
+            yield { type: 'run_finished', runId, reason: 'error' };
+            return;
+          }
+
           yield { type: 'status', runId, phase: 'done' };
           yield { type: 'run_finished', runId, reason: 'final' };
           return;
@@ -400,6 +514,7 @@ export class AgentLoop {
           });
           const result = await this.options.registry.execute(call, context);
           yield { type: 'tool_result', runId, result };
+          if (result.ok && FILE_WRITE_TOOL_NAMES.has(call.name)) wroteDeliverable = true;
 
           // Planen skapas av loopen, inte av verktyget: den ska bära sessionens och körningens
           // id och bli en händelse som UI:t kan visa och användaren kan godkänna.

@@ -303,6 +303,7 @@ const FATAL_ERROR_CODES: ReadonlySet<string> = new Set([
   'model_missing',
   'transport_error',
   'empty_response',
+  'no_deliverable',
   'internal_error',
   'loop_limit',
 ]);

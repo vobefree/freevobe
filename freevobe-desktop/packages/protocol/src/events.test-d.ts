@@ -10,6 +10,7 @@ describe('AgentEvent', () => {
       expectTypeOf(event.code).toEqualTypeOf<
         | 'ollama_unavailable'
         | 'empty_response'
+        | 'no_deliverable'
         | 'model_missing'
         | 'tool_not_found'
         | 'tool_invalid_args'

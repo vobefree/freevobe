@@ -152,6 +152,19 @@ export function buildSystemPrompt(input: SystemPromptInput): string {
     sections.push(`## Filinnehåll\n${input.contextBlock}`);
   }
 
+  sections.push(
+    [
+      '## Leverans: när användaren vill ha något byggt',
+      'Ber användaren om en hemsida, en landningssida, ett spel, en app eller liknande är det filerna i projektet som är svaret.',
+      '- Skapa filerna direkt med write_file/create_file redan i första varvet. En vanlig statisk sida (index.html, style.css, app.js) räcker och fungerar utan byggsteg.',
+      '- Scaffolda inte med npx, npm, create-react-app eller vite. Det kräver nätverk och godkända installationsskript, och när det misslyckas står användaren utan sida.',
+      '- Skriv inte koden i chatten och be inte användaren klistra in den eller köra kommandon. Bara filer i projektet räknas som leverans.',
+      '- Om ett kommando misslyckas: välj en väg som inte behöver kommandot och skriv filerna ändå. Lämna aldrig tillbaka hela uppgiften till användaren.',
+      '- Avsluta med en kort lista över filerna du skapade och hur sidan öppnas (t.ex. öppna index.html i webbläsaren).',
+      '- Hitta inte på felmeddelanden, kommandon eller resultat som du inte faktiskt sett.',
+    ].join('\n'),
+  );
+
   // Sist i prompten, närmast samtalet: lokala modeller tappar instruktioner som ligger långt
   // upp i en lång kontext, och då blir svaret en beskrivning i stället för ett verktygsanrop.
   sections.push(
@@ -161,6 +174,7 @@ export function buildSystemPrompt(input: SystemPromptInput): string {
       '- Anropa verktyget direkt: create_file/write_file med {"path", "content"}, edit_file med {"path", "oldString", "newString"}, run_terminal_command med {"command"}.',
       '- Använd aldrig egna nycklar som "files", "filename", "actions" eller "operation" – de är inte verktygsanrop.',
       '- Fråga inte om lov först när uppgiften redan är tydlig; appen visar diffen och godkännandet.',
+      '- Beställer användaren en sida, ett spel eller en app: skriv filerna först, sammanfatta sedan. Ett svar med bara kod i chatten är underkänt.',
       '- När ett verktyg har svarat: sammanfatta i egna ord. Klistra aldrig in råsvar som <tool_response> i chatten.',
     ].join('\n'),
   );

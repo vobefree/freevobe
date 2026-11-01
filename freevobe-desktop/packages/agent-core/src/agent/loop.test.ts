@@ -57,6 +57,8 @@ interface SliceOptions {
   firstTokenNoticeMs?: number;
   /** Godkänd plan som ska gälla som kontrakt i körningen. */
   plan?: Plan;
+  /** Användarmeddelandet i körningen. Standard är filuppgiften i den vertikala slicen. */
+  userMessage?: string;
 }
 
 interface SliceResult {
@@ -121,7 +123,8 @@ async function runSlice(options: SliceOptions): Promise<SliceResult> {
     mode: options.mode ?? 'execute',
     permissionMode: options.permissionMode ?? 'ask',
     model: 'deepseek-r1:8b',
-    userMessage: 'Läs src/halsa.ts och lägg till en svensk hälsning med template-sträng',
+    userMessage:
+      options.userMessage ?? 'Läs src/halsa.ts och lägg till en svensk hälsning med template-sträng',
     history: [],
     signal: controller.signal,
     supportsTools: options.supportsTools ?? true,
@@ -620,6 +623,73 @@ describe('vertikal slice: Ollama → chatt → läs fil → ändra → diff → 
     expect(
       result.toolResultContents.some((content) => content.includes('export function halsa')),
     ).toBe(true);
+  });
+});
+
+describe('leverans: en beställning ska bli filer, inte text', () => {
+  it('knuffar modellen att skriva filerna när den bara svarar med kod i chatten', async () => {
+    // Rapporterat fel: användaren bad om en hemsida och fick kodblock i chatten medan inga
+    // filer skapades. Efter knuffen ska filen finnas på disk.
+    const result = await runSlice({
+      permissionMode: 'auto-edit',
+      userMessage: 'Kan jag få en hemsida till min frisörsalong Klippet?',
+      turns: [
+        { content: 'Här är koden:\n```html\n<h1>Klippet</h1>\n```' },
+        {
+          toolCalls: [
+            {
+              id: 'c1',
+              name: 'write_file',
+              args: { path: 'index.html', content: '<h1>Klippet</h1>\n' },
+            },
+          ],
+        },
+        { content: 'Klart. Jag skapade index.html.' },
+      ],
+    });
+
+    expect(await fs.readFile(path.join(root, 'index.html'), 'utf8')).toBe('<h1>Klippet</h1>\n');
+    const finished = result.events.at(-1);
+    expect(finished?.type === 'run_finished' && finished.reason).toBe('final');
+    expect(result.events.some((event) => event.type === 'error')).toBe(false);
+  });
+
+  it('skickar tillbaka kravet på filer och felar synligt när modellen aldrig skriver', async () => {
+    const result = await runSlice({
+      permissionMode: 'auto-edit',
+      userMessage: 'Bygg ett spel till mig',
+      turns: [
+        { content: 'Jag kan bygga det åt dig.' },
+        { content: 'Här är koden: ```js\nconst x = 1;\n```' },
+        { content: 'Här är koden igen: ```js\nconst x = 1;\n```' },
+      ],
+    });
+
+    // Knuffen nådde modellen som ett användarmeddelande med kravet på filer.
+    const messages = fake.requests.at(-1)?.body.messages as
+      | { role: string; content: string }[]
+      | undefined;
+    expect(
+      messages?.some((message) => message.role === 'user' && message.content.includes('skapade inga filer')),
+    ).toBe(true);
+
+    expect(
+      result.events.some((event) => event.type === 'error' && event.code === 'no_deliverable'),
+    ).toBe(true);
+    const finished = result.events.at(-1);
+    expect(finished?.type === 'run_finished' && finished.reason).toBe('error');
+  });
+
+  it('lämnar en vanlig fråga i fred och svarar i chatten', async () => {
+    const result = await runSlice({
+      permissionMode: 'auto-edit',
+      userMessage: 'Vad tycker du om hemsidor med mörkt tema?',
+      turns: [{ content: 'Mörkt tema fungerar bra för en frisörsalong.' }],
+    });
+
+    expect(result.events.some((event) => event.type === 'error')).toBe(false);
+    const finished = result.events.at(-1);
+    expect(finished?.type === 'run_finished' && finished.reason).toBe('final');
   });
 });
 
