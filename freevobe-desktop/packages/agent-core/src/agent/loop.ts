@@ -152,6 +152,59 @@ function containsPhrase(text: string, phrase: string): boolean {
   return new RegExp(`(?:^|[^\\p{L}])${escaped}(?![\\p{L}])`, 'u').test(text);
 }
 
+/** Språk i ett kodblock som blir en fil när modellen beskriver sidan i stället för att skriva den. */
+const DELIVERABLE_LANGUAGES: Record<string, string> = {
+  html: 'index.html',
+  htm: 'index.html',
+  css: 'style.css',
+  js: 'app.js',
+  javascript: 'app.js',
+  mjs: 'app.js',
+  jsx: 'app.jsx',
+  ts: 'app.ts',
+  tsx: 'app.tsx',
+};
+
+/**
+ * Gör filer av kodblocken i ett modellsvar. Lokala modeller skriver ofta hela sidan i chatten i
+ * stället för att anropa write_file, och då blir "leveransen" en text användaren måste klistra in.
+ * Filnamnet tas bara från staketet eller en kort rad utan kod: annars blir href="style.css" i
+ * föregående block namnet på nästa fil.
+ */
+function deliverableFiles(content: string): Array<{ path: string; content: string }> {
+  const files: Array<{ path: string; content: string }> = [];
+  const taken = new Set<string>();
+  const fence = /```([^\n`]*)\n([\s\S]*?)```/g;
+  let match: RegExpExecArray | null;
+
+  while ((match = fence.exec(content)) !== null) {
+    const info = (match[1] ?? '').trim();
+    const body = (match[2] ?? '').replace(/\n+$/, '');
+    const fallback = DELIVERABLE_LANGUAGES[(info.split(/[\s:]/)[0] ?? '').toLowerCase()];
+    if (!fallback || body.trim() === '') continue;
+
+    const before = content.slice(0, match.index).trimEnd().split('\n').at(-1)?.trim() ?? '';
+    const caption = /[<>"']|href=|src=/.test(before) ? '' : before;
+    const named = /([\w.-]+\.(?:html?|css|m?js|jsx|tsx?))\b/i.exec(`${info} ${caption}`)?.[1];
+    const safe = named && !named.includes('..') && /^[\w][\w.-]*$/.test(named) ? named : null;
+
+    const dot = fallback.lastIndexOf('.');
+    let path = safe ?? fallback;
+    for (let index = 2; taken.has(path); index += 1) {
+      path = `${fallback.slice(0, dot)}-${index}${fallback.slice(dot)}`;
+    }
+    taken.add(path);
+    files.push({ path, content: `${body}\n` });
+  }
+
+  return files;
+}
+
+/** Sant när svaret innehåller en hel sida, även när beställningen inte kändes igen på orden. */
+function replyContainsPage(content: string): boolean {
+  return /<!doctype\s+html/i.test(content) || /<html[\s>]/i.test(content);
+}
+
 export function looksLikeBuildRequest(message: string): boolean {
   const text = message.toLowerCase();
   if (!DELIVERABLE_SUBJECTS.some((subject) => containsPhrase(text, subject))) return false;
@@ -331,6 +384,22 @@ export class AgentLoop {
             content = stripTextualToolCalls(content, parsed);
             textualCall = true;
           }
+        }
+
+        // Modellen kan ha skrivit hela sidan som kod i chatten i stället för att anropa
+        // write_file. Då blir kodblocken riktiga filer, så att en beställning alltid slutar i
+        // filer på disk – även när modellen saknar verktygsstöd eller fastnar i "förklara"-läge.
+        if (
+          toolCalls.length === 0 &&
+          !wroteDeliverable &&
+          (expectsDeliverable || replyContainsPage(content))
+        ) {
+          toolCalls = deliverableFiles(content).map((file) => ({
+            id: createId('call'),
+            name: 'write_file',
+            args: { path: file.path, content: file.content },
+            rawArguments: JSON.stringify({ path: file.path }),
+          }));
         }
 
         if (content.trim() !== '' || toolCalls.length > 0) {

@@ -658,10 +658,11 @@ describe('leverans: en beställning ska bli filer, inte text', () => {
     const result = await runSlice({
       permissionMode: 'auto-edit',
       userMessage: 'Bygg ett spel till mig',
+      // Inga kodblock alls i svaren: då finns inget att göra filer av, och felet ska synas.
       turns: [
         { content: 'Jag kan bygga det åt dig.' },
-        { content: 'Här är koden: ```js\nconst x = 1;\n```' },
-        { content: 'Här är koden igen: ```js\nconst x = 1;\n```' },
+        { content: 'Jag kan tyvärr inte skapa filer.' },
+        { content: 'Jag kan fortfarande inte skapa några filer.' },
       ],
     });
 
@@ -690,6 +691,40 @@ describe('leverans: en beställning ska bli filer, inte text', () => {
     expect(result.events.some((event) => event.type === 'error')).toBe(false);
     const finished = result.events.at(-1);
     expect(finished?.type === 'run_finished' && finished.reason).toBe('final');
+  });
+
+  it('gör filer av kodblocken när modellen aldrig anropar write_file', async () => {
+    // Det rapporterade felet: modellen skrev hela sidan i chatten och inga filer skapades.
+    // Nu ska appen själv skriva filerna ur svaret, utan ett enda verktygsanrop från modellen.
+    const page = [
+      '<!doctype html>',
+      '<html lang="sv">',
+      '  <head><link rel="stylesheet" href="style.css" /></head>',
+      '  <body><h1>Klippet</h1><script src="app.js"></script></body>',
+      '</html>',
+    ].join('\n');
+
+    const result = await runSlice({
+      permissionMode: 'auto-edit',
+      userMessage: 'Kan jag få en hemsida till min frisörsalong Klippet?',
+      turns: [
+        {
+          content: `Så här ser sidan ut:\n\`\`\`html\n${page}\n\`\`\`\n\`\`\`css\nbody { background: #111; }\n\`\`\`\n\`\`\`js\ndocument.title = 'Klippet';\n\`\`\``,
+        },
+        { content: 'Klart. Filerna ligger i projektet.' },
+      ],
+    });
+
+    expect(await fs.readFile(path.join(root, 'index.html'), 'utf8')).toContain('<h1>Klippet</h1>');
+    expect(await fs.readFile(path.join(root, 'style.css'), 'utf8')).toContain('background');
+    expect(await fs.readFile(path.join(root, 'app.js'), 'utf8')).toContain('Klippet');
+
+    const finished = result.events.at(-1);
+    expect(finished?.type === 'run_finished' && finished.reason).toBe('final');
+    expect(result.events.some((event) => event.type === 'error')).toBe(false);
+    expect(
+      result.events.some((event) => event.type === 'tool_call' && event.call.name === 'write_file'),
+    ).toBe(true);
   });
 });
 
