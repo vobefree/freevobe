@@ -1,0 +1,74 @@
+# Tillfällig workflow: lägger in den färdiga fixen från .github/freebuff-fix.patch på main och höjer
+# versionen, så att Release-workflowen kan bygga en ny .exe. Den tar bort sig själv och patchen i
+# samma commit. Skälet till att den finns: ändringen togs fram i en sandlåda utan git-remote, så
+# den kunde inte pushas därifrån.
+name: Applicera fix
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    name: Applicera, verifiera och versionshöj
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Applicera patchen
+        run: |
+          set -euo pipefail
+          git apply --check --verbose .github/freebuff-fix.patch
+          git apply --verbose .github/freebuff-fix.patch
+      - name: Kontrollera att fixen kom in
+        run: |
+          set -euo pipefail
+          grep -q 'emptyTurns' freevobe-desktop/packages/agent-core/src/agent/loop.ts
+          grep -q 'ensureWorkspace' freevobe-desktop/apps/desktop/src/store/appStore.ts
+          grep -q 'empty_response' freevobe-desktop/packages/protocol/src/events.ts
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: freevobe-desktop/package-lock.json
+      - run: npm ci
+        working-directory: freevobe-desktop
+      - name: Typecheck, lint och tester
+        working-directory: freevobe-desktop
+        run: npm run verify
+      - name: Höj versionen till 0.2.7
+        run: |
+          set -euo pipefail
+          node <<'NODE'
+          const fs = require('node:fs');
+          const version = '0.2.7';
+          for (const file of [
+            'freevobe-desktop/package.json',
+            'freevobe-desktop/apps/desktop/package.json',
+            'freevobe-desktop/apps/desktop/src-tauri/tauri.conf.json',
+          ]) {
+            const json = JSON.parse(fs.readFileSync(file, 'utf8'));
+            json.version = version;
+            fs.writeFileSync(file, JSON.stringify(json, null, 2) + '\n');
+          }
+          const lockFile = 'freevobe-desktop/package-lock.json';
+          const lock = JSON.parse(fs.readFileSync(lockFile, 'utf8'));
+          lock.version = version;
+          if (lock.packages && lock.packages['']) lock.packages[''].version = version;
+          fs.writeFileSync(lockFile, JSON.stringify(lock, null, 2) + '\n');
+          NODE
+          sed -i 's/^version = "0\.2\.6"/version = "0.2.7"/' freevobe-desktop/apps/desktop/src-tauri/Cargo.toml
+          grep -n '"version"' freevobe-desktop/package.json | head -3
+      - name: Committa och pusha
+        run: |
+          set -euo pipefail
+          git config user.name 'Freevobe'
+          git config user.email 'vobefree@users.noreply.github.com'
+          git rm --quiet .github/freebuff-fix.patch .github/workflows/apply-fix.yml
+          git add -A
+          git commit -m 'Låt chatten alltid leverera ett svar' -m 'Appen visade varken inmatningsruta eller svar efter en omstart: projektet sparades inte, så chatten saknades och sendPrompt returnerade tyst. Nu öppnas senast använda projekt och en chatt skapas automatiskt, fel visas i chatten i stället för bara i loggen, och ett tomt modellsvar ger först ett nytt försök, sedan resonemanget och sist ett synligt fel i stället för en tyst tom bubbla. Verktyg skickas bara till modeller som stöder dem.' -m '🤖 Generated with Codebuff' -m 'Co-Authored-By: Codebuff <noreply@codebuff.com>'
+          git log --oneline -2
+          git push origin HEAD:main
