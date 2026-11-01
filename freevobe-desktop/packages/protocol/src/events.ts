@@ -189,6 +189,8 @@ export type AgentEvent =
 
 export type AgentErrorCode =
   | 'ollama_unavailable'
+  /** Modellen svarade utan text och utan verktygsanrop – körningen får inte sluta tyst. */
+  | 'empty_response'
   | 'model_missing'
   | 'tool_not_found'
   | 'tool_invalid_args'

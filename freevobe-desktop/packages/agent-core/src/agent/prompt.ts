@@ -69,6 +69,7 @@ export function buildSystemPrompt(input: SystemPromptInput): string {
       '- Skicka aldrig hemligheter, nycklar eller personuppgifter till externa tjänster.',
       '- Fråga med ask_user när ett beslut är användarens, inte ditt.',
       '- Committa bara när användaren bett om det eller när uppgiften uttryckligen är "committa".',
+      '- Frågor som inte gäller filerna (förklara, diskutera, skriv text) besvarar du direkt i chatten – verktygen är till för ändringar, inte för samtal.',
     ].join('\n'),
   );
 

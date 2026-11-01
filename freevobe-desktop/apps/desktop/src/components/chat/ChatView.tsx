@@ -103,8 +103,17 @@ export function ChatView() {
     void useAppStore.getState().sendPrompt(value.trim());
   };
 
+  // Utan chatt fanns förut ingen inmatningsruta alls, så appen gick inte att använda. Nu kan
+  // chatten startas härifrån i stället för att ytan bara står tom.
   if (!sessionId) {
-    return <EmptyState title={t('chat.noChat')} hint={t('chat.noChatHint')} />;
+    return (
+      <div className="flex h-full flex-col items-center justify-center gap-3 p-8">
+        <EmptyState title={t('chat.noChat')} hint={t('chat.noChatHint')} />
+        <Button variant="primary" onClick={() => void useAppStore.getState().ensureWorkspace()}>
+          {t('left.newChat')}
+        </Button>
+      </div>
+    );
   }
 
   return (
@@ -152,7 +161,7 @@ export function ChatView() {
          * innan första token kommer. Bubblan visar fasen direkt, och när det är modellinläsningen
          * som tar tid står det också varför.
          */}
-        {isRunning && !streamingText ? (
+        {isRunning && !streamingText && !reasoningText ? (
           <article data-testid="chat-waiting" className="mr-2 rounded-lg px-3.5 py-2.5">
             <header className="mb-1 flex items-center gap-2">
               <span className="text-[11px] font-semibold tracking-wide text-ember uppercase">
@@ -173,7 +182,8 @@ export function ChatView() {
           </article>
         ) : null}
 
-        {streamingText ? (
+        {/* Ett resonemang utan färdigt svar ska också synas – annars står chatten tom medan modellen tänker. */}
+        {streamingText || reasoningText ? (
           <article className="mr-2 rounded-lg px-3.5 py-2.5">
             <header className="mb-1 flex items-center gap-2">
               <span className="text-[11px] font-semibold tracking-wide text-ember uppercase">

@@ -174,6 +174,8 @@ export interface AppState {
   // åtgärder
   bootstrap(): Promise<void>;
   connect(): Promise<void>;
+  /** Öppnar senast använda projekt och ser till att en chatt finns, så chatten aldrig står död. */
+  ensureWorkspace(): Promise<void>;
   refreshOllama(baseUrl?: string): Promise<void>;
   selectModel(model: string): void;
   updateSettings(patch: Partial<AppSettings>): Promise<void>;
@@ -289,6 +291,29 @@ function logEntry(text: string, level: LogEntry['level'] = 'info'): LogEntry {
     at: Date.now(),
     level,
     text,
+  };
+}
+
+/**
+ * Fel som avslutar hela körningen. De måste synas i chatten, inte bara i loggen: annars står
+ * bubblan tom och det ser ut som att inget producerades, fast något gick fel.
+ */
+const FATAL_ERROR_CODES: ReadonlySet<string> = new Set([
+  'ollama_unavailable',
+  'model_missing',
+  'transport_error',
+  'empty_response',
+  'internal_error',
+  'loop_limit',
+]);
+
+/** Felmeddelandet i chatten. Rollen är assistent så att det hamnar i samtalet där svaret väntades. */
+function failureMessage(text: string): ChatMessage {
+  return {
+    id: `error_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+    role: 'assistant',
+    content: `⚠️ ${text}`,
+    createdAt: Date.now(),
   };
 }
 
@@ -517,17 +542,22 @@ export const useAppStore = create<AppState>((set, get) => {
               logEntry(`Hook ${event.hook.name}: ${event.hook.blocked ? 'blockerade' : 'körde'}`),
             ].slice(-LOG_LIMIT),
           };
-        case 'error':
+        case 'error': {
+          const visible = FATAL_ERROR_CODES.has(event.code)
+            ? [failureMessage(`${event.message}${event.detail ? `\n\n${event.detail}` : ''}`)]
+            : [];
           return {
             logs: [...state.logs, logEntry(`${event.code}: ${event.message}`, 'error')].slice(
               -LOG_LIMIT,
             ),
+            ...(visible.length > 0 ? { messages: [...state.messages, ...visible] } : {}),
             phase: event.code === 'ollama_unavailable' ? 'idle' : state.phase,
             agentHelpUrl:
               event.code === 'ollama_unavailable'
                 ? (state.agentHelpUrl ?? 'https://freevobe.dev/docs/ollama')
                 : state.agentHelpUrl,
           };
+        }
         case 'run_finished':
           return {
             isRunning: false,
@@ -652,6 +682,10 @@ export const useAppStore = create<AppState>((set, get) => {
         await get().refreshOllama();
         set({ consentGivesBack: settings.givesBack.enabled });
         await get().loadContributions();
+        // Vilket projekt som var öppet sparas inte mellan omstarter. Utan den här raden startade
+        // appen utan projekt och utan chatt: inmatningsrutan fanns inte ens, så ingenting kunde
+        // levereras hur man än skrev.
+        await get().ensureWorkspace();
       } catch (error) {
         set({
           connectionStatus: 'error',
@@ -831,6 +865,43 @@ export const useAppStore = create<AppState>((set, get) => {
       if (client && sessionId) await client.patch(`/api/sessions/${sessionId}`, { mode });
     },
 
+    /**
+     * Gör appen redo för en prompt: öppnar det senast använda projektet och skapar en chatt om det
+     * inte finns någon. Tidigare stannade appen på "Ingen chatt vald" utan inmatningsruta.
+     */
+    async ensureWorkspace() {
+      const { client } = get();
+      if (!client) return;
+      try {
+        if (!get().project) {
+          const projects = await client.get<Project[]>('/api/projects');
+          set({ projects });
+          const last = projects[0];
+          if (last) {
+            set({ project: last, permissionMode: last.permissionMode });
+            await Promise.all([
+              get().loadTree(),
+              get().refreshSkills(),
+              get().refreshMcp(),
+              get().refreshConnectors(),
+              get().refreshMemory(),
+              get().refreshGit(),
+              get().refreshCheckpoints(),
+              get().refreshVerification(),
+            ]);
+          }
+        }
+        await get().loadSessions();
+        if (!get().sessionId && get().project) await get().newSession();
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        set({
+          messages: [...get().messages, failureMessage(`Kunde inte öppna en chatt: ${message}`)],
+          logs: [...get().logs, logEntry(message, 'error')].slice(-LOG_LIMIT),
+        });
+      }
+    },
+
     async newSession() {
       const { client, project } = get();
       if (!client || !project) return;
@@ -923,9 +994,32 @@ export const useAppStore = create<AppState>((set, get) => {
     },
 
     async sendPrompt(prompt) {
-      const { client, sessionId } = get();
-      if (!client || !sessionId) return;
       if (get().isRunning) return;
+
+      // Här får det aldrig bli en tyst retur: förut hände ingenting alls när anslutningen eller
+      // chatten saknades, hur man än skrev.
+      if (!get().client) {
+        set({
+          messages: [
+            ...get().messages,
+            failureMessage('Ingen anslutning till agenten. Starta om appen så försöker den ansluta igen.'),
+          ],
+        });
+        return;
+      }
+      if (!get().sessionId) await get().ensureWorkspace();
+      const { client, sessionId } = get();
+      if (!client || !sessionId) {
+        set({
+          messages: [
+            ...get().messages,
+            failureMessage(
+              'Ingen chatt kunde skapas. Öppna ett projekt i vänsterpanelen och försök igen.',
+            ),
+          ],
+        });
+        return;
+      }
 
       const userMessage: ChatMessage = {
         id: `local_${Date.now()}`,
@@ -962,10 +1056,13 @@ export const useAppStore = create<AppState>((set, get) => {
           () => set({ isRunning: false }),
         );
       } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
         set({
           isRunning: false,
           phase: 'idle',
-          logs: [...get().logs, logEntry(String(error), 'error')].slice(-LOG_LIMIT),
+          // Utan det här blev ett misslyckat anrop helt tyst i chatten.
+          messages: [...get().messages, failureMessage(message)],
+          logs: [...get().logs, logEntry(message, 'error')].slice(-LOG_LIMIT),
         });
       }
     },

@@ -280,6 +280,48 @@ describe('vertikal slice: Ollama → chatt → läs fil → ändra → diff → 
     expect(finished?.type === 'run_finished' && finished.reason).toBe('loop_limit');
   });
 
+  it('säger till när modellen svarar med tomt innehåll i stället för att avsluta tyst', async () => {
+    const result = await runSlice({ turns: [{}] });
+
+    const error = result.events.find((event) => event.type === 'error');
+    expect(error?.type === 'error' && error.code).toBe('empty_response');
+    // Inget tomt svar ska hamna i chatten, men körningen får inte se ut att ha lyckats.
+    expect(types(result.events)).not.toContain('assistant_message');
+    // Ett försök till görs innan felet visas.
+    expect(fake.requests).toHaveLength(2);
+    const finished = result.events.at(-1);
+    expect(finished?.type === 'run_finished' && finished.reason).toBe('error');
+  });
+
+  it('försöker en gång till innan den ger upp', async () => {
+    const result = await runSlice({ turns: [{}, { content: 'Här är svaret.' }] });
+
+    const message = result.events.find((event) => event.type === 'assistant_message');
+    expect(message?.type === 'assistant_message' && message.text).toBe('Här är svaret.');
+    expect(result.events.some((event) => event.type === 'error')).toBe(false);
+    expect(fake.requests).toHaveLength(2);
+  });
+
+  it('visar resonemanget när modellen inte skriver något svar', async () => {
+    const result = await runSlice({ turns: [{ reasoning: 'Jag tänker igenom frågan.' }] });
+
+    const message = result.events.find((event) => event.type === 'assistant_message');
+    expect(message?.type === 'assistant_message' && message.text).toBe(
+      'Jag tänker igenom frågan.',
+    );
+    const finished = result.events.at(-1);
+    expect(finished?.type === 'run_finished' && finished.reason).toBe('final');
+  });
+
+  it('skickar inga verktyg till en modell som saknar verktygsstöd', async () => {
+    await runSlice({
+      supportsTools: false,
+      turns: [{ content: 'Hej! Jag är en modell utan verktygsstöd.' }],
+    });
+
+    expect(fake.requests[0]?.body.tools).toBeUndefined();
+  });
+
   it('blockerar farliga kommandon även i Full auto och kör dem aldrig', async () => {
     const result = await runSlice({
       permissionMode: 'full-auto',

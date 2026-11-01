@@ -186,6 +186,9 @@ export class AgentLoop {
         { role: 'user', content: input.userMessage },
       ];
 
+      // Antal tomma varv i följd. Modellen får en tydlig knuff att svara innan körningen ger upp.
+      let emptyTurns = 0;
+
       const policyContext: PolicyContext = {
         root: this.options.rules.root,
         mode: input.permissionMode,
@@ -258,6 +261,47 @@ export class AgentLoop {
             yield { type: 'assistant_reset', runId };
           }
         }
+
+        // Ett svar utan både text och verktygsanrop får aldrig avsluta körningen tyst. Förut
+        // hände precis det: chatten stannade tom och det såg ut som att ingenting producerades,
+        // fast modellen hade svarat – bara utan innehåll. Nu: först en tydlig knuff, sedan
+        // resonemanget om det finns, och först därefter ett synligt fel.
+        if (content.trim() === '' && toolCalls.length === 0) {
+          if (emptyTurns === 0) {
+            emptyTurns += 1;
+            messages.push({
+              role: 'user',
+              content:
+                'Ditt förra svar innehöll ingen text alls. Svara nu med själva svaret direkt i chatten, i vanlig text och på användarens språk. Använd bara verktyg om uppgiften kräver det.',
+            });
+            continue;
+          }
+
+          if (turn.reasoning.trim() !== '') {
+            // Modellen tänkte men skrev inget svar. Bättre att visa tanken än en tom chatt.
+            yield {
+              type: 'assistant_message',
+              runId,
+              text: turn.reasoning.trim(),
+              messageId: createId('msg'),
+            };
+            yield { type: 'status', runId, phase: 'done' };
+            yield { type: 'run_finished', runId, reason: 'final' };
+            return;
+          }
+
+          yield {
+            type: 'error',
+            runId,
+            code: 'empty_response',
+            message:
+              'Modellen svarade med tomt innehåll två gånger i rad. Välj en annan modell i modellistan, eller skriv frågan igen med lite mer detaljer.',
+          };
+          yield { type: 'run_finished', runId, reason: 'error' };
+          return;
+        }
+
+        emptyTurns = 0;
 
         if (toolCalls.length === 0) {
           yield { type: 'status', runId, phase: 'done' };
@@ -437,10 +481,13 @@ export class AgentLoop {
     let content = '';
     let reasoning = '';
 
+    // En modell som saknar verktygsstöd ska inte få verktyg skickade: då svarar Ollama ofta med
+    // tomt innehåll i stället för text. Prompten beskriver i stället hur anropet skrivs som JSON.
+    const supportsTools = input.supportsTools ?? true;
     const stream = this.options.transport.chat({
       model: input.model,
       messages,
-      tools: this.options.registry.specsForModel(),
+      ...(supportsTools ? { tools: this.options.registry.specsForModel() } : {}),
       signal: input.signal,
     })[Symbol.asyncIterator]();
 
