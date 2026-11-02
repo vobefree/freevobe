@@ -60,14 +60,21 @@ afterEach(async () => {
 
 async function api<T = any>(
   pathname: string,
-  options: { method?: string; body?: unknown; token?: string | null; origin?: string } = {},
+  options: {
+    method?: string;
+    body?: unknown;
+    token?: string | null;
+    origin?: string;
+    /** Egen server i ett test som startar en andra instans. */
+    base?: string;
+  } = {},
 ): Promise<{ status: number; data: T; raw: unknown }> {
   const headers: Record<string, string> = { 'content-type': 'application/json' };
   const token = options.token === undefined ? TOKEN : options.token;
   if (token) headers['x-freevobe-token'] = token;
   if (options.origin) headers.origin = options.origin;
 
-  const response = await fetch(`${server.url}${pathname}`, {
+  const response = await fetch(`${options.base ?? server.url}${pathname}`, {
     method: options.method ?? 'GET',
     headers,
     ...(options.body ? { body: JSON.stringify(options.body) } : {}),
@@ -83,6 +90,7 @@ async function readEvents(
     until: (events: AgentEvent[]) => boolean;
     onEvent?: (events: AgentEvent[]) => Promise<void>;
     timeoutMs?: number;
+    base?: string;
   },
 ): Promise<AgentEvent[]> {
   const controller = new AbortController();
@@ -90,7 +98,7 @@ async function readEvents(
   const events: AgentEvent[] = [];
 
   try {
-    const response = await fetch(`${server.url}/api/runs/${runId}/events`, {
+    const response = await fetch(`${options.base ?? server.url}/api/runs/${runId}/events`, {
       headers: { 'x-freevobe-token': TOKEN, accept: 'text/event-stream' },
       signal: controller.signal,
     });
@@ -598,5 +606,84 @@ describe('verktyg och övriga resurser', () => {
     expect(
       (await api<{ aborted: boolean }>('/api/runs/okand/abort', { method: 'POST' })).data.aborted,
     ).toBe(false);
+  });
+
+  it('skapar hello.txt från en beställning och visar diff, filändring och slutsvar', async () => {
+    // Hela kedjan som användaren beskrev: prompt → Ollama → tool_call write_file → fil på disk,
+    // med diff och slutsvar till UI:t. Egen Ollama- och serverinstans så att turerna är kända.
+    const ownFake = await startFakeOllama({
+      turns: [
+        {
+          toolCalls: [
+            { id: 'c1', name: 'write_file', args: { path: 'hello.txt', content: 'Hello World\n' } },
+          ],
+        },
+        { content: 'Klart. hello.txt innehåller Hello World.' },
+      ],
+    });
+    const ownHub = new AgentSessionHub({ home, dbFile: ':memory:', ollamaBaseUrl: ownFake.url });
+    const ownServer = await startAgentServer({ hub: ownHub, port: 0, devMode: true, token: TOKEN });
+
+    try {
+      const project = await api<{ project: { id: string } }>('/api/projects', {
+        method: 'POST',
+        body: { path: projectRoot, name: 'Hello', index: false },
+        base: ownServer.url,
+      });
+      const projectId = project.data.project.id;
+      await api(`/api/projects/${projectId}`, {
+        method: 'PATCH',
+        body: { permissionMode: 'auto-edit' },
+        base: ownServer.url,
+      });
+      const session = await api<{ id: string }>('/api/sessions', {
+        method: 'POST',
+        body: { projectId, title: 'Hello' },
+        base: ownServer.url,
+      });
+
+      const started = await api<{ runId: string }>('/api/chat', {
+        method: 'POST',
+        body: {
+          sessionId: session.data.id,
+          prompt: "Skapa en fil hello.txt med innehållet 'Hello World'",
+          permissionMode: 'auto-edit',
+        },
+        base: ownServer.url,
+      });
+      expect(started.status).toBe(200);
+
+      const events = await readEvents(started.data.runId, {
+        base: ownServer.url,
+        until: (list) => list.some((event) => event.type === 'run_finished'),
+      });
+
+      // 1. Modellen anropade write_file.
+      expect(
+        events.some(
+          (event) =>
+            event.type === 'tool_call' && (event.call as { name: string }).name === 'write_file',
+        ),
+      ).toBe(true);
+
+      // 2. Ändringen visades som en diff (Change Card) och filen skrevs till disk.
+      const diff = events.find((event) => event.type === 'diff')?.diff as
+        | { path: string; kind: string }
+        | undefined;
+      expect(diff?.path).toBe('hello.txt');
+      expect(diff?.kind).toBe('create');
+      expect(await fs.readFile(path.join(projectRoot, 'hello.txt'), 'utf8')).toBe('Hello World\n');
+      expect(events.some((event) => event.type === 'file_changed')).toBe(true);
+
+      // 3. Slutsvaret visades och körningen avslutades normalt.
+      const answer = events.filter((event) => event.type === 'assistant_message').at(-1);
+      expect(answer?.type === 'assistant_message' && answer.text).toContain('hello.txt');
+      const finished = events.at(-1);
+      expect(finished?.type === 'run_finished' && finished.reason).toBe('final');
+    } finally {
+      await ownServer.close();
+      ownHub.close();
+      await ownFake.close();
+    }
   });
 });

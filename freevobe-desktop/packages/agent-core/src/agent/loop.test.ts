@@ -764,3 +764,53 @@ describe('modellinläsning syns i chatten', () => {
     expect(phases).not.toContain('loading-model');
   });
 });
+
+describe('verktygsanrop som modellerna faktiskt skickar', () => {
+  it('redigerar filen när modellen använder old_string och new_string', async () => {
+    // Många modeller är tränade på snake_case. Förut avvisades anropet som ogiltigt och filen
+    // ändrades aldrig, trots att modellen gjorde precis rätt.
+    const result = await runSlice({
+      permissionMode: 'auto-edit',
+      turns: [
+        {
+          toolCalls: [
+            {
+              id: 'c1',
+              name: 'edit_file',
+              args: {
+                path: 'src/halsa.ts',
+                old_string: "return 'hej ' + namn;",
+                new_string: 'return `hej ${namn}!`;',
+              },
+            },
+          ],
+        },
+        { content: 'Klart. Hälsningen är uppdaterad.' },
+      ],
+    });
+
+    expect(await fs.readFile(path.join(root, 'src', 'halsa.ts'), 'utf8')).toBe(UPDATED_FILE);
+    expect(result.events.some((event) => event.type === 'error')).toBe(false);
+    expect(types(result.events)).toContain('file_changed');
+  });
+
+  it('säger rakt ut att modellen saknar tool calling när inget blev levererat', async () => {
+    // En modell utan verktygsstöd kan aldrig skriva filer. Då ska felet säga det i stället för
+    // att be användaren försöka igen med samma modell.
+    const result = await runSlice({
+      permissionMode: 'auto-edit',
+      supportsTools: false,
+      userMessage: 'Bygg en hemsida till mig',
+      turns: [
+        { content: 'Jag kan beskriva sidan i text.' },
+        { content: 'Jag kan fortfarande bara skriva text.' },
+        { content: 'Jag kan inte skapa några filer.' },
+      ],
+    });
+
+    const error = result.events.find((event) => event.type === 'error');
+    expect(error?.type === 'error' && error.code).toBe('no_deliverable');
+    expect(error?.type === 'error' && error.message).toContain('tool calling');
+    expect(error?.type === 'error' && error.message).toContain('qwen2.5-coder');
+  });
+});

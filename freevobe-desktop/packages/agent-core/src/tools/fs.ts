@@ -317,16 +317,20 @@ export const editFileTool: RegisteredTool = {
         path: { type: 'string', description: 'Projektrelativ sökväg.' },
         oldString: { type: 'string', description: 'Texten som ska bytas ut (måste finnas exakt).' },
         newString: { type: 'string', description: 'Ersättningstext.' },
+        // Modeller som lärt sig snake_case skickar old_string/new_string. Utan de här nycklarna
+        // avvisades anropet som ogiltigt och ingen ändring gjordes.
+        old_string: { type: 'string', description: 'Samma som oldString.' },
+        new_string: { type: 'string', description: 'Samma som newString.' },
         replaceAll: { type: 'boolean', description: 'Byt ut alla förekomster.', default: false },
       },
-      required: ['path', 'oldString', 'newString'],
+      required: ['path'],
     },
     'write',
   ),
   handler: async (args, ctx) => {
     const candidate = stringArg(args, 'path');
-    const oldString = typeof args.oldString === 'string' ? args.oldString : null;
-    const newString = typeof args.newString === 'string' ? args.newString : null;
+    const oldString = stringArg(args, 'oldString') ?? stringArg(args, 'old_string');
+    const newString = stringArg(args, 'newString') ?? stringArg(args, 'new_string');
     if (!candidate || oldString === null || newString === null) {
       return fail('Argumenten "path", "oldString" och "newString" krävs.');
     }

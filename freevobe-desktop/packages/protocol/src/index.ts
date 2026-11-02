@@ -50,7 +50,8 @@ export const DEFAULT_OLLAMA_URL = 'http://localhost:11434';
 export const DEFAULT_MODEL = 'qwen2.5-coder:7b';
 export const AGENT_SERVER_PORT = 4319;
 export const DEFAULT_CONTEXT_BUDGET_CHARS = 24_000;
-export const DEFAULT_MAX_ITERATIONS = 12;
+/** Taket för en körning. En vanlig uppgift tar 3–6 varv; 25 räcker för att läsa, ändra och verifiera. */
+export const DEFAULT_MAX_ITERATIONS = 25;
 export const MAX_TOOL_OUTPUT_CHARS = 131_072;
 export const TERMINAL_TIMEOUT_MS = 120_000;
 export const DIFF_CONTEXT_LINES = 3;

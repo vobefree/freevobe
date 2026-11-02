@@ -480,8 +480,12 @@ export class AgentLoop {
               type: 'error',
               runId,
               code: 'no_deliverable',
+              // En modell utan verktygsstöd kan aldrig skapa filer. Då ska felet säga det rakt ut
+              // i stället för att be användaren försöka igen med samma modell.
               message:
-                'Modellen svarade bara med text och skapade inga filer, så uppgiften blev inte levererad. Prova en starkare kodmodell med verktygsstöd, eller dela upp uppgiften i mindre steg.',
+                input.supportsTools === false
+                  ? 'Denna modell stöder inte tool calling, så den kan inte skapa eller ändra filer. Välj en modell med verktygsstöd i modellistan – till exempel qwen2.5-coder – och skicka uppgiften igen.'
+                  : 'Modellen svarade bara med text och skapade inga filer, så uppgiften blev inte levererad. Prova en starkare kodmodell med verktygsstöd, eller dela upp uppgiften i mindre steg.',
             };
             yield { type: 'run_finished', runId, reason: 'error' };
             return;
