@@ -1,0 +1,42 @@
+diff --git a/freevobe-desktop/packages/agent-core/src/tools/fs.ts b/freevobe-desktop/packages/agent-core/src/tools/fs.ts
+index 58ee294..6e5b653 100644
+--- a/freevobe-desktop/packages/agent-core/src/tools/fs.ts
++++ b/freevobe-desktop/packages/agent-core/src/tools/fs.ts
+@@ -317,16 +317,20 @@ export const editFileTool: RegisteredTool = {
+         path: { type: 'string', description: 'Projektrelativ sökväg.' },
+         oldString: { type: 'string', description: 'Texten som ska bytas ut (måste finnas exakt).' },
+         newString: { type: 'string', description: 'Ersättningstext.' },
++        // Modeller som lärt sig snake_case skickar old_string/new_string. Utan de här nycklarna
++        // avvisades anropet som ogiltigt och ingen ändring gjordes.
++        old_string: { type: 'string', description: 'Samma som oldString.' },
++        new_string: { type: 'string', description: 'Samma som newString.' },
+         replaceAll: { type: 'boolean', description: 'Byt ut alla förekomster.', default: false },
+       },
+-      required: ['path', 'oldString', 'newString'],
++      required: ['path'],
+     },
+     'write',
+   ),
+   handler: async (args, ctx) => {
+     const candidate = stringArg(args, 'path');
+-    const oldString = typeof args.oldString === 'string' ? args.oldString : null;
+-    const newString = typeof args.newString === 'string' ? args.newString : null;
++    const oldString = stringArg(args, 'oldString') ?? stringArg(args, 'old_string');
++    const newString = stringArg(args, 'newString') ?? stringArg(args, 'new_string');
+     if (!candidate || oldString === null || newString === null) {
+       return fail('Argumenten "path", "oldString" och "newString" krävs.');
+     }
+diff --git a/freevobe-desktop/packages/protocol/src/index.ts b/freevobe-desktop/packages/protocol/src/index.ts
+index 1c8d70f..4d01245 100644
+--- a/freevobe-desktop/packages/protocol/src/index.ts
++++ b/freevobe-desktop/packages/protocol/src/index.ts
+@@ -50,7 +50,8 @@ export const DEFAULT_OLLAMA_URL = 'http://localhost:11434';
+ export const DEFAULT_MODEL = 'qwen2.5-coder:7b';
+ export const AGENT_SERVER_PORT = 4319;
+ export const DEFAULT_CONTEXT_BUDGET_CHARS = 24_000;
+-export const DEFAULT_MAX_ITERATIONS = 12;
++/** Taket för en körning. En vanlig uppgift tar 3–6 varv; 25 räcker för att läsa, ändra och verifiera. */
++export const DEFAULT_MAX_ITERATIONS = 25;
+ export const MAX_TOOL_OUTPUT_CHARS = 131_072;
+ export const TERMINAL_TIMEOUT_MS = 120_000;
+ export const DIFF_CONTEXT_LINES = 3;
