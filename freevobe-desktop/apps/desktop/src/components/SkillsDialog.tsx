@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { FREEVOBE_SKILLS_DIR, type SkillSummary } from '@freevobe/protocol';
 import { useAppStore } from '../store/appStore';
 import { Button, Chip, Field, Modal } from './ui';
+import { SkillImportDialog, SOURCE_LABELS } from './SkillImportDialog';
 
 const SOURCE_KEYS: Record<SkillSummary['source'], string> = {
   builtin: 'skills.source.builtin',
@@ -21,6 +22,7 @@ export function SkillsDialog() {
   const deleteSkill = useAppStore((state) => state.deleteSkill);
   const exportSkill = useAppStore((state) => state.exportSkill);
   const importSkills = useAppStore((state) => state.importSkills);
+  const setSkillImportOpen = useAppStore((state) => state.setSkillImportOpen);
 
   const [draft, setDraft] = useState({ name: '', description: '', triggers: '', body: '' });
   const [selected, setSelected] = useState<SkillSummary | null>(null);
@@ -130,6 +132,29 @@ export function SkillsDialog() {
                         tools: skill.tools.join(', ') || '–',
                       })}
                     </p>
+                    {skill.importedFrom ? (
+                      <p className="mt-0.5 flex flex-wrap items-center gap-1.5 text-[10px] text-slate-600">
+                        <span>
+                          {t('skills.provenance.from', {
+                            source: SOURCE_LABELS[skill.importedFrom],
+                          })}
+                        </span>
+                        {skill.author ? (
+                          <span>· {t('skills.provenance.author', { author: skill.author })}</span>
+                        ) : null}
+                        {skill.sourceUrl ? (
+                          <a
+                            href={skill.sourceUrl}
+                            target="_blank"
+                            rel="noreferrer noopener"
+                            onClick={(event) => event.stopPropagation()}
+                            className="underline hover:text-slate-300"
+                          >
+                            {t('skills.provenance.open')}
+                          </a>
+                        ) : null}
+                      </p>
+                    ) : null}
                   </button>
                 </li>
               ))
@@ -168,6 +193,7 @@ export function SkillsDialog() {
               >
                 {t('skills.export')}
               </Button>
+              <Button onClick={() => setSkillImportOpen(true)}>{t('skills.import.open')}</Button>
             </div>
             {status ? <p className="text-[11px] text-mint">{status}</p> : null}
           </div>
@@ -243,6 +269,7 @@ export function SkillsDialog() {
           <p className="text-[11px] text-slate-600">{t('skills.footnote')}</p>
         </section>
       </div>
+      <SkillImportDialog />
     </Modal>
   );
 }

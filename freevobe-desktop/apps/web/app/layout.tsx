@@ -9,12 +9,12 @@ export const metadata: Metadata = {
     template: '%s · Freevobe',
   },
   description:
-    'Freevobe är en lokal-first AI-coding agent för skrivbordet. Anslut Ollama, välj modell och bygg mjukvara i naturligt språk – koden lämnar aldrig datorn.',
+    'Freevobe är en lokal-first AI-coding agent för skrivbordet. Anslut Ollama, välj modell och bygg mjukvara i naturligt språk – och skapa bild, video och ljud med egna nycklar när du själv slagit på det.',
   metadataBase: new URL('https://freevobe.dev'),
   openGraph: {
     title: 'Freevobe',
     description:
-      'Lokal-first vibecoding med Ollama. Planera, koda, testa och committa – utan att koden lämnar datorn.',
+      'Lokal-first vibecoding med Ollama. Planera, koda, testa och committa – och skapa bild, video och ljud när du själv godkänt det.',
     type: 'website',
   },
 };

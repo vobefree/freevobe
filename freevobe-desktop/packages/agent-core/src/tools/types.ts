@@ -4,11 +4,15 @@ import type {
   ApprovalQuestion,
   FileChangeKind,
   FileDiff,
+  MediaKind,
   RiskLevel,
+  SubagentKind,
+  TaskItem,
   ToolResult,
   ToolSpec,
 } from '@freevobe/protocol';
 import type { BrowserDriver } from './browser.js';
+import type { MediaService } from '../media/service.js';
 
 /** Hur ett verktyg ska hantera godkännande, enligt policyn som loopen redan kört. */
 export interface ApprovalPolicy {
@@ -72,6 +76,10 @@ export interface ToolContext {
     url?: string;
     diff?: FileDiff;
     questions?: ApprovalQuestion[];
+    /** Uppskattad kostnad i USD, när katalogen har ett pris. */
+    costUsd?: number;
+    /** Media som godkännandet gäller: sort, prompt och vald provider. */
+    media?: { kind: MediaKind; prompt: string; provider?: string; model?: string };
   }): Promise<ApprovalOutcome>;
   /** Diffar, godkänner, kör hooks och skriver filen. Returnerar diffen. */
   proposeChange(change: ProposedChange): Promise<ChangeResult>;
@@ -90,6 +98,17 @@ export interface ToolContext {
   /** Låter modellen föreslå ett commit-meddelande utifrån diffen. */
   generateCommitMessage?: (diff: string) => Promise<string>;
   browser?: BrowserDriver;
+  /** Bild, video, ljud och vision. Saknas bara i körningar som inte har några providers. */
+  media?: MediaService;
+  /** Uppgiftslistan för samtalet. Injiceras av servern; saknas i isolerade körningar. */
+  tasks?: {
+    list(): TaskItem[];
+    replace(items: Array<{ title: string; status: TaskItem['status'] }>): TaskItem[];
+  };
+  /** Kör en subagent med egen kontext och returnera en sammanfattning. */
+  runSubagent?: (kind: SubagentKind, task: string) => Promise<{ summary: string; status: string }>;
+  /** Adressen till den preview som är igång, om någon. */
+  previewUrl?: string | null;
   fetchImpl: typeof fetch;
   /** Standard för bentid och utdatatak, delas av alla verktyg. */
   limits: { terminalTimeoutMs: number; maxOutputChars: number };

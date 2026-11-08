@@ -1,7 +1,12 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { startFakeOllama, type FakeOllamaHandle } from '../testing/fakeOllama.js';
 import { OllamaClient } from './client.js';
-import { ToolCallAccumulator, parseArguments, parseTextualToolCalls, stripTextualToolCalls } from './openai.js';
+import {
+  ToolCallAccumulator,
+  parseArguments,
+  parseTextualToolCalls,
+  stripTextualToolCalls,
+} from './openai.js';
 import type { ChatChunk } from './types.js';
 import { TransportError } from './types.js';
 

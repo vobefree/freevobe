@@ -1,5 +1,6 @@
 import { exec } from 'node:child_process';
 import fs from 'node:fs/promises';
+import os from 'node:os';
 import path from 'node:path';
 import type {
   AgentEvent,
@@ -12,9 +13,12 @@ import type {
   CheckpointRestoreReport,
   DoctorReport,
   GivesBackPayload,
+  MediaKind,
   OllamaProbeResult,
   PermissionMode,
   Plan,
+  ProviderId,
+  ProvidersResponse,
   Project,
   Session,
   SubagentKind,
@@ -22,6 +26,11 @@ import type {
   VerificationCommand,
   VerificationKind,
   VerificationReport,
+  HardwareProfile,
+  ModelPullResult,
+  PullProgress,
+  PreviewStatus,
+  RouterDecision,
 } from '@freevobe/protocol';
 import { AUTO_VERIFICATION_KINDS } from '@freevobe/protocol';
 import {
@@ -29,6 +38,16 @@ import {
   ApprovalManager,
   HookRunner,
   OllamaClient,
+  appendSkillAudit,
+  buildHardwareProfile,
+  detectDevServer,
+  pullModel as pullOllamaModel,
+  routeModel as chooseModel,
+  runHarness,
+  startDevPreview,
+  startStaticPreview,
+  writeLaunchConfig,
+  type PreviewHandle,
   SubagentRunner,
   createId,
   createRepositories,
@@ -42,6 +61,8 @@ import {
   ConnectorSecretStore,
   ConnectorService,
   FreevobeDatabase,
+  MediaService,
+  ProviderService,
   buildCommitMessagePrompt,
   detectVerificationCommands,
   filterVerificationCommands,
@@ -100,6 +121,8 @@ export class AgentSessionHub {
   readonly home: string;
   /** Connector-registret. Token ligger krypterat i Freevobe-home, aldrig i databasen. */
   readonly connectors: ConnectorService;
+  /** Providers: vilka modellkällor som är på och vem som genererar media. */
+  readonly providerRegistry: ProviderService;
 
   private readonly options: HubOptions;
   private readonly workspaces = new Map<string, ProjectWorkspace>();
@@ -112,6 +135,8 @@ export class AgentSessionHub {
   /** Cachad transport. Byggs om när användaren byter bas-URL i inställningarna. */
   private ollamaClient: OllamaClient | null = null;
   private ollamaClientBaseUrl: string | null = null;
+  /** En preview-server per projekt. Stängs när projektet stängs. */
+  private readonly previews = new Map<string, PreviewHandle>();
 
   constructor(options: HubOptions = {}) {
     this.options = options;
@@ -121,6 +146,11 @@ export class AgentSessionHub {
     this.connectors = new ConnectorService({
       repositories: this.repositories,
       secrets: new ConnectorSecretStore(this.home),
+    });
+    this.providerRegistry = new ProviderService({
+      home: this.home,
+      readSettings: () => this.settings(),
+      writeSettings: (patch) => this.updateSettings(patch),
     });
   }
 
@@ -160,6 +190,29 @@ export class AgentSessionHub {
     return saved;
   }
 
+  // ---------------------------------------------------------------- providers
+
+  /** Katalogen plus användarens läge. Nycklar lämnas aldrig ut, bara en maskerad ledtråd. */
+  providerList(): ProvidersResponse {
+    return this.providerRegistry.list();
+  }
+
+  setProviderEnabled(id: ProviderId, enabled: boolean): ProvidersResponse {
+    return this.providerRegistry.setEnabled(id, enabled);
+  }
+
+  setProviderKey(id: ProviderId, key: string): { hint: string } {
+    return this.providerRegistry.setKey(id, key);
+  }
+
+  clearProviderKey(id: ProviderId): boolean {
+    return this.providerRegistry.clearKey(id);
+  }
+
+  setProviderMediaPreference(kind: MediaKind, providerId: string): ProvidersResponse {
+    return this.providerRegistry.setMediaPreference(kind, providerId);
+  }
+
   async probeOllama(baseUrl?: string): Promise<OllamaProbeResult> {
     const client = baseUrl
       ? new OllamaClient({
@@ -168,6 +221,130 @@ export class AgentSessionHub {
         })
       : this.resolveOllamaClient();
     return client.probe();
+  }
+
+  // ---------------------------------------------------------------- harness
+
+  /** Datorns resurser. VRAM kan inte läsas portabelt och lämnas därför okänt. */
+  hardwareProfile(): HardwareProfile {
+    return buildHardwareProfile({
+      totalmem: os.totalmem(),
+      freemem: os.freemem(),
+      vramBytes: null,
+    });
+  }
+
+  /**
+   * Väljer modell för en uppgift utifrån vad som finns lokalt, vilka providers som är på och
+   * hur mycket minne datorn har. Frågar Ollama först – ingen molntjänst kontaktas här.
+   */
+  async routeModel(prompt: string): Promise<RouterDecision> {
+    const settings = this.settings();
+    const probe = await this.probeOllama();
+    const localModels = probe.models.map((model) => ({
+      name: model.name,
+      provider: 'ollama' as const,
+      sizeBytes: model.sizeBytes,
+      parameterSize: model.parameterSize,
+      capabilities: ['text' as const, ...(model.supportsTools ? (['tools'] as const) : [])],
+      local: true,
+    }));
+    const providers = this.providerList().providers.map((view) => ({
+      id: view.definition.id,
+      enabled: view.enabled,
+      ready: view.ready,
+      capabilities: view.definition.capabilities,
+      models: view.definition.models.map((model) => model.id),
+    }));
+    return chooseModel({
+      prompt,
+      localModels,
+      providers,
+      hardware: this.hardwareProfile(),
+      allowCloud: settings.allowCloudServices,
+    });
+  }
+
+  /** Hämtar en modell. `approved` måste vara sant; annars hämtas ingenting. */
+  async pullModel(input: {
+    model: string;
+    approved: boolean;
+    expectedDigest?: string | null;
+    onProgress?: (progress: PullProgress) => void;
+  }): Promise<ModelPullResult> {
+    return pullOllamaModel({
+      model: input.model,
+      approved: input.approved,
+      baseUrl: this.settings().ollamaBaseUrl,
+      ...(this.options.fetchImpl ? { fetchImpl: this.options.fetchImpl } : {}),
+      ...(input.expectedDigest ? { expectedDigest: input.expectedDigest } : {}),
+      ...(input.onProgress ? { onProgress: input.onProgress } : {}),
+    });
+  }
+
+  previewStatus(projectId: string): PreviewStatus {
+    const handle = this.previews.get(projectId);
+    if (!handle) {
+      return {
+        status: 'idle',
+        kind: null,
+        command: null,
+        url: null,
+        port: null,
+        logTail: [],
+      };
+    }
+    return handle.snapshot();
+  }
+
+  /** Startar projektets dev-server (eller en statisk server) på loopback. */
+  async startProjectPreview(projectId: string): Promise<PreviewStatus> {
+    const existing = this.previews.get(projectId);
+    if (existing) return existing.snapshot();
+
+    const workspace = this.requireWorkspace(projectId);
+    const tree = await workspace.fileTree();
+    let packageJson: unknown;
+    try {
+      packageJson = JSON.parse(
+        await fs.readFile(path.join(workspace.root, 'package.json'), 'utf8'),
+      );
+    } catch {
+      packageJson = undefined;
+    }
+
+    const detection = detectDevServer({
+      files: tree.map((entry) => entry.path),
+      packageJson,
+    });
+    if (!detection.kind) {
+      throw new Error('Projektet har varken ett dev-skript eller en index.html att visa.');
+    }
+
+    const handle =
+      detection.kind === 'static'
+        ? await startStaticPreview({ root: workspace.root })
+        : await startDevPreview({ root: workspace.root, detection });
+    // Samma uppgifter som servern använde sparas i projektet, så att nästa start och du själv
+    // kan se exakt vilket kommando, vilken port och vilken adress previewn fick.
+    await writeLaunchConfig({
+      root: workspace.root,
+      kind: detection.kind,
+      command: detection.command,
+      args: detection.args,
+      url: handle.url,
+      port: handle.port,
+    }).catch(() => undefined);
+    this.previews.set(projectId, handle);
+    return handle.snapshot();
+  }
+
+  async stopProjectPreview(projectId: string): Promise<boolean> {
+    const handle = this.previews.get(projectId);
+    if (!handle) return false;
+    await handle.close();
+    this.previews.delete(projectId);
+    return true;
   }
 
   // ---------------------------------------------------------------- projekt
@@ -200,6 +377,7 @@ export class AgentSessionHub {
   }
 
   async closeProject(projectId: string): Promise<void> {
+    await this.stopProjectPreview(projectId).catch(() => undefined);
     const workspace = this.workspaces.get(projectId);
     if (workspace) await workspace.close();
     this.workspaces.delete(projectId);
@@ -507,6 +685,14 @@ export class AgentSessionHub {
     // passerar aldrig loopens ström – därför måste filbytet fångas redan här.
     let filesChanged = false;
 
+    const mediaService = new MediaService({
+      root: workspace.root,
+      providers: this.providerRegistry,
+      // Budgeten läses vid varje anrop: en ändring i inställningarna gäller direkt, utan omstart.
+      dailyBudgetUsd: () => this.settings().mediaDailyBudgetUsd,
+      ...(this.options.fetchImpl ? { fetchImpl: this.options.fetchImpl } : {}),
+    });
+
     const runtime = createToolRuntime({
       root: workspace.root,
       projectId: workspace.project.id,
@@ -514,6 +700,7 @@ export class AgentSessionHub {
       runId: run.runId,
       approvals: approvalManager,
       hooks,
+      media: mediaService,
       recordChange: (change) => checkpoint.record(change),
       emit: (event) => {
         if (event.type === 'file_changed') filesChanged = true;
@@ -522,7 +709,26 @@ export class AgentSessionHub {
       signal: run.abort.signal,
       browserAutomationEnabled: settings.browserAutomationEnabled,
       ...(browser ? { browser } : {}),
+      previewUrl: this.previews.get(run.projectId)?.url ?? null,
       ...(this.options.fetchImpl ? { fetchImpl: this.options.fetchImpl } : {}),
+      // Verktygen todo_write och run_subagent får sina implementationer här: de hör till
+      // körningen och sessionen, inte till verktygsdefinitionen.
+      tasks: {
+        list: () => this.repositories.tasks.list(run.sessionId),
+        replace: (items) => {
+          for (const existing of this.repositories.tasks.list(run.sessionId)) {
+            this.repositories.tasks.remove(existing.id);
+          }
+          for (const item of items) {
+            const created = this.repositories.tasks.create(run.sessionId, item.title);
+            if (item.status !== 'todo') {
+              this.repositories.tasks.setStatus(created.id, item.status);
+            }
+          }
+          return this.repositories.tasks.list(run.sessionId);
+        },
+      },
+      runSubagent: (kind, task) => this.runSubagent(run.projectId, kind, task, run.sessionId),
       ...(typeof workspace.rules.preferences.testCommand === 'string' &&
       workspace.rules.preferences.testCommand
         ? { testCommandOverride: workspace.rules.preferences.testCommand }
@@ -542,7 +748,11 @@ export class AgentSessionHub {
       browserAutomationEnabled: settings.browserAutomationEnabled,
       autoApprove: settings.autoApprove,
       ...(browser ? { browser } : {}),
+      resolveProvider: (capability) => this.providerRegistry.resolve(capability),
       mcpServerApproved: (server) => workspace.mcp.isApproved(server),
+      onSkillsActivated: (entries) => {
+        void appendSkillAudit(workspace.root, entries);
+      },
     });
 
     // Användarmeddelandet sparas först, så att sessionen alltid har hela samtalet.
@@ -561,31 +771,30 @@ export class AgentSessionHub {
     const supportsTools =
       input.supportsTools ?? (await this.modelSupportsTools(model, settings.ollamaBaseUrl));
 
-    for await (const event of loop.run({
-      runId: run.runId,
-      sessionId: run.sessionId,
-      mode,
-      permissionMode,
-      model,
-      userMessage: input.prompt,
-      history,
-      pinnedFiles: input.pinnedFiles ?? [],
-      recentFiles: recentPaths(workspace.root),
-      signal: run.abort.signal,
-      supportsTools,
-      projectName: workspace.project.name,
-      ...(activePlan ? { plan: activePlan } : {}),
-    })) {
-      if (event.type === 'file_changed') filesChanged = true;
+    const runLoop = () =>
+      loop.run({
+        runId: run.runId,
+        sessionId: run.sessionId,
+        mode,
+        permissionMode,
+        model,
+        userMessage: input.prompt,
+        history,
+        pinnedFiles: input.pinnedFiles ?? [],
+        recentFiles: recentPaths(workspace.root),
+        signal: run.abort.signal,
+        supportsTools,
+        projectName: workspace.project.name,
+        ...(activePlan ? { plan: activePlan } : {}),
+      });
 
-      // Verifieringen körs innan sista händelsen skickas, så att rapporten hinner fram medan
-      // klienten fortfarande lyssnar på körningen.
-      if (
-        event.type === 'run_finished' &&
-        event.reason === 'final' &&
-        filesChanged &&
-        settings.verifyAfterRun
-      ) {
+    const stream = runHarness({
+      runId: run.runId,
+      loop: runLoop,
+      // Verktygen rapporterar filbyten direkt till prenumeranterna, inte genom loopens ström.
+      changedFiles: () => (filesChanged ? ['(verktygens ändringar)'] : []),
+      verify: async () => {
+        if (!settings.verifyAfterRun) return null;
         this.broadcast(run, {
           type: 'status',
           runId: run.runId,
@@ -593,12 +802,17 @@ export class AgentSessionHub {
           message: 'Verifierar projektet',
         });
         try {
-          await this.verifyProject(run.projectId, {
+          return await this.verifyProject(run.projectId, {
             sessionId: run.sessionId,
             runId: run.runId,
             trigger: 'run',
             kinds: AUTO_VERIFICATION_KINDS,
-            onEvent: (verificationEvent) => this.broadcast(run, verificationEvent),
+            // Slutrapporten skickas av harness-motorn, så att den inte kommer två gånger.
+            onEvent: (verificationEvent) => {
+              if (verificationEvent.type !== 'verification') {
+                this.broadcast(run, verificationEvent);
+              }
+            },
           });
         } catch (error) {
           this.broadcast(run, {
@@ -607,8 +821,15 @@ export class AgentSessionHub {
             code: 'verification_failed',
             message: describeError(error),
           });
+          return null;
         }
-      }
+      },
+      // Preview startas först efter en grön verifiering, och bara om projektet kan visas.
+      preview: () => this.startProjectPreview(run.projectId),
+    });
+
+    for await (const event of stream) {
+      if (event.type === 'file_changed') filesChanged = true;
 
       if (event.type === 'tests') {
         await checkpoint.setTests({

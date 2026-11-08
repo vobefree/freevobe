@@ -9,6 +9,11 @@ export * from './plans.js';
 export * from './verification.js';
 export * from './gives-back.js';
 export * from './connectors.js';
+export * from './providers.js';
+export * from './media.js';
+export * from './skillImport.js';
+export * from './models.js';
+export * from './harness.js';
 
 /** Protokollversion för agent-server <-> UI. Ökas vid brytande ändringar. */
 export const FREEVOBE_PROTOCOL_VERSION = 1 as const;
@@ -52,6 +57,8 @@ export const AGENT_SERVER_PORT = 4319;
 export const DEFAULT_CONTEXT_BUDGET_CHARS = 24_000;
 /** Taket för en körning. En vanlig uppgift tar 3–6 varv; 25 räcker för att läsa, ändra och verifiera. */
 export const DEFAULT_MAX_ITERATIONS = 25;
+/** Standard för mediekostnad: ingen gräns förrän användaren sätter en egen daglig budget. */
+export const DEFAULT_MEDIA_DAILY_BUDGET_USD = 0;
 export const MAX_TOOL_OUTPUT_CHARS = 131_072;
 export const TERMINAL_TIMEOUT_MS = 120_000;
 export const DIFF_CONTEXT_LINES = 3;

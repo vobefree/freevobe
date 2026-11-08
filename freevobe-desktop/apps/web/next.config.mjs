@@ -12,6 +12,17 @@ const nextConfig = {
   reactStrictMode: true,
   trailingSlash: true,
   images: { unoptimized: true },
+  // Protokollet importeras som TypeScript-källa (exports -> ./src/index.ts) och använder
+  // `.js` i importvägarna, vilket TypeScript löser men webpack inte gör av sig själv.
+  transpilePackages: ['@freevobe/protocol'],
+  webpack: (config) => {
+    config.resolve.extensionAlias = {
+      ...(config.resolve.extensionAlias ?? {}),
+      '.js': ['.ts', '.tsx', '.js'],
+      '.mjs': ['.mts', '.mjs'],
+    };
+    return config;
+  },
 };
 
 export default nextConfig;

@@ -86,11 +86,23 @@ export function normalizeLocale(value: string | null | undefined): Locale | null
   return SUPPORTED_LOCALES.find((locale) => locale.toLowerCase() === base) ?? null;
 }
 
+/**
+ * Läser det sparade språkvalet. localStorage kan saknas eller kasta (privat läge, opak origin,
+ * vissa testmiljöer) – då gäller webbläsarens språk i stället för att appen kraschar.
+ */
+function readStoredLocale(): string | null {
+  try {
+    return window.localStorage?.getItem(LOCALE_STORAGE_KEY) ?? null;
+  } catch {
+    return null;
+  }
+}
+
 /** Sparat val vinner, därefter webbläsarens språklista, annars engelska. */
 export function detectLocale(): Locale {
   if (typeof window === 'undefined') return DEFAULT_LOCALE;
 
-  const stored = normalizeLocale(window.localStorage.getItem(LOCALE_STORAGE_KEY));
+  const stored = normalizeLocale(readStoredLocale());
   if (stored) return stored;
 
   const candidates = [...(window.navigator.languages ?? []), window.navigator.language ?? ''];
@@ -112,7 +124,11 @@ export function applyLocale(locale: Locale): void {
   void i18n.changeLanguage(next);
   if (typeof document !== 'undefined') document.documentElement.lang = next;
   if (typeof window !== 'undefined') {
-    window.localStorage.setItem(LOCALE_STORAGE_KEY, next);
+    try {
+      window.localStorage?.setItem(LOCALE_STORAGE_KEY, next);
+    } catch {
+      // Utan localStorage fungerar språkbytet ändå – valet gäller bara den här sessionen.
+    }
   }
 }
 

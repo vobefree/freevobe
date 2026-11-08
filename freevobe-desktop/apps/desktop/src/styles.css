@@ -1,17 +1,42 @@
 @import 'tailwindcss';
 
 /* Freevobe-tema. Mörkt som standard, egen palett (inte ett varumärkeslån). */
-@theme {
-  --color-anvil: #14161c;
-  --color-forge: #1b1f27;
-  --color-steel: #2a2f3a;
-  --color-iron: #3a4150;
-  --color-ember: #ff7a3d;
+:root,
+html[data-theme='dark'] {
+  --vf-anvil: #14161c;
+  --vf-forge: #1b1f27;
+  --vf-steel: #2a2f3a;
+  --vf-iron: #3a4150;
+  --vf-ember: #ff7a3d;
+  --vf-spark: #ffd166;
+  --vf-mint: #4ade80;
+  --vf-sky: #6ab7ff;
+  --vf-alert: #ff6b6b;
+}
+
+html[data-theme='light'] {
+  --vf-anvil: #f6f5f1;
+  --vf-forge: #ffffff;
+  --vf-steel: #e4e1d8;
+  --vf-iron: #cfcbc0;
+  --vf-ember: #b9541c;
+  --vf-spark: #9a6a00;
+  --vf-mint: #157f3c;
+  --vf-sky: #2563eb;
+  --vf-alert: #b42318;
+}
+
+@theme inline {
+  --color-anvil: var(--vf-anvil);
+  --color-forge: var(--vf-forge);
+  --color-steel: var(--vf-steel);
+  --color-iron: var(--vf-iron);
+  --color-ember: var(--vf-ember);
   --color-ember-dim: #c9581f;
-  --color-spark: #ffd166;
-  --color-mint: #4ade80;
-  --color-sky: #6ab7ff;
-  --color-alert: #ff6b6b;
+  --color-spark: var(--vf-spark);
+  --color-mint: var(--vf-mint);
+  --color-sky: var(--vf-sky);
+  --color-alert: var(--vf-alert);
   --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
@@ -97,4 +122,70 @@ body {
     animation-duration: 0.001ms !important;
     transition-duration: 0.001ms !important;
   }
+}
+
+/* Ljust läge: slate-skalan vänds så att alla befintliga komponenter följer temat. */
+html[data-theme='light'] .text-slate-100 {
+  color: #14181f;
+}
+html[data-theme='light'] .text-slate-200 {
+  color: #1f2733;
+}
+html[data-theme='light'] .text-slate-300 {
+  color: #34404f;
+}
+html[data-theme='light'] .text-slate-400 {
+  color: #55616f;
+}
+html[data-theme='light'] .text-slate-500 {
+  color: #6b7684;
+}
+html[data-theme='light'] .text-slate-600 {
+  color: #8a94a1;
+}
+html[data-theme='light'] .text-anvil {
+  color: #ffffff;
+}
+html[data-theme='light'] input::placeholder,
+html[data-theme='light'] textarea::placeholder {
+  color: #8a94a1;
+}
+html[data-theme='light'] ::-webkit-scrollbar-track {
+  background: var(--vf-anvil);
+}
+html[data-theme='light'] ::-webkit-scrollbar-thumb {
+  background: #d6d2c8;
+}
+
+/* Qoder: terminal-likt, tangentbordsförst. Samma funktioner, annan yta. */
+html[data-qoder='true'] body {
+  background: #05070a;
+  letter-spacing: 0.01em;
+}
+html[data-qoder='true'] .vf-panel,
+html[data-qoder='true'] .vf-button,
+html[data-qoder='true'] button,
+html[data-qoder='true'] input,
+html[data-qoder='true'] textarea,
+html[data-qoder='true'] select,
+html[data-qoder='true'] article {
+  border-radius: 0 !important;
+}
+html[data-qoder='true'] .vf-panel {
+  background: #070b0e;
+  border-color: #1d3a2c;
+}
+html[data-qoder='true'] .vf-button,
+html[data-qoder='true'] button {
+  font-family: var(--font-mono);
+}
+html[data-qoder='true'] .text-ember {
+  color: #7cf5b0;
+}
+html[data-qoder='true'] .bg-ember {
+  background: #7cf5b0;
+  color: #04110a;
+}
+html[data-qoder='true'] ::selection {
+  background: rgba(124, 245, 176, 0.3);
 }

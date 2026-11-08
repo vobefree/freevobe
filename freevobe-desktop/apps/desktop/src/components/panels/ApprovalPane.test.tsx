@@ -76,6 +76,33 @@ describe('ApprovalPane', () => {
     expect(screen.getByText(/körs aldrig automatiskt/)).toBeTruthy();
   });
 
+  it('visar prompt, provider och uppskattat pris för ett medieanrop', () => {
+    useAppStore.setState({
+      approvals: [
+        {
+          ...approval,
+          kind: 'media',
+          title: 'Generera 2 bild(er)',
+          hardBlock: true,
+          costUsd: 0.04,
+          media: {
+            kind: 'image',
+            prompt: 'En räv i snön',
+            provider: 'google',
+            model: 'gemini-3.1-flash-image',
+          },
+        },
+      ],
+      permissionMode: 'full-auto',
+    });
+    render(<ApprovalPane />);
+
+    const card = screen.getByTestId('approval-card').textContent ?? '';
+    expect(card).toContain('En räv i snön');
+    expect(card).toContain('google · gemini-3.1-flash-image');
+    expect(screen.getByTestId('approval-cost').textContent).toContain('$0.04');
+  });
+
   it('visar frågor från ask_user-verktyget', () => {
     useAppStore.setState({
       approvals: [

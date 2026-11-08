@@ -4,6 +4,7 @@ import type { ToolSpec } from '@freevobe/protocol';
 import { truncate } from '../util/text.js';
 import { walkFiles } from '../util/walk.js';
 import { resolveProjectPath } from '../security/paths.js';
+import { isSensitivePath, sensitivePathRefusal } from '../security/sensitive.js';
 import { fail, ok, numberArg, stringArg, type RegisteredTool, type ToolContext } from './types.js';
 
 const MAX_READ_CHARS = 200_000;
@@ -25,6 +26,9 @@ function resolveOrFail(
 ): { absolute: string; relative: string } | string {
   const resolved = resolveProjectPath(ctx.root, candidate);
   if (!resolved.ok) return `Sökvägen avvisades: ${resolved.reason}`;
+  // Hemlighetsfiler läses eller ändras aldrig av agenten, inte heller via en skill.
+  const refusal = sensitivePathRefusal(resolved.relative);
+  if (refusal) return refusal;
   return { absolute: resolved.absolute, relative: resolved.relative };
 }
 
@@ -190,12 +194,17 @@ export const searchFilesTool: RegisteredTool = {
     const results: string[] = [];
     let scanned = 0;
     let skipped = 0;
+    let sensitiveSkipped = 0;
     let matches = 0;
 
     for await (const entry of walkFiles({ root: ctx.root, maxFiles: MAX_SEARCH_FILES })) {
       const relativeToSub = path.relative(resolved.absolute, entry.absolute).replace(/\\/g, '/');
       if (relativeToSub.startsWith('..')) continue;
       if (include && !simpleGlob(path.basename(entry.relative), include)) continue;
+      if (isSensitivePath(entry.relative)) {
+        sensitiveSkipped += 1;
+        continue;
+      }
       if (entry.size > MAX_SEARCH_FILE_BYTES) {
         skipped += 1;
         continue;
@@ -225,8 +234,12 @@ export const searchFilesTool: RegisteredTool = {
       return ok(`Inga träffar på "${query}" (${scanned} filer genomsökta).`, { matches: 0 });
     const rest =
       matches > results.length ? `\n… och ${matches - results.length} träffar till.` : '';
+    const restWithSensitive =
+      sensitiveSkipped > 0
+        ? `${rest}\n(${sensitiveSkipped} filer med hemligheter genomsöktes inte)`
+        : rest;
     return ok(
-      `${matches} träffar på "${query}":\n${results.join('\n')}${rest}${skipped > 0 ? `\n(${skipped} filer hoppades över p.g.a. storlek)` : ''}`,
+      `${matches} träffar på "${query}":\n${results.join('\n')}${restWithSensitive}${skipped > 0 ? `\n(${skipped} filer hoppades över p.g.a. storlek)` : ''}`,
       { matches, scanned },
     );
   },
@@ -261,6 +274,8 @@ export const writeFileTool: RegisteredTool = {
     const candidate = stringArg(args, 'path');
     const content = typeof args.content === 'string' ? args.content : null;
     if (!candidate || content === null) return fail('Både "path" och "content" krävs.');
+    const allowed = resolveOrFail(ctx, candidate);
+    if (typeof allowed === 'string') return fail(allowed);
     const result = await proposeFileContent(ctx, candidate, content, 'update');
     return ok(result.summary, {
       diffId: result.diff.id,

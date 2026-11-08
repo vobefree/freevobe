@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useAppStore, type CenterTab } from '../../store/appStore';
 import { Button, EmptyState, Tabs } from '../ui';
 import { EditorPane } from './EditorPane';
+import { PreviewPane } from './PreviewPane';
 import { formatBytes, formatNumber, shortPath } from '../../lib/format';
 
 function FileTree() {
@@ -219,7 +220,6 @@ export function CenterPanel() {
   const { t } = useTranslation();
   const centerTab = useAppStore((state) => state.centerTab);
   const setCenterTab = useAppStore((state) => state.setCenterTab);
-  const editorFile = useAppStore((state) => state.editorFile);
   const treeOpen = useAppStore((state) => state.treeOpen);
   const toggleTree = useAppStore((state) => state.toggleTree);
 
@@ -254,20 +254,7 @@ export function CenterPanel() {
           ) : centerTab === 'context' ? (
             <ContextView />
           ) : null}
-          {centerTab === 'preview' ? (
-            editorFile ? (
-              <div data-testid="preview" className="h-full overflow-auto bg-anvil p-4">
-                <p className="mb-2 font-mono text-[11px] text-slate-500">
-                  {editorFile.path} ({t('center.previewNote')})
-                </p>
-                <pre className="font-mono text-[12px] whitespace-pre-wrap text-slate-300">
-                  {editorFile.content}
-                </pre>
-              </div>
-            ) : (
-              <EmptyState title={t('center.noFile')} hint={t('center.noFileHint')} />
-            )
-          ) : null}
+          {centerTab === 'preview' ? <PreviewPane /> : null}
           {centerTab === 'editor' ? <EditorPane /> : null}
         </div>
       </div>

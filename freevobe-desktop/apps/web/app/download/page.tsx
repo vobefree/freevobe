@@ -32,7 +32,9 @@ export default function DownloadPage() {
         </p>
         <p className="text-[13px] text-slate-500">
           Du behöver Ollama för att chatten ska svara, men appen går att starta och titta runt i
-          redan innan du kopplar upp den.
+          redan innan du kopplar upp den. Vill du skapa bilder, video eller ljud behöver du en egen
+          nyckel hos Anthropic, Google eller xAI och slå på molntjänster i inställningarna – varje
+          anrop visar priset och kräver ett eget godkännande.
         </p>
       </header>
       <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

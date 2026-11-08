@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useAppStore } from '../store/appStore';
 import { AUTO_APPROVE_LABELS, PERMISSION_DESCRIPTIONS, PERMISSION_LABELS } from '../lib/format';
 import { AUTO_APPROVE_CATEGORIES, PERMISSION_MODES, FREEVOBE_SKILLS_DIR } from '@freevobe/protocol';
+import { COLON_HINT, resolveColonAction, type ColonAction } from '../lib/paletteCommands';
 
 interface Command {
   id: string;
@@ -205,6 +206,55 @@ export function CommandPalette() {
         label: t('palette.abort'),
         run: () => store.abort(),
       },
+      {
+        id: 'theme-light',
+        group: t('palette.groupAppearance'),
+        label: t('palette.themeLight'),
+        run: () => store.setThemeMode('light'),
+      },
+      {
+        id: 'theme-dark',
+        group: t('palette.groupAppearance'),
+        label: t('palette.themeDark'),
+        run: () => store.setThemeMode('dark'),
+      },
+      {
+        id: 'theme-system',
+        group: t('palette.groupAppearance'),
+        label: t('palette.themeSystem'),
+        run: () => store.setThemeMode('system'),
+      },
+      ...(['verbose', 'normal', 'summary'] as const).map((mode) => ({
+        id: `view-${mode}`,
+        group: t('palette.groupAppearance'),
+        label: t(
+          mode === 'verbose'
+            ? 'palette.viewVerbose'
+            : mode === 'normal'
+              ? 'palette.viewNormal'
+              : 'palette.viewSummary',
+        ),
+        run: () => store.setViewMode(mode),
+      })),
+      {
+        id: 'qoder',
+        group: t('palette.groupAppearance'),
+        label: t(store.qoderMode ? 'palette.qoderOff' : 'palette.qoderOn'),
+        run: () => store.toggleQoder(),
+      },
+      {
+        id: 'side-chat',
+        group: t('palette.groupNavigation'),
+        label: t('palette.sideChat'),
+        hint: '⌘;',
+        run: () => store.toggleSideChat(),
+      },
+      {
+        id: 'swap-panes',
+        group: t('palette.groupNavigation'),
+        label: t('palette.swapPanes'),
+        run: () => store.setChatFirst(!store.chatFirst),
+      },
     ];
   }, [t]);
 
@@ -226,6 +276,36 @@ export function CommandPalette() {
       inputRef.current?.focus();
     }
   }, [open]);
+
+  const runColonAction = (action: ColonAction) => {
+    const store = useAppStore.getState();
+    switch (action) {
+      case 'save':
+        void store.saveEditorFile();
+        break;
+      case 'quit':
+        break;
+      case 'run':
+        void store.startPreview();
+        break;
+      case 'test':
+        void store.runTests();
+        break;
+      case 'verify':
+        void store.runVerification();
+        break;
+      case 'theme':
+        store.setThemeMode(store.themeMode === 'dark' ? 'light' : 'dark');
+        break;
+      case 'qoder':
+        store.toggleQoder();
+        break;
+      case 'sidechat':
+        void store.toggleSideChat();
+        break;
+    }
+    setPalette(false);
+  };
 
   useEffect(() => setCursor(0), [query]);
 
@@ -264,6 +344,11 @@ export function CommandPalette() {
             }
             if (event.key === 'Enter') {
               event.preventDefault();
+              if (query.trim().startsWith(':')) {
+                const action = resolveColonAction(query);
+                if (action) runColonAction(action);
+                return;
+              }
               void execute(filtered[cursor]);
             }
           }}
@@ -295,6 +380,9 @@ export function CommandPalette() {
             </li>
           ))}
         </ul>
+        <p className="truncate border-t border-steel px-4 py-1.5 font-mono text-[10px] text-slate-600">
+          {t('palette.commandHint')} · {COLON_HINT}
+        </p>
       </div>
     </div>
   );

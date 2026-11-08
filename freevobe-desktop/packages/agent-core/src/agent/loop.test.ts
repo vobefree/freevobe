@@ -2,7 +2,7 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import type { AgentEvent, ApprovalRequest, Plan } from '@freevobe/protocol';
+import type { AgentEvent, ApprovalRequest, Plan, ProviderResolution } from '@freevobe/protocol';
 import { startFakeOllama, type FakeOllamaHandle, type FakeTurn } from '../testing/fakeOllama.js';
 import { OllamaClient } from '../ollama/client.js';
 import { ToolRegistry } from '../tools/registry.js';
@@ -59,6 +59,10 @@ interface SliceOptions {
   plan?: Plan;
   /** Användarmeddelandet i körningen. Standard är filuppgiften i den vertikala slicen. */
   userMessage?: string;
+  /** Injicerad routing: vilken provider som kan leverera en capability i testet. */
+  resolveProvider?: (
+    capability: 'text' | 'vision' | 'tools' | 'image_gen' | 'video_gen' | 'audio_gen',
+  ) => ProviderResolution;
 }
 
 interface SliceResult {
@@ -114,6 +118,7 @@ async function runSlice(options: SliceOptions): Promise<SliceResult> {
     ...(options.firstTokenNoticeMs !== undefined
       ? { firstTokenNoticeMs: options.firstTokenNoticeMs }
       : {}),
+    ...(options.resolveProvider ? { resolveProvider: options.resolveProvider } : {}),
     browserAutomationEnabled: false,
   });
 
@@ -124,7 +129,8 @@ async function runSlice(options: SliceOptions): Promise<SliceResult> {
     permissionMode: options.permissionMode ?? 'ask',
     model: 'deepseek-r1:8b',
     userMessage:
-      options.userMessage ?? 'Läs src/halsa.ts och lägg till en svensk hälsning med template-sträng',
+      options.userMessage ??
+      'Läs src/halsa.ts och lägg till en svensk hälsning med template-sträng',
     history: [],
     signal: controller.signal,
     supportsTools: options.supportsTools ?? true,
@@ -309,9 +315,7 @@ describe('vertikal slice: Ollama → chatt → läs fil → ändra → diff → 
     const result = await runSlice({ turns: [{ reasoning: 'Jag tänker igenom frågan.' }] });
 
     const message = result.events.find((event) => event.type === 'assistant_message');
-    expect(message?.type === 'assistant_message' && message.text).toBe(
-      'Jag tänker igenom frågan.',
-    );
+    expect(message?.type === 'assistant_message' && message.text).toBe('Jag tänker igenom frågan.');
     const finished = result.events.at(-1);
     expect(finished?.type === 'run_finished' && finished.reason).toBe('final');
   });
@@ -668,10 +672,11 @@ describe('leverans: en beställning ska bli filer, inte text', () => {
 
     // Knuffen nådde modellen som ett användarmeddelande med kravet på filer.
     const messages = fake.requests.at(-1)?.body.messages as
-      | { role: string; content: string }[]
-      | undefined;
+      { role: string; content: string }[] | undefined;
     expect(
-      messages?.some((message) => message.role === 'user' && message.content.includes('skapade inga filer')),
+      messages?.some(
+        (message) => message.role === 'user' && message.content.includes('skapade inga filer'),
+      ),
     ).toBe(true);
 
     expect(
@@ -812,5 +817,43 @@ describe('verktygsanrop som modellerna faktiskt skickar', () => {
     expect(error?.type === 'error' && error.code).toBe('no_deliverable');
     expect(error?.type === 'error' && error.message).toContain('tool calling');
     expect(error?.type === 'error' && error.message).toContain('qwen2.5-coder');
+  });
+});
+
+describe('routing till medieproviders', () => {
+  it('stoppar en bildbeställning i lokal-only och ber om en provider', async () => {
+    const result = await runSlice({
+      turns: [],
+      userMessage: 'Skapa en bild av en räv i vattenfärg',
+      resolveProvider: () => ({ ok: false, code: 'local_only' }),
+    });
+
+    const required = result.events.find((event) => event.type === 'provider_required');
+    expect(required).toMatchObject({
+      type: 'provider_required',
+      outputType: 'image',
+      providers: ['google', 'xai'],
+      reason: 'local_only',
+    });
+    // Ingen modell anropades: varken verktygsanrop eller modellsvar ska ha sänts.
+    expect(result.events.some((event) => event.type === 'tool_call')).toBe(false);
+    expect(result.events.some((event) => event.type === 'assistant_message')).toBe(false);
+    expect(result.events.at(-1)).toMatchObject({ type: 'run_finished', reason: 'final' });
+  });
+
+  it('kör vidare när providern är redo', async () => {
+    const result = await runSlice({
+      turns: [{ content: 'Jag skapar bilden med Gemini.' }],
+      userMessage: 'Skapa en bild av en räv i vattenfärg',
+      resolveProvider: () => ({
+        ok: true,
+        providerId: 'google',
+        model: 'gemini-3.1-flash-image',
+        code: 'ok',
+      }),
+    });
+
+    expect(result.events.some((event) => event.type === 'provider_required')).toBe(false);
+    expect(result.events.at(-1)).toMatchObject({ type: 'run_finished', reason: 'final' });
   });
 });

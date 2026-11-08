@@ -101,6 +101,26 @@ export class AgentClient {
     return { 'content-type': 'application/json', ...tokenHeaders(this.token), ...extra };
   }
 
+  /** Hämtar en binärfil (media) med token i huvudet. Blob-URL:er används i gränssnittet. */
+  async blob(path: string): Promise<Blob> {
+    let response: Response;
+    try {
+      response = await fetch(`${this.baseUrl}${path}`, { headers: tokenHeaders(this.token) });
+    } catch (error) {
+      throw new AgentRequestError({
+        code: 'unreachable',
+        message: `Kan inte nå Freevobe-agenten på ${this.baseUrl}. Starta den med "npm run dev:server". (${error instanceof Error ? error.message : String(error)})`,
+      });
+    }
+    if (!response.ok) {
+      throw new AgentRequestError({
+        code: 'request_failed',
+        message: `Filen kunde inte hämtas (${response.status}).`,
+      });
+    }
+    return response.blob();
+  }
+
   async request<T>(path: string, options: { method?: string; body?: unknown } = {}): Promise<T> {
     let response: Response;
     try {
@@ -146,6 +166,57 @@ export class AgentClient {
    * Prenumererar på händelser för en körning. Använder fetch i stället för EventSource,
    * eftersom token måste skickas som header.
    */
+  /** Strömmar ett POST-svar som SSE, t.ex. modellhämtningens framsteg. */
+  async streamPost(
+    path: string,
+    body: unknown,
+    onEvent: (name: string, data: unknown) => void,
+  ): Promise<void> {
+    const response = await fetch(`${this.baseUrl}${path}`, {
+      method: 'POST',
+      headers: { ...this.headers(), accept: 'text/event-stream' },
+      body: JSON.stringify(body),
+    });
+    if (!response.ok || !response.body) {
+      throw new AgentRequestError({
+        code: `http_${response.status}`,
+        message: `Agenten svarade ${response.status}.`,
+      });
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+
+    const flush = (block: string) => {
+      let name = 'message';
+      const data: string[] = [];
+      for (const line of block.split('\n')) {
+        if (line.startsWith('event:')) name = line.slice(6).trim();
+        else if (line.startsWith('data:')) data.push(line.slice(5).trim());
+      }
+      if (data.length === 0) return;
+      try {
+        onEvent(name, JSON.parse(data.join('')) as unknown);
+      } catch {
+        // En trasig rad ska inte tappa hela strömmen.
+      }
+    };
+
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      let separator = buffer.indexOf('\n\n');
+      while (separator !== -1) {
+        flush(buffer.slice(0, separator));
+        buffer = buffer.slice(separator + 2);
+        separator = buffer.indexOf('\n\n');
+      }
+    }
+    if (buffer.trim() !== '') flush(buffer);
+  }
+
   subscribe(runId: string, onEvent: (event: AgentEvent) => void, onDone?: () => void): () => void {
     const controller = new AbortController();
     let stopped = false;

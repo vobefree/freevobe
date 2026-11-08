@@ -6,6 +6,9 @@ import type {
   McpServerConfig,
   McpServerStatus,
   Project,
+  SkillImportApplyItem,
+  SkillImportApplyResult,
+  SkillImportScan,
   SkillSummary,
 } from '@freevobe/protocol';
 import {
@@ -22,6 +25,9 @@ import {
   loadProjectSkills,
   mergeSkills,
   loadBuiltinSkills,
+  applySkillImport,
+  readSkillAudit,
+  scanSkillImportTarget,
   builtinTools,
   parseGitStatus,
   defaultHookTemplates,
@@ -171,6 +177,28 @@ export class ProjectWorkspace {
 
   async exportSkill(name: string): Promise<string | null> {
     return this.skillStore.export(name);
+  }
+
+  /** Skannar en mapp eller ett GitHub-repo och normaliserar allt som hittas. */
+  async scanSkillImport(target?: string): Promise<SkillImportScan> {
+    const existing = await this.skillStore.list();
+    return scanSkillImportTarget({
+      cwd: this.project.path,
+      ...(target && target.trim() !== '' ? { target } : {}),
+      existing,
+    });
+  }
+
+  /** Sparar de skills användaren godkände. Inget skrivs utan att vyn skickat posterna. */
+  async applyImportedSkills(items: SkillImportApplyItem[]): Promise<SkillImportApplyResult> {
+    const result = await applySkillImport(this.skillStore, items);
+    await this.reloadSkills();
+    return result;
+  }
+
+  /** Senaste skill-anropen, nyast först. Ligger lokalt i `.freevobe/audit/skills.jsonl`. */
+  async skillAudit(limit = 50) {
+    return readSkillAudit(this.project.path, limit);
   }
 
   async copyBuiltinSkills(): Promise<string[]> {

@@ -69,6 +69,15 @@ function isAllowedOrigin(origin: string): boolean {
 const TOKEN_HEADERS = ['x-freevobe-token'] as const;
 const ALLOWED_HEADERS = ['content-type', ...TOKEN_HEADERS].join(', ');
 
+/** En väg kan svara med en binärfil (media) i stället för JSON. */
+type RawFileResponse = { __raw: Buffer; contentType: string };
+
+function isRawFile(value: unknown): value is RawFileResponse {
+  if (typeof value !== 'object' || value === null) return false;
+  const candidate = value as Partial<RawFileResponse>;
+  return Buffer.isBuffer(candidate.__raw) && typeof candidate.contentType === 'string';
+}
+
 function presentedToken(headers: http.IncomingHttpHeaders): string | undefined {
   for (const name of TOKEN_HEADERS) {
     const value = headers[name];
@@ -269,6 +278,17 @@ export async function startAgentServer(options: AgentServerOptions): Promise<Age
 
     try {
       const result = await match.handler(context({ params }));
+      if (isRawFile(result)) {
+        response.writeHead(200, {
+          'content-type': result.contentType,
+          'cache-control': 'private, max-age=60',
+          'content-length': result.__raw.length,
+          'access-control-allow-origin': allowedOrigin,
+          vary: 'origin',
+        });
+        response.end(result.__raw);
+        return;
+      }
       send(200, { ok: true, data: result ?? null });
     } catch (error) {
       send(400, { ok: false, error: { code: 'request_failed', message: describeError(error) } });

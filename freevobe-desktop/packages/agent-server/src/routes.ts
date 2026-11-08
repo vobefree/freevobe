@@ -1,3 +1,4 @@
+import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import type {
   ApprovalAnswer,
@@ -9,7 +10,7 @@ import type {
   VerificationKind,
 } from '@freevobe/protocol';
 import { FREEVOBE_PROTOCOL_VERSION } from '@freevobe/protocol';
-import { defaultMcpExamples } from '@freevobe/agent-core';
+import { MEDIA_DIR, defaultMcpExamples, listMedia, resolveMediaFile } from '@freevobe/agent-core';
 import type { AgentSessionHub } from './sessionHub.js';
 
 export interface RouteContext {
@@ -69,6 +70,79 @@ export function createRoutes(serverInfo: { port: number; devMode: boolean }): Ro
     route('GET', '/api/ollama', ({ hub, url }) =>
       hub.probeOllama(url.searchParams.get('baseUrl') ?? undefined),
     ),
+
+    // ---- modellrouter: vilken modell som bör göra jobbet, och varför.
+    route('GET', '/api/router', async ({ hub, url }) => {
+      const prompt = (url.searchParams.get('prompt') ?? '').trim();
+      if (prompt === '') throw new Error('Query-parametern "prompt" saknas.');
+      return hub.routeModel(prompt);
+    }),
+
+    // ---- modellhämtning: kräver ett uttryckligt ja och strömmar framstegen som SSE.
+    route('POST', '/api/models/pull', ({ hub, body, stream }) => {
+      stream(
+        (write) => {
+          void (async () => {
+            try {
+              const payload = (await body()) as {
+                model?: unknown;
+                approved?: unknown;
+                expectedDigest?: unknown;
+              };
+              if (typeof payload.model !== 'string' || payload.model.trim() === '') {
+                throw new Error('Fältet "model" saknas.');
+              }
+              const result = await hub.pullModel({
+                model: payload.model.trim(),
+                approved: payload.approved === true,
+                ...(typeof payload.expectedDigest === 'string'
+                  ? { expectedDigest: payload.expectedDigest }
+                  : {}),
+                onProgress: (progress) => {
+                  write(`event: progress\ndata: ${JSON.stringify(progress)}\n\n`);
+                },
+              });
+              write(`event: done\ndata: ${JSON.stringify(result)}\n\n`);
+            } catch (error) {
+              const message = error instanceof Error ? error.message : String(error);
+              write(`event: error\ndata: ${JSON.stringify({ message })}\n\n`);
+            }
+          })();
+        },
+        () => undefined,
+      );
+      return undefined;
+    }),
+
+    // ---- live-preview: dev-servern eller de statiska filerna, alltid på loopback.
+    route('GET', '/api/projects/:projectId/preview', ({ hub, params }) =>
+      hub.previewStatus(params.projectId as string),
+    ),
+    route('POST', '/api/projects/:projectId/preview', async ({ hub, params }) => ({
+      preview: await hub.startProjectPreview(params.projectId as string),
+    })),
+    route('DELETE', '/api/projects/:projectId/preview', async ({ hub, params }) => ({
+      stopped: await hub.stopProjectPreview(params.projectId as string),
+    })),
+
+    // ---- Providers: vilka modellkällor som är på. Nycklar tas emot men lämnas aldrig tillbaka.
+    route('GET', '/api/providers', ({ hub }) => hub.providerList()),
+    route('PATCH', '/api/providers/preferences', async ({ hub, body }) => {
+      const payload = (await body()) as { kind?: unknown; providerId?: unknown };
+      return hub.setProviderMediaPreference(payload.kind as never, String(payload.providerId));
+    }),
+    route('PATCH', '/api/providers/:id', async ({ hub, params, body }) => {
+      const payload = (await body()) as { enabled?: unknown };
+      return hub.setProviderEnabled(params.id as never, payload.enabled === true);
+    }),
+    route('POST', '/api/providers/:id/key', async ({ hub, params, body }) => {
+      const payload = (await body()) as { key?: unknown };
+      if (typeof payload.key !== 'string') throw new Error('Fältet "key" saknas.');
+      return hub.setProviderKey(params.id as never, payload.key);
+    }),
+    route('DELETE', '/api/providers/:id/key', ({ hub, params }) => ({
+      cleared: hub.clearProviderKey(params.id as never),
+    })),
 
     // ---- Gives Back: frivillig välgörenhet, ingen reklam och inga pengar genom appen.
     route('GET', '/api/gives-back', ({ hub, url }) =>
@@ -152,6 +226,19 @@ export function createRoutes(serverInfo: { port: number; devMode: boolean }): Ro
         })),
       };
     }),
+    // ---- media: filer som agenten skapat. Läses bara ur projektets .freevobe/media.
+    route('GET', '/api/projects/:projectId/media', async ({ hub, params }) => {
+      const workspace = hub.requireWorkspace(params.projectId as string);
+      return { directory: MEDIA_DIR, assets: await listMedia(workspace.root) };
+    }),
+    route('GET', '/api/projects/:projectId/media/file', async ({ hub, params, url }) => {
+      const requested = url.searchParams.get('path');
+      if (!requested) throw new Error('Fältet "path" saknas.');
+      const workspace = hub.requireWorkspace(params.projectId as string);
+      const { absolutePath, mime } = resolveMediaFile(workspace.root, requested);
+      return { __raw: await readFile(absolutePath), contentType: mime };
+    }),
+
     route('GET', '/api/projects/:projectId/doctor', ({ hub, params }) =>
       hub.doctor(params.projectId as string),
     ),
@@ -191,6 +278,46 @@ export function createRoutes(serverInfo: { port: number; devMode: boolean }): Ro
     route('POST', '/api/projects/:projectId/skills/copy-builtin', async ({ hub, params }) => ({
       created: await hub.requireWorkspace(params.projectId as string).copyBuiltinSkills(),
     })),
+    route('GET', '/api/projects/:projectId/skills/audit', async ({ hub, params }) =>
+      hub.requireWorkspace(params.projectId as string).skillAudit(),
+    ),
+    /** Skannar en mapp eller ett GitHub-repo. Läser bara – inget skrivs förrän importen godkänns. */
+    route('POST', '/api/projects/:projectId/skills/import/scan', async ({ hub, params, body }) => {
+      const payload = (await body()) as { target?: unknown };
+      if (payload.target !== undefined && typeof payload.target !== 'string') {
+        throw new Error('Fältet "target" måste vara en sträng.');
+      }
+      return hub
+        .requireWorkspace(params.projectId as string)
+        .scanSkillImport(typeof payload.target === 'string' ? payload.target : undefined);
+    }),
+    route('POST', '/api/projects/:projectId/skills/import/apply', async ({ hub, params, body }) => {
+      const payload = (await body()) as { items?: unknown };
+      if (!Array.isArray(payload.items)) throw new Error('Fältet "items" måste vara en lista.');
+      const toArray = (value: unknown): string[] =>
+        Array.isArray(value)
+          ? value.filter((entry): entry is string => typeof entry === 'string')
+          : [];
+      const items = payload.items.filter(
+        (item): item is Record<string, unknown> => typeof item === 'object' && item !== null,
+      );
+      return hub.requireWorkspace(params.projectId as string).applyImportedSkills(
+        items.map((item) => ({
+          name: String(item.name ?? ''),
+          description: String(item.description ?? ''),
+          tools: toArray(item.tools),
+          triggers: toArray(item.triggers),
+          globs: toArray(item.globs),
+          alwaysApply: item.alwaysApply === true,
+          body: typeof item.body === 'string' ? item.body : '',
+          source: (typeof item.source === 'string' ? item.source : 'generic') as never,
+          sourcePath: typeof item.sourcePath === 'string' ? item.sourcePath : '',
+          ...(typeof item.sourceRepo === 'string' ? { sourceRepo: item.sourceRepo } : {}),
+          ...(typeof item.author === 'string' ? { author: item.author } : {}),
+          ...(typeof item.sourceUrl === 'string' ? { sourceUrl: item.sourceUrl } : {}),
+        })),
+      );
+    }),
 
     // ---- MCP
     route('GET', '/api/projects/:projectId/mcp', ({ hub, params }) => {

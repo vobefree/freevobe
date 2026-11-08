@@ -8,8 +8,10 @@ import {
 } from '../lib/format';
 import { useAppStore } from '../store/appStore';
 import { AutoApproveSettings } from './AutoApproveSettings';
+import { AppearanceSection } from './AppearanceSection';
 import { ConnectorsSection } from './ConnectorsSection';
 import { LanguageSelect } from './LanguageSelect';
+import { ProvidersSection } from './ProvidersSection';
 import { Button, Chip, Field, Modal, Toggle } from './ui';
 import {
   GIVES_BACK_CAUSES,
@@ -65,6 +67,8 @@ export function SettingsDialog() {
             <LanguageSelect testId="settings-language" />
           </Field>
         </section>
+
+        <AppearanceSection />
 
         <section className="space-y-2">
           <h3 className="text-xs font-semibold tracking-wide text-slate-400 uppercase">
@@ -239,9 +243,32 @@ export function SettingsDialog() {
             }
             label={t('settings.agent.cloudLabel')}
           />
+          <Field label={t('settings.agent.mediaBudget')} hint={t('settings.agent.mediaBudgetHint')}>
+            <input
+              type="number"
+              min={0}
+              step={0.5}
+              defaultValue={settings.mediaDailyBudgetUsd}
+              data-testid="settings-media-budget"
+              onBlur={(event) =>
+                void save(
+                  { mediaDailyBudgetUsd: Math.max(0, Number(event.target.value) || 0) },
+                  t('settings.agent.mediaBudgetSaved'),
+                )
+              }
+              className="w-full rounded border border-steel bg-anvil px-2 py-1.5 text-xs text-slate-200"
+            />
+          </Field>
           <p className="rounded border border-steel p-2 text-[11px] text-slate-500">
             {t('settings.agent.telemetry')}
           </p>
+        </section>
+
+        <section className="space-y-2">
+          <h3 className="text-xs font-semibold tracking-wide text-slate-400 uppercase">
+            {t('settings.providers.section')}
+          </h3>
+          <ProvidersSection />
         </section>
 
         <section className="space-y-2">

@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, render, screen } from '@testing-library/react';
-import { DEFAULT_AUTO_APPROVE } from '@freevobe/protocol';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { DEFAULT_AUTO_APPROVE, DEFAULT_PROVIDER_PREFERENCES } from '@freevobe/protocol';
 import type { AppSettings, ChatMessage } from '@freevobe/protocol';
 import { ChatView } from './ChatView';
 import { useAppStore } from '../../store/appStore';
@@ -21,6 +21,11 @@ function settingsWith(givesBack: GivesBack): AppSettings {
     maxIterations: 12,
     telemetry: false,
     allowCloudServices: false,
+    providers: {
+      ...DEFAULT_PROVIDER_PREFERENCES,
+      enabled: { ...DEFAULT_PROVIDER_PREFERENCES.enabled },
+    },
+    mediaDailyBudgetUsd: 0,
     givesBack,
     browserAutomationEnabled: false,
     verifyAfterRun: true,
@@ -69,6 +74,18 @@ describe('ChatView med Gives Back', () => {
   afterEach(() => {
     cleanup();
     useAppStore.setState({ settings: null, sessionId: null, messages: [] });
+  });
+
+  it('visar tre medieexempel som fyller inmatningsrutan', () => {
+    setState(0, enabled);
+    const { container } = render(<ChatView />);
+
+    const examples = container.querySelectorAll('[data-testid="media-example"]');
+    expect(examples).toHaveLength(3);
+
+    fireEvent.click(examples[0] as HTMLElement);
+    const textarea = container.querySelector('textarea') as HTMLTextAreaElement;
+    expect(textarea.value).toContain('16:9');
   });
 
   it('visar exakt en Gives Back-plats efter tio prompter', () => {

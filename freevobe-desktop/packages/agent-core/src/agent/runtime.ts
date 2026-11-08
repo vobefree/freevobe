@@ -7,6 +7,9 @@ import type {
   ApprovalQuestion,
   FileChangeKind,
   FileDiff,
+  MediaKind,
+  SubagentKind,
+  TaskItem,
 } from '@freevobe/protocol';
 import { AGENT_SERVER_PORT, MAX_TOOL_OUTPUT_CHARS, TERMINAL_TIMEOUT_MS } from '@freevobe/protocol';
 import { createFileDiff } from '../diff/engine.js';
@@ -26,6 +29,7 @@ import type {
   ToolContext,
 } from '../tools/types.js';
 import type { BrowserDriver } from '../tools/browser.js';
+import type { MediaService } from '../media/service.js';
 
 export interface ToolRuntimeOptions {
   root: string;
@@ -38,9 +42,20 @@ export interface ToolRuntimeOptions {
   signal: AbortSignal;
   browserAutomationEnabled: boolean;
   browser?: BrowserDriver;
+  /** Medietjänsten för bild, video, ljud och vision. */
+  media?: MediaService;
   fetchImpl?: typeof fetch;
   limits?: { terminalTimeoutMs?: number; maxOutputChars?: number };
   testCommandOverride?: string;
+  /** Preview-adressen som preview_check får använda när inget url-argument anges. */
+  previewUrl?: string | null;
+  /** Uppgiftslistan som verktyget todo_write arbetar mot. */
+  tasks?: {
+    list(): TaskItem[];
+    replace(items: Array<{ title: string; status: TaskItem['status'] }>): TaskItem[];
+  };
+  /** Kör en subagent från verktyget run_subagent. */
+  runSubagent?: (kind: SubagentKind, task: string) => Promise<{ summary: string; status: string }>;
   /**
    * Anropas precis innan en fil skrivs. Checkpointen sparar då filens tidigare innehåll, så att
    * ändringen kan rullas tillbaka utan att röra Git.
@@ -62,6 +77,10 @@ export interface ApprovalPrompt {
   url?: string;
   diff?: FileDiff;
   questions?: ApprovalQuestion[];
+  /** Uppskattad kostnad i USD, när katalogen har ett pris. */
+  costUsd?: number;
+  /** Media som godkännandet gäller: sort, prompt och vald provider. */
+  media?: { kind: MediaKind; prompt: string; provider?: string; model?: string };
 }
 
 export interface ToolRuntime {
@@ -203,6 +222,8 @@ export function createToolRuntime(options: ToolRuntimeOptions): ToolRuntime {
       ...(prompt.url ? { url: prompt.url } : {}),
       ...(prompt.diff ? { diff: prompt.diff } : {}),
       ...(prompt.questions ? { questions: prompt.questions } : {}),
+      ...(prompt.costUsd !== undefined ? { costUsd: prompt.costUsd } : {}),
+      ...(prompt.media ? { media: prompt.media } : {}),
     });
 
     options.emit({ type: 'approval_request', runId: options.runId, request: pending.request });
@@ -348,6 +369,10 @@ export function createToolRuntime(options: ToolRuntimeOptions): ToolRuntime {
         limits,
       };
       if (browser) context.browser = browser;
+      if (options.media) context.media = options.media;
+      if (options.tasks) context.tasks = options.tasks;
+      if (options.runSubagent) context.runSubagent = options.runSubagent;
+      if (options.previewUrl) context.previewUrl = options.previewUrl;
       return context;
     },
   };

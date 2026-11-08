@@ -73,6 +73,16 @@ export function useShortcuts(handlers: ShortcutHandlers): void {
         handlers.onNewChat?.();
         return;
       }
+      if (isCommandKey(event) && event.shiftKey && event.key.toLowerCase() === 'q') {
+        event.preventDefault();
+        store.toggleQoder();
+        return;
+      }
+      if (isCommandKey(event) && event.code === 'Semicolon' && !event.shiftKey) {
+        event.preventDefault();
+        void store.toggleSideChat();
+        return;
+      }
       if (isCommandKey(event) && event.shiftKey && event.key.toLowerCase() === 't') {
         event.preventDefault();
         handlers.onRunTests?.();

@@ -533,14 +533,14 @@ describe('verktyg och övriga resurser', () => {
     const skills = await api<Array<{ name: string; source: string }>>(
       `/api/projects/${projectId}/skills`,
     );
-    expect(skills.data).toHaveLength(10);
+    expect(skills.data).toHaveLength(11);
     expect(skills.data.every((skill) => skill.source === 'builtin')).toBe(true);
 
     const copied = await api<{ created: string[] }>(
       `/api/projects/${projectId}/skills/copy-builtin`,
       { method: 'POST' },
     );
-    expect(copied.data.created).toHaveLength(10);
+    expect(copied.data.created).toHaveLength(11);
 
     const after = await api<Array<{ name: string; source: string }>>(
       `/api/projects/${projectId}/skills`,
@@ -685,5 +685,63 @@ describe('verktyg och övriga resurser', () => {
       ownHub.close();
       await ownFake.close();
     }
+  });
+});
+
+describe('skill-import', () => {
+  it('skannar projektet, normaliserar och importerar valda skills', async () => {
+    const opened = await api<{ project: { id: string } }>('/api/projects', {
+      method: 'POST',
+      body: { path: projectRoot, index: false },
+    });
+    const projectId = opened.data.project.id;
+
+    await fs.mkdir(path.join(projectRoot, '.claude', 'skills', 'review'), { recursive: true });
+    await fs.writeFile(
+      path.join(projectRoot, '.claude', 'skills', 'review', 'SKILL.md'),
+      '---\nname: review\ndescription: Granskar kod\nwhen_to_use: review\n---\n\nLäs diffen först.\n',
+      'utf8',
+    );
+    await fs.writeFile(
+      path.join(projectRoot, 'AGENTS.md'),
+      '# Projektregler\n\n- Kör tester före commit.\n',
+      'utf8',
+    );
+
+    const scan = await api<{
+      items: Array<{ name: string; source: string; alwaysApply: boolean; conflict: unknown }>;
+      bySource: Array<{ source: string; count: number }>;
+      unknown: string[];
+    }>(`/api/projects/${projectId}/skills/import/scan`, { method: 'POST', body: {} });
+
+    expect(scan.status).toBe(200);
+    expect(scan.data.items.map((item) => item.name).sort()).toEqual(['project-rules', 'review']);
+    expect(scan.data.bySource).toEqual([
+      { source: 'claude', count: 1 },
+      { source: 'agents_md', count: 1 },
+    ]);
+    const review = scan.data.items.find((item) => item.name === 'review');
+    expect(review?.source).toBe('claude');
+    expect(review?.conflict).toBeNull();
+    expect(scan.data.items.find((item) => item.name === 'project-rules')?.alwaysApply).toBe(true);
+
+    const applied = await api<{ created: string[] }>(
+      `/api/projects/${projectId}/skills/import/apply`,
+      { method: 'POST', body: { items: [review] } },
+    );
+    expect(applied.data.created).toEqual(['review']);
+
+    const skills = await api<Array<{ name: string; importedFrom?: string; source: string }>>(
+      `/api/projects/${projectId}/skills`,
+    );
+    const imported = skills.data.find((skill) => skill.name === 'review');
+    expect(imported?.source).toBe('project');
+    expect(imported?.importedFrom).toBe('claude');
+
+    const rejected = await api(`/api/projects/${projectId}/skills/import/apply`, {
+      method: 'POST',
+      body: { items: 'inte en lista' },
+    });
+    expect(rejected.status).toBeGreaterThanOrEqual(400);
   });
 });

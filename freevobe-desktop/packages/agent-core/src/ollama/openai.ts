@@ -384,7 +384,10 @@ function closeUnbalanced(text: string): string {
 /** JSON.parse med de lagningar lokala modeller brukar kräva: staket, trailing-komman, avklippta klamrar. */
 function parseJsonLoose(raw: string): unknown {
   const trimmed = raw.trim();
-  const withoutFence = trimmed.replace(/^```(?:json|tool_call)?/i, '').replace(/```$/, '').trim();
+  const withoutFence = trimmed
+    .replace(/^```(?:json|tool_call)?/i, '')
+    .replace(/```$/, '')
+    .trim();
   const attempts = [
     trimmed,
     withoutFence,
@@ -508,7 +511,10 @@ function looseContent(sources: Array<Record<string, unknown>>): string | null {
 
 function normalizeVerb(raw: unknown): string | null {
   if (typeof raw !== 'string') return null;
-  const verb = raw.trim().toLowerCase().replace(/[\s-]+/g, '_');
+  const verb = raw
+    .trim()
+    .toLowerCase()
+    .replace(/[\s-]+/g, '_');
   return verb === '' ? null : verb;
 }
 

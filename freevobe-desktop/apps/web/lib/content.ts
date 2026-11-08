@@ -57,6 +57,28 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '0.4.0',
+    date: '2026-11-07',
+    highlights: [
+      'Claude-likt gränssnitt: centrerad läskolumn, tre vylägen (Verbose, Normal, Summary) som filtrerar verktygsanrop och resonemang, och en sidchatt i en egen session vid sidan av huvudtråden.',
+      'Ljust, mörkt och systemtema över hela appen – inklusive kodeditorn, som byter Monaco-tema direkt när du växlar. Alla val sparas mellan omstarterna.',
+      'Qoder-läge: monospace-yta, dolda extraknappar och kolonkommandon i paletten (:w, :q, :run, :test, :verify, :theme, :qoder, :side).',
+      'Dragbara paneler: byt plats på chatt och editor genom att dra i rubriken och dra i avdelaren för höjden. Ordningen och delningen sparas mellan omstarterna.',
+      'Allt finns på tolv språk, och landningssidan visar de nya lägena.',
+    ],
+  },
+  {
+    version: '0.3.0',
+    date: '2026-11-02',
+    highlights: [
+      'Fler providers vid sidan av Ollama: Claude (text och vision), Gemini (text, vision, bild, video och ljud) och Grok (bild och video). Egna nycklar som sparas krypterat på datorn, plus en katalog som visar förmågor, modeller och pris per anrop.',
+      'Multimodal agent: fem nya verktyg – generate_image, generate_video, generate_audio, analyze_image och analyze_video. Varje anrop kräver ett eget godkännande med prompt, provider, modell och beräknat pris.',
+      'Media i chatten och i en egen Media-flik: genererade filer sparas i projektets .freevobe/media/ med metadata och kan användas direkt i koden.',
+      'Kostnad och säkerhet: daglig budget i USD, kostnadsöversikt per provider och hårda promptregler mot hemligheter, filterkringgående och minderåriga.',
+      'Medieflöden som inbyggd skill och dokumentation: hela kedjan från prompt till färdig, verifierad fil – plus en lokal-only-banner som förklarar vad som krävs.',
+    ],
+  },
+  {
     version: '0.2.6',
     date: '2026-10-30',
     highlights: [
@@ -204,6 +226,13 @@ export const GALLERY_SKILLS: GallerySkill[] = [
     triggers: ['migration', 'databas', 'schema'],
     tools: ['read_file', 'write_file', 'run_terminal_command', 'run_tests'],
   },
+  {
+    name: 'media-flows',
+    description:
+      'Hela kedjan från prompt till färdig bild, video eller ljud: välj provider, beskriv, godkänn kostnaden och använd filen i koden.',
+    triggers: ['bild', 'video', 'ljud', 'media', 'image'],
+    tools: ['generate_image', 'generate_video', 'generate_audio', 'analyze_image', 'read_file'],
+  },
 ];
 
 export interface DocSection {
@@ -249,6 +278,29 @@ export const DOC_SECTIONS: DocSection[] = [
     title: 'Skills, regler och minne',
     paragraphs: [
       'Skills ligger i .freevobe/skills/ och aktiveras via triggers eller @namn. Regler läses från AGENTS.md och .freevobe/rules.md, och projektminnet från .freevobe/memory.md – allt lokalt och versionshanterat.',
+    ],
+  },
+  {
+    id: 'providers',
+    title: 'Providers och media',
+    paragraphs: [
+      'Ollama är standard och kräver ingen nyckel. Utöver den kan du lägga till Claude (text och vision), Gemini (text, vision, bild, video och ljud) och Grok (bild och video) i Inställningar → Providers. Nycklarna sparas krypterat i det lokala valvet och skickas bara till den provider du själv valt.',
+      'Molntjänster är avstängda tills du slår på Tillåt molntjänster och providerns egen strömbrytare. Utan det stannar en medieuppgift med ett tydligt besked i stället för att skickas iväg.',
+      'Fem verktyg hanterar media: generate_image, generate_video, generate_audio, analyze_image och analyze_video. Varje anrop kräver ett eget godkännande som visar prompt, provider, modell och beräknat pris, och en daglig budget i USD stoppar anrop innan de skickas.',
+      'Filerna sparas i projektets .freevobe/media/ tillsammans med en metadatafil – provider, modell, prompt, storlek och kostnad, aldrig nycklar. De syns i chatten och i Media-fliken i högerpanelen.',
+    ],
+    commands: [
+      { label: 'Se metadata för sparad media', value: 'cat .freevobe/media/*.json' },
+      { label: 'Rensa media i ett projekt', value: 'rm -r .freevobe/media' },
+    ],
+  },
+  {
+    id: 'media-flows',
+    title: 'Från prompt till färdig fil',
+    paragraphs: [
+      'Skillen media-flows beskriver tre flöden: en hero-bild till en sida, en kort video som bakgrund och ett ljudintro med spelare. I alla tre letar agenten efter en befintlig fil först, skriver en beskrivande prompt, säger vad den tänker göra innan anropet och läser sökvägen ur verktygssvaret i stället för att hitta på den.',
+      'Efter godkännandet hamnar filen i .freevobe/media/, visas i chatten och kan användas direkt i koden. Sedan körs projektets egna kontroller som vanligt, så att en bild eller video inte räknas som klar förrän sidan faktiskt fungerar.',
+      'Avvisar du ett godkännande föreslår agenten ett billigare alternativ – en mindre bild, färre sekunder eller en lokal fil du redan har – i stället för att försöka igen med samma anrop.',
     ],
   },
   {

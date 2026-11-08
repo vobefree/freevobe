@@ -1,6 +1,7 @@
 import type { ContextFile, ProjectRepoMapEntry } from './tools.js';
 import type { AgentPhase, ApprovalCategory, PermissionMode } from './events.js';
 import type { GivesBackConfig } from './gives-back.js';
+import type { ProviderPreferences } from './providers.js';
 
 export interface OllamaModel {
   name: string;
@@ -65,6 +66,21 @@ export interface TaskItem {
   createdAt: number;
 }
 
+/**
+ * Kända källor för importerade skills. Samma värden skrivs i frontmattern som `source:` så att
+ * en ny import kan kännas igen och erbjudas som uppdatering i stället för dubblett.
+ */
+export type SkillFormatSource =
+  | 'claude'
+  | 'cursor'
+  | 'agents_md'
+  | 'copilot'
+  | 'codex'
+  | 'opencode'
+  | 'windsurf'
+  | 'cline'
+  | 'generic';
+
 export interface SkillSummary {
   name: string;
   description: string;
@@ -73,6 +89,20 @@ export interface SkillSummary {
   source: 'builtin' | 'project' | 'user';
   path?: string;
   chars: number;
+  /** Filglobs från t.ex. Cursor-regler. Tom = ingen filbegränsning. */
+  globs?: string[];
+  /** Sant för regeldokument som AGENTS.md – skillen gäller alltid. */
+  alwaysApply?: boolean;
+  /** Var skillen kom ifrån när den importerats från en annan agent. */
+  importedFrom?: SkillFormatSource;
+  /** Repo som skillen importerades från, t.ex. `owner/repo`. */
+  sourceRepo?: string;
+  /** Författare från frontmattern eller repo-ägaren. */
+  author?: string;
+  /** Klickbar källa: repo-adress med filsökväg, eller lokal sökväg. */
+  sourceUrl?: string;
+  /** När skillen importerades, ISO-datum. */
+  importedAt?: string;
 }
 
 export interface McpServerConfig {
@@ -130,6 +160,10 @@ export interface AppSettings {
   browserAutomationEnabled: boolean;
   /** Kör typkontroll, lint och tester automatiskt efter en körning som ändrat filer. */
   verifyAfterRun: boolean;
+  /** Vilka modellkällor som är påslagna och vem som genererar bild, video och ljud. */
+  providers: ProviderPreferences;
+  /** Dagligt tak för uppskattad mediekostnad i USD. 0 betyder ingen gräns. */
+  mediaDailyBudgetUsd: number;
   updatedAt: number;
 }
 

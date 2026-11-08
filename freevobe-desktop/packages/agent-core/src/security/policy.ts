@@ -1,6 +1,7 @@
 import type { ApprovalCategory, PermissionMode, RiskLevel, ToolSpec } from '@freevobe/protocol';
 import { AUTO_APPROVE_CATEGORIES } from '@freevobe/protocol';
 import { normalizeSlashes } from '../util/text.js';
+import { scanMediaRequest } from './mediaSafety.js';
 import { resolveProjectPath } from './paths.js';
 import { scanForSecrets } from './secrets.js';
 
@@ -251,8 +252,20 @@ const BROWSER_TOOLS = new Set([
   'browser_screenshot',
   'browser_click',
   'browser_fill',
+  'preview_check',
 ]);
 const NETWORK_TOOLS = new Set(['web_fetch']);
+/**
+ * Media kostar pengar per bild, videosekund eller ljudspår. Regeln nedan ger alltid
+ * require-approval, även i Full auto och även om användaren auto-godkänt nätverkskategorin.
+ */
+const MEDIA_TOOLS = new Set([
+  'generate_image',
+  'generate_video',
+  'generate_audio',
+  'analyze_image',
+  'analyze_video',
+]);
 
 export interface ToolEvaluationInput {
   spec: ToolSpec;
@@ -294,6 +307,23 @@ export function evaluateToolCall(
         detail: 'Freevobe får bara ändra filer i projektet.',
       };
     }
+  }
+
+  // 2b. Media: kostar pengar och skickar innehåll till en provider – alltid ett personligt ja.
+  //     Prompten kontrolleras först: hemligheter, försök att stänga av providerns filter och
+  //     sexuellt innehåll med minderåriga blockeras i alla lägen.
+  if (MEDIA_TOOLS.has(spec.name)) {
+    const issue = scanMediaRequest(args);
+    if (issue) return { effect: 'block', reason: issue.reason, detail: issue.detail };
+    const isAnalysis = spec.name.startsWith('analyze_');
+    return {
+      effect: 'require-approval',
+      risk: 'medium',
+      reason: isAnalysis
+        ? 'Filen skickas till providern för analys och kräver alltid ditt godkännande.'
+        : 'Bild, video och ljud kostar pengar och kräver alltid ditt godkännande.',
+      hardBlock: true,
+    };
   }
 
   // 3. Webbläsarautomation kräver alltid användarens ja.

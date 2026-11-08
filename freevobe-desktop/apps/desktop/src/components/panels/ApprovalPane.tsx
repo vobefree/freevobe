@@ -120,6 +120,27 @@ export function ApprovalCard({ approval }: { approval: PendingApproval }) {
         </p>
       ) : null}
 
+      {/* Medieanrop visar prompten och priset innan något skickas till providern. */}
+      {approval.media ? (
+        <div className="mt-1.5 rounded border border-steel bg-anvil px-2 py-1">
+          <p className="text-[10px] tracking-wide text-slate-500 uppercase">
+            {t(`media.kind.${approval.media.kind}`)}
+          </p>
+          <p className="mt-0.5 text-[11px] text-slate-300">{approval.media.prompt}</p>
+          {approval.media.provider ? (
+            <p className="mt-0.5 font-mono text-[10px] text-slate-600">
+              {[approval.media.provider, approval.media.model].filter(Boolean).join(' · ')}
+            </p>
+          ) : null}
+        </div>
+      ) : null}
+
+      {approval.costUsd !== undefined ? (
+        <p className="mt-1 text-[11px] text-ember" data-testid="approval-cost">
+          {t('approval.estimatedCost', { cost: `$${approval.costUsd}` })}
+        </p>
+      ) : null}
+
       {approval.command ? (
         <pre className="mt-1.5 overflow-x-auto rounded border border-steel bg-anvil px-2 py-1 font-mono text-[11px] text-spark">
           {approval.command}

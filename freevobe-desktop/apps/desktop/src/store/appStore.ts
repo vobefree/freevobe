@@ -1,3 +1,15 @@
+import {
+  clampShare,
+  readQoderMode,
+  readThemeMode,
+  saveQoderMode,
+  saveThemeMode,
+  systemPrefersDark,
+  type ResolvedTheme,
+  type ThemeMode,
+} from '../lib/theme';
+import { readViewMode, saveViewMode, type ViewMode } from '../lib/viewMode';
+import { readPaneLayout, savePaneLayout } from '../lib/paneLayout';
 import { create } from 'zustand';
 import type {
   AgentEvent,
@@ -19,13 +31,26 @@ import type {
   FileDiff,
   McpServerConfig,
   McpServerStatus,
+  MediaAsset,
+  MediaKind,
+  MediaLibraryResponse,
   OllamaModel,
   OllamaProbeResult,
+  OutputType,
   PermissionMode,
   Plan,
   PlanStatus,
+  PreviewStatus,
+  RouterDecision,
+  PullProgress,
+  ModelPullResult,
+  ProviderId,
+  ProvidersResponse,
   Project,
   Session,
+  SkillImportApplyItem,
+  SkillImportApplyResult,
+  SkillImportScan,
   SkillSummary,
   SubagentStatus,
   TaskItem,
@@ -33,6 +58,7 @@ import type {
   VerificationCommand,
   VerificationReport,
 } from '@freevobe/protocol';
+import { readStorage, writeStorage } from '../lib/storage';
 import {
   AgentClient,
   AgentRequestError,
@@ -43,8 +69,41 @@ import i18n from '../i18n';
 import { AUTO_APPROVE_LABELS } from '../lib/format';
 
 export type RightTab =
-  'diff' | 'terminal' | 'logs' | 'tests' | 'verify' | 'approvals' | 'checkpoints' | 'mcp' | 'gives';
+  | 'diff'
+  | 'terminal'
+  | 'logs'
+  | 'tests'
+  | 'verify'
+  | 'approvals'
+  | 'checkpoints'
+  | 'mcp'
+  | 'gives'
+  | 'media'
+  | 'control';
 export type CenterTab = 'editor' | 'preview' | 'search' | 'context';
+
+export type TimelineKind =
+  | 'run'
+  | 'phase'
+  | 'route'
+  | 'tool'
+  | 'result'
+  | 'approval'
+  | 'diff'
+  | 'verify'
+  | 'preview'
+  | 'checkpoint'
+  | 'error'
+  | 'pull';
+
+/** En rad i Control Room. Byggs från händelserna som redan strömmar genom agenten. */
+export interface TimelineEntry {
+  id: string;
+  at: number;
+  kind: TimelineKind;
+  text: string;
+  detail?: string;
+}
 
 export interface LogEntry {
   id: string;
@@ -126,6 +185,17 @@ export interface AppState {
   verificationCommands: VerificationCommand[];
   verificationProgress: VerificationCheckResult[];
   verificationRunning: boolean;
+  /** Live-preview: dev-servern eller de statiska filerna, alltid på loopback. */
+  preview: PreviewStatus | null;
+  previewBusy: boolean;
+  /** Control Room: allt som hänt i körningen, i ordning. */
+  timeline: TimelineEntry[];
+  /** Routerns svar för den senaste beställningen, när ingen modell duger. */
+  routerDecision: RouterDecision | null;
+  routerBusy: boolean;
+  pullProgress: PullProgress | null;
+  pullResult: ModelPullResult | null;
+  pullBusy: boolean;
   contextFiles: ContextFile[];
   contextChars: number;
   gitStatus: {
@@ -155,6 +225,23 @@ export interface AppState {
   connectorBusy: string | null;
   connectorMessage: string | null;
 
+  // providers: katalogen över modellkällor och användarens val
+  providers: ProvidersResponse | null;
+  providerMessage: string | null;
+  /** Beställning som kräver en provider som inte är påslagen – visas som en banner i chatten. */
+  providerNotice: {
+    outputType: OutputType;
+    providers: ProviderId[];
+    reason: 'local_only' | 'not_configured';
+  } | null;
+
+  // media: bilder, videor och ljud som agenten skapat i projektet
+  mediaAssets: MediaAsset[];
+  mediaLoading: boolean;
+  mediaError: string | null;
+  /** Media som skapades av en verktygskörning – visas som kort i chatten. */
+  mediaResults: { id: string; at: number; files: string[] }[];
+
   // gränssnitt
   leftOpen: boolean;
   rightOpen: boolean;
@@ -163,6 +250,7 @@ export interface AppState {
   paletteOpen: boolean;
   settingsOpen: boolean;
   skillsOpen: boolean;
+  skillImportOpen: boolean;
   mcpOpen: boolean;
   doctorOpen: boolean;
   memoryOpen: boolean;
@@ -170,6 +258,21 @@ export interface AppState {
   searchResults: string[];
   mode: 'plan' | 'execute';
   treeOpen: boolean;
+
+  // utseende och lägen
+  themeMode: ThemeMode;
+  resolvedTheme: ResolvedTheme;
+  viewMode: ViewMode;
+  qoderMode: boolean;
+  /** Sant när chatten ligger ovanför editorn. */
+  chatFirst: boolean;
+  /** Hur stor del av höjden chatten får (0.2–0.8). */
+  chatShare: number;
+  sideChatOpen: boolean;
+  sideChatSessionId: string | null;
+  sideChatMessages: ChatMessage[];
+  sideChatStreaming: string;
+  sideChatBusy: boolean;
 
   // åtgärder
   bootstrap(): Promise<void>;
@@ -233,6 +336,8 @@ export interface AppState {
   deleteSkill(name: string): Promise<void>;
   exportSkill(name: string): Promise<string>;
   importSkills(contents: string[]): Promise<number>;
+  scanSkillImport(target?: string): Promise<SkillImportScan>;
+  applySkillImport(items: SkillImportApplyItem[]): Promise<SkillImportApplyResult>;
 
   refreshMcp(): Promise<void>;
   saveMcpServers(servers: McpServerConfig[]): Promise<void>;
@@ -243,6 +348,15 @@ export interface AppState {
   connectConnector(id: string, secret: string, accountLabel?: string): Promise<void>;
   disconnectConnector(id: string): Promise<string[]>;
   setConnectorEnabled(id: string, enabled: boolean): Promise<void>;
+
+  refreshProviders(): Promise<void>;
+  setProviderEnabled(id: ProviderId, enabled: boolean): Promise<void>;
+  saveProviderKey(id: ProviderId, key: string): Promise<void>;
+  clearProviderKey(id: ProviderId): Promise<void>;
+  setProviderMediaPreference(kind: MediaKind, providerId: string): Promise<void>;
+  dismissProviderNotice(): void;
+  /** Läser om projektets media-mapp. */
+  loadMedia(): Promise<void>;
 
   refreshMemory(): Promise<void>;
   saveMemory(content: string): Promise<void>;
@@ -258,6 +372,16 @@ export interface AppState {
   runTests(): Promise<void>;
   refreshVerification(): Promise<void>;
   runVerification(kinds?: string[]): Promise<void>;
+  /** Läser av preview-läget utan att starta något. */
+  refreshPreview(): Promise<void>;
+  startPreview(): Promise<void>;
+  stopPreview(): Promise<void>;
+  clearTimeline(): void;
+  /** Frågar routern vad som behövs för en uppgift. Hämtar aldrig något. */
+  checkModelFit(prompt: string): Promise<void>;
+  /** Hämtar modellen i rekommendationen – bara efter ett tryck på knappen. */
+  pullRecommendedModel(): Promise<void>;
+  dismissRouterRecommendation(): void;
   commitAll(message: string): Promise<void>;
   suggestCommitMessage(): Promise<string>;
   runSubagent(kind: string, task: string): Promise<void>;
@@ -271,10 +395,26 @@ export interface AppState {
   setPalette(open: boolean): void;
   setSettingsOpen(open: boolean): void;
   setSkillsOpen(open: boolean): void;
+  setSkillImportOpen(open: boolean): void;
   setMcpOpen(open: boolean): void;
   setDoctorOpen(open: boolean): void;
   setMemoryOpen(open: boolean): void;
   setActiveDiff(id: string): void;
+
+  // utseende, vyläge och qoder
+  setThemeMode(mode: ThemeMode): void;
+  setResolvedTheme(theme: ResolvedTheme): void;
+  setViewMode(mode: ViewMode): void;
+  setQoder(enabled: boolean): void;
+  toggleQoder(): void;
+  setChatFirst(first: boolean): void;
+  setChatShare(share: number): void;
+
+  // sidchatt: en egen session vid sidan av huvudtråden
+  ensureSideChatSession(): Promise<string | null>;
+  toggleSideChat(): Promise<void>;
+  closeSideChat(): void;
+  sendSideChat(prompt: string): Promise<void>;
 }
 
 const LOG_LIMIT = 400;
@@ -283,6 +423,15 @@ const TERMINAL_LIMIT = 2_000;
 /** Byter ut en connector i listan utan att röra ordningen (katalogen äger ordningen). */
 function replaceConnector(connectors: ConnectorView[], view: ConnectorView): ConnectorView[] {
   return connectors.map((entry) => (entry.definition.id === view.definition.id ? view : entry));
+}
+
+function sideChatMessage(role: 'user' | 'assistant', content: string): ChatMessage {
+  return {
+    id: `side-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    role,
+    content,
+    createdAt: Date.now(),
+  };
 }
 
 function logEntry(text: string, level: LogEntry['level'] = 'info'): LogEntry {
@@ -318,263 +467,398 @@ function failureMessage(text: string): ChatMessage {
   };
 }
 
+const TIMELINE_LIMIT = 400;
+
+function timelineEntry(kind: TimelineKind, text: string, detail?: string): TimelineEntry {
+  return {
+    id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    at: Date.now(),
+    kind,
+    text,
+    ...(detail ? { detail } : {}),
+  };
+}
+
+/** Översätter en AgentEvent till en rad i Control Room. Okända händelser ger ingen rad. */
+function timelineFor(event: AgentEvent): TimelineEntry | null {
+  switch (event.type) {
+    case 'run_started':
+      return timelineEntry('run', `Körning startad med ${event.model}`, event.mode);
+    case 'tool_call':
+      return timelineEntry(
+        'tool',
+        `→ ${event.call.name}`,
+        JSON.stringify(event.call.args).slice(0, 240),
+      );
+    case 'tool_result':
+      return timelineEntry(
+        'result',
+        `← ${event.result.name} (${event.result.ok ? 'ok' : 'fel'}, ${event.result.durationMs} ms)`,
+      );
+    case 'approval_request':
+      return timelineEntry('approval', `Godkännande: ${event.request.title}`, event.request.reason);
+    case 'diff':
+      return timelineEntry(
+        'diff',
+        `${event.diff.path} (+${event.diff.additions}/-${event.diff.deletions})`,
+      );
+    case 'verification':
+      return timelineEntry('verify', `Verifiering: ${event.report.summary}`);
+    case 'harness_phase':
+      return timelineEntry('phase', `Fas: ${event.phase}`);
+    case 'harness_preview':
+      return timelineEntry('preview', `Preview: ${event.preview.url ?? 'ingen adress'}`);
+    case 'harness_route':
+      return timelineEntry(
+        'route',
+        event.route
+          ? `Modell: ${event.route.model} (${event.route.reason})`
+          : `Rekommendation: ${event.recommendation?.preview.name ?? 'okänd'}`,
+      );
+    case 'checkpoint':
+      return timelineEntry('checkpoint', `Checkpoint: ${event.checkpoint.label}`);
+    case 'error':
+      return timelineEntry('error', `${event.code}: ${event.message}`);
+    case 'tests':
+      return timelineEntry('verify', `Tester: ${event.passed} gröna, ${event.failed} röda`);
+    case 'run_finished':
+      return timelineEntry('run', `Körning klar (${event.reason})`);
+    default:
+      return null;
+  }
+}
+
 export const useAppStore = create<AppState>((set, get) => {
   /** Hanterar varje AgentEvent från körningen och lägger det på rätt plats i UI:t. */
   function handleEvent(event: AgentEvent): void {
     set((state) => {
-      switch (event.type) {
-        case 'run_started':
-          return {
-            isRunning: true,
-            streamingText: '',
-            reasoningText: '',
-            phase: 'thinking',
-            logs: [
-              ...state.logs,
-              logEntry(`Körning startad med ${event.model} (${event.mode}).`),
-            ].slice(-LOG_LIMIT),
-          };
-        case 'status':
-          return { phase: event.phase };
-        case 'assistant_delta':
-          return { streamingText: state.streamingText + event.text };
-        case 'reasoning_delta':
-          return { reasoningText: state.reasoningText + event.text };
-        case 'plan_proposed':
-          return {
-            plans: [event.plan, ...state.plans.filter((plan) => plan.id !== event.plan.id)],
-            logs: [
-              ...state.logs,
-              logEntry(
-                `Plan framlagd: ${event.plan.title} (${event.plan.steps.length} steg, väntar på beslut).`,
+      const partial = ((): Partial<AppState> => {
+        switch (event.type) {
+          case 'run_started':
+            return {
+              isRunning: true,
+              streamingText: '',
+              reasoningText: '',
+              phase: 'thinking',
+              providerNotice: null,
+              logs: [
+                ...state.logs,
+                logEntry(`Körning startad med ${event.model} (${event.mode}).`),
+              ].slice(-LOG_LIMIT),
+            };
+          case 'status':
+            return { phase: event.phase };
+          case 'assistant_delta':
+            return { streamingText: state.streamingText + event.text };
+          case 'reasoning_delta':
+            return { reasoningText: state.reasoningText + event.text };
+          case 'plan_proposed':
+            return {
+              plans: [event.plan, ...state.plans.filter((plan) => plan.id !== event.plan.id)],
+              logs: [
+                ...state.logs,
+                logEntry(
+                  `Plan framlagd: ${event.plan.title} (${event.plan.steps.length} steg, väntar på beslut).`,
+                ),
+              ].slice(-LOG_LIMIT),
+            };
+          case 'plan_decided':
+            return {
+              plans: state.plans.map((plan) =>
+                plan.id === event.planId
+                  ? { ...plan, status: event.status, decidedAt: Date.now() }
+                  : event.status === 'approved' && plan.status === 'approved'
+                    ? { ...plan, status: 'superseded' as PlanStatus }
+                    : plan,
               ),
-            ].slice(-LOG_LIMIT),
-          };
-        case 'plan_decided':
-          return {
-            plans: state.plans.map((plan) =>
-              plan.id === event.planId
-                ? { ...plan, status: event.status, decidedAt: Date.now() }
-                : event.status === 'approved' && plan.status === 'approved'
-                  ? { ...plan, status: 'superseded' as PlanStatus }
-                  : plan,
-            ),
-            logs: [
-              ...state.logs,
-              logEntry(`Planen ${event.status === 'approved' ? 'godkändes' : 'avvisades'}.`),
-            ].slice(-LOG_LIMIT),
-          };
-        case 'assistant_reset':
-          // Den strömmade texten var ett verktygsanrop, inte ett svar.
-          return { streamingText: '' };
-        case 'assistant_message':
-          return {
-            streamingText: '',
-            reasoningText: '',
-            messages: [
-              ...state.messages,
-              {
-                id: event.messageId,
-                role: 'assistant',
-                content: event.text,
-                createdAt: Date.now(),
-                ...(state.reasoningText ? { reasoning: state.reasoningText } : {}),
+              logs: [
+                ...state.logs,
+                logEntry(`Planen ${event.status === 'approved' ? 'godkändes' : 'avvisades'}.`),
+              ].slice(-LOG_LIMIT),
+            };
+          case 'assistant_reset':
+            // Den strömmade texten var ett verktygsanrop, inte ett svar.
+            return { streamingText: '' };
+          case 'assistant_message':
+            return {
+              streamingText: '',
+              reasoningText: '',
+              messages: [
+                ...state.messages,
+                {
+                  id: event.messageId,
+                  role: 'assistant',
+                  content: event.text,
+                  createdAt: Date.now(),
+                  ...(state.reasoningText ? { reasoning: state.reasoningText } : {}),
+                },
+              ],
+            };
+          case 'tool_call':
+            return {
+              logs: [
+                ...state.logs,
+                logEntry(`→ ${event.call.name} ${JSON.stringify(event.call.args).slice(0, 300)}`),
+              ].slice(-LOG_LIMIT),
+            };
+          case 'tool_result': {
+            // Medieverktygen returnerar filerna i `data.files`; de ska synas i chatten direkt.
+            const rawFiles = event.result.data?.files;
+            const files = Array.isArray(rawFiles)
+              ? rawFiles.filter((entry): entry is string => typeof entry === 'string')
+              : [];
+            return {
+              logs: [
+                ...state.logs,
+                logEntry(
+                  `← ${event.result.name} (${event.result.durationMs} ms, ${event.result.ok ? 'ok' : 'fel'})`,
+                  event.result.ok ? 'info' : 'warn',
+                ),
+              ].slice(-LOG_LIMIT),
+              ...(files.length > 0
+                ? {
+                    mediaResults: [
+                      ...state.mediaResults,
+                      { id: event.result.callId, at: Date.now(), files },
+                    ].slice(-20),
+                  }
+                : {}),
+            };
+          }
+          case 'context':
+            return {
+              contextFiles: event.files,
+              contextChars: event.chars,
+              filesInContext: event.files.map((file) => file.path),
+              logs: [
+                ...state.logs,
+                logEntry(`Kontext: ${event.files.length} filer, ${event.chars} tecken.`),
+              ].slice(-LOG_LIMIT),
+            };
+          case 'diff':
+            return {
+              diffs: [event.diff, ...state.diffs.filter((diff) => diff.id !== event.diff.id)].slice(
+                0,
+                40,
+              ),
+              activeDiffId: event.diff.id,
+              rightTab: 'diff',
+              rightOpen: true,
+            };
+          case 'file_changed': {
+            const editorFile = state.editorFile?.path === event.path ? null : state.editorFile;
+            return {
+              editorFile,
+              logs: [
+                ...state.logs,
+                logEntry(
+                  `${event.kind === 'delete' ? 'Tog bort' : event.kind === 'create' ? 'Skapade' : 'Ändrade'} ${event.path}`,
+                ),
+              ].slice(-LOG_LIMIT),
+            };
+          }
+          case 'terminal':
+            return {
+              terminal: [
+                ...state.terminal,
+                {
+                  id: `${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+                  stream: event.chunk.stream,
+                  text: event.chunk.text,
+                },
+              ].slice(-TERMINAL_LIMIT),
+            };
+          case 'approval_request':
+            return {
+              approvals: [event.request, ...state.approvals],
+              rightTab: 'approvals',
+              rightOpen: true,
+            };
+          case 'approval_resolved':
+            return {
+              approvals: state.approvals.filter((approval) => approval.id !== event.approvalId),
+            };
+          case 'subagent':
+            return {
+              subagents: [
+                event.subagent,
+                ...state.subagents.filter((entry) => entry.id !== event.subagent.id),
+              ].slice(0, 20),
+            };
+          case 'verification_started':
+            return {
+              verificationRunning: true,
+              verificationProgress: [],
+              logs: [
+                ...state.logs,
+                logEntry(
+                  `Verifiering startad (${event.trigger}): ${event.commands.map((command) => command.label).join(', ') || 'inga steg'}.`,
+                ),
+              ].slice(-LOG_LIMIT),
+            };
+          case 'verification_check':
+            return {
+              verificationProgress: [
+                ...state.verificationProgress.filter((check) => check.id !== event.check.id),
+                event.check,
+              ],
+              logs: [
+                ...state.logs,
+                logEntry(
+                  `${event.check.label}: ${event.check.status} (${event.check.durationMs} ms)`,
+                  event.check.status === 'passed' ? 'info' : 'warn',
+                ),
+              ].slice(-LOG_LIMIT),
+            };
+          case 'verification':
+            return {
+              verification: event.report,
+              verificationRunning: false,
+              verificationProgress: [],
+              // Panelen öppnas bara när något är rött – ett grönt resultat ska inte stjäla fokus.
+              ...(event.report.status === 'failed'
+                ? { rightTab: 'verify' as RightTab, rightOpen: true }
+                : {}),
+              logs: [
+                ...state.logs,
+                logEntry(
+                  `Verifiering: ${event.report.summary}`,
+                  event.report.status === 'failed' ? 'warn' : 'info',
+                ),
+              ].slice(-LOG_LIMIT),
+            };
+          case 'harness_phase':
+            return {
+              phase:
+                event.phase === 'gather'
+                  ? 'building-context'
+                  : event.phase === 'verify'
+                    ? 'testing'
+                    : event.phase === 'deliver'
+                      ? 'done'
+                      : 'thinking',
+            };
+          case 'harness_preview':
+            return {
+              preview: event.preview,
+              // Resultatet ska synas direkt, utan att användaren letar reda på fliken.
+              centerTab: 'preview' as CenterTab,
+              logs: [
+                ...state.logs,
+                logEntry(
+                  `Preview: ${event.preview.url ?? 'ingen adress'} (${event.preview.kind ?? 'okänd'})`,
+                ),
+              ].slice(-LOG_LIMIT),
+            };
+          case 'harness_route':
+            return {
+              logs: [
+                ...state.logs,
+                logEntry(
+                  event.route
+                    ? `Router: ${event.route.model} (${event.route.reason}).`
+                    : `Router: ingen modell duger (${
+                        event.recommendation?.preview.name ?? 'okänd'
+                      } rekommenderas).`,
+                ),
+              ].slice(-LOG_LIMIT),
+            };
+          case 'tests':
+            return {
+              testResult: {
+                command: event.command,
+                passed: event.passed,
+                failed: event.failed,
+                output: event.output,
               },
-            ],
-          };
-        case 'tool_call':
-          return {
-            logs: [
-              ...state.logs,
-              logEntry(`→ ${event.call.name} ${JSON.stringify(event.call.args).slice(0, 300)}`),
-            ].slice(-LOG_LIMIT),
-          };
-        case 'tool_result':
-          return {
-            logs: [
-              ...state.logs,
-              logEntry(
-                `← ${event.result.name} (${event.result.durationMs} ms, ${event.result.ok ? 'ok' : 'fel'})`,
-                event.result.ok ? 'info' : 'warn',
-              ),
-            ].slice(-LOG_LIMIT),
-          };
-        case 'context':
-          return {
-            contextFiles: event.files,
-            contextChars: event.chars,
-            filesInContext: event.files.map((file) => file.path),
-            logs: [
-              ...state.logs,
-              logEntry(`Kontext: ${event.files.length} filer, ${event.chars} tecken.`),
-            ].slice(-LOG_LIMIT),
-          };
-        case 'diff':
-          return {
-            diffs: [event.diff, ...state.diffs.filter((diff) => diff.id !== event.diff.id)].slice(
-              0,
-              40,
-            ),
-            activeDiffId: event.diff.id,
-            rightTab: 'diff',
-            rightOpen: true,
-          };
-        case 'file_changed': {
-          const editorFile = state.editorFile?.path === event.path ? null : state.editorFile;
-          return {
-            editorFile,
-            logs: [
-              ...state.logs,
-              logEntry(
-                `${event.kind === 'delete' ? 'Tog bort' : event.kind === 'create' ? 'Skapade' : 'Ändrade'} ${event.path}`,
-              ),
-            ].slice(-LOG_LIMIT),
-          };
-        }
-        case 'terminal':
-          return {
-            terminal: [
-              ...state.terminal,
-              {
-                id: `${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-                stream: event.chunk.stream,
-                text: event.chunk.text,
+              rightTab: 'tests',
+              logs: [
+                ...state.logs,
+                logEntry(
+                  `Tester: ${event.passed} godkända, ${event.failed} underkända.`,
+                  event.failed > 0 ? 'warn' : 'info',
+                ),
+              ].slice(-LOG_LIMIT),
+            };
+          case 'git':
+            return {
+              gitStatus: {
+                branch: event.branch,
+                files: event.files,
+                ahead: event.ahead ?? 0,
+                behind: event.behind ?? 0,
               },
-            ].slice(-TERMINAL_LIMIT),
-          };
-        case 'approval_request':
-          return {
-            approvals: [event.request, ...state.approvals],
-            rightTab: 'approvals',
-            rightOpen: true,
-          };
-        case 'approval_resolved':
-          return {
-            approvals: state.approvals.filter((approval) => approval.id !== event.approvalId),
-          };
-        case 'subagent':
-          return {
-            subagents: [
-              event.subagent,
-              ...state.subagents.filter((entry) => entry.id !== event.subagent.id),
-            ].slice(0, 20),
-          };
-        case 'verification_started':
-          return {
-            verificationRunning: true,
-            verificationProgress: [],
-            logs: [
-              ...state.logs,
-              logEntry(
-                `Verifiering startad (${event.trigger}): ${event.commands.map((command) => command.label).join(', ') || 'inga steg'}.`,
+            };
+          case 'checkpoint':
+            return {
+              checkpoints: [
+                event.checkpoint,
+                ...state.checkpoints.filter((entry) => entry.id !== event.checkpoint.id),
+              ].sort((a, b) => b.createdAt - a.createdAt),
+            };
+          case 'usage':
+            return state;
+          case 'hook':
+            return {
+              logs: [
+                ...state.logs,
+                logEntry(`Hook ${event.hook.name}: ${event.hook.blocked ? 'blockerade' : 'körde'}`),
+              ].slice(-LOG_LIMIT),
+            };
+          case 'error': {
+            const visible = FATAL_ERROR_CODES.has(event.code)
+              ? [failureMessage(`${event.message}${event.detail ? `\n\n${event.detail}` : ''}`)]
+              : [];
+            return {
+              logs: [...state.logs, logEntry(`${event.code}: ${event.message}`, 'error')].slice(
+                -LOG_LIMIT,
               ),
-            ].slice(-LOG_LIMIT),
-          };
-        case 'verification_check':
-          return {
-            verificationProgress: [
-              ...state.verificationProgress.filter((check) => check.id !== event.check.id),
-              event.check,
-            ],
-            logs: [
-              ...state.logs,
-              logEntry(
-                `${event.check.label}: ${event.check.status} (${event.check.durationMs} ms)`,
-                event.check.status === 'passed' ? 'info' : 'warn',
+              ...(visible.length > 0 ? { messages: [...state.messages, ...visible] } : {}),
+              phase: event.code === 'ollama_unavailable' ? 'idle' : state.phase,
+              agentHelpUrl:
+                event.code === 'ollama_unavailable'
+                  ? (state.agentHelpUrl ?? 'https://freevobe.dev/docs/ollama')
+                  : state.agentHelpUrl,
+            };
+          }
+          case 'provider_required':
+            return {
+              isRunning: false,
+              streamingText: '',
+              phase: 'idle',
+              providerNotice: {
+                outputType: event.outputType,
+                providers: event.providers,
+                reason: event.reason,
+              },
+              logs: [
+                ...state.logs,
+                logEntry(`Provider krävs för ${event.outputType} (${event.reason}).`),
+              ].slice(-LOG_LIMIT),
+            };
+          case 'run_finished':
+            return {
+              isRunning: false,
+              streamingText: '',
+              phase: event.reason === 'final' ? 'done' : 'idle',
+              logs: [...state.logs, logEntry(`Körning avslutad (${event.reason}).`)].slice(
+                -LOG_LIMIT,
               ),
-            ].slice(-LOG_LIMIT),
-          };
-        case 'verification':
-          return {
-            verification: event.report,
-            verificationRunning: false,
-            verificationProgress: [],
-            // Panelen öppnas bara när något är rött – ett grönt resultat ska inte stjäla fokus.
-            ...(event.report.status === 'failed'
-              ? { rightTab: 'verify' as RightTab, rightOpen: true }
-              : {}),
-            logs: [
-              ...state.logs,
-              logEntry(
-                `Verifiering: ${event.report.summary}`,
-                event.report.status === 'failed' ? 'warn' : 'info',
-              ),
-            ].slice(-LOG_LIMIT),
-          };
-        case 'tests':
-          return {
-            testResult: {
-              command: event.command,
-              passed: event.passed,
-              failed: event.failed,
-              output: event.output,
-            },
-            rightTab: 'tests',
-            logs: [
-              ...state.logs,
-              logEntry(
-                `Tester: ${event.passed} godkända, ${event.failed} underkända.`,
-                event.failed > 0 ? 'warn' : 'info',
-              ),
-            ].slice(-LOG_LIMIT),
-          };
-        case 'git':
-          return {
-            gitStatus: {
-              branch: event.branch,
-              files: event.files,
-              ahead: event.ahead ?? 0,
-              behind: event.behind ?? 0,
-            },
-          };
-        case 'checkpoint':
-          return {
-            checkpoints: [
-              event.checkpoint,
-              ...state.checkpoints.filter((entry) => entry.id !== event.checkpoint.id),
-            ].sort((a, b) => b.createdAt - a.createdAt),
-          };
-        case 'usage':
-          return state;
-        case 'hook':
-          return {
-            logs: [
-              ...state.logs,
-              logEntry(`Hook ${event.hook.name}: ${event.hook.blocked ? 'blockerade' : 'körde'}`),
-            ].slice(-LOG_LIMIT),
-          };
-        case 'error': {
-          const visible = FATAL_ERROR_CODES.has(event.code)
-            ? [failureMessage(`${event.message}${event.detail ? `\n\n${event.detail}` : ''}`)]
-            : [];
-          return {
-            logs: [...state.logs, logEntry(`${event.code}: ${event.message}`, 'error')].slice(
-              -LOG_LIMIT,
-            ),
-            ...(visible.length > 0 ? { messages: [...state.messages, ...visible] } : {}),
-            phase: event.code === 'ollama_unavailable' ? 'idle' : state.phase,
-            agentHelpUrl:
-              event.code === 'ollama_unavailable'
-                ? (state.agentHelpUrl ?? 'https://freevobe.dev/docs/ollama')
-                : state.agentHelpUrl,
-          };
+            };
+          default:
+            return state;
         }
-        case 'run_finished':
-          return {
-            isRunning: false,
-            streamingText: '',
-            phase: event.reason === 'final' ? 'done' : 'idle',
-            logs: [...state.logs, logEntry(`Körning avslutad (${event.reason}).`)].slice(
-              -LOG_LIMIT,
-            ),
-          };
-        default:
-          return state;
-      }
+      })();
+      const entry = timelineFor(event);
+      return entry
+        ? { ...partial, timeline: [...state.timeline, entry].slice(-TIMELINE_LIMIT) }
+        : partial;
     });
   }
 
   const ONBOARDING_KEY = 'freevobe.onboardingComplete';
+  // Panelayouten läses en gång vid start; sedan äger storen värdet och sparar varje ändring.
+  const paneLayout = readPaneLayout();
 
   return {
     connection: null,
@@ -583,7 +867,7 @@ export const useAppStore = create<AppState>((set, get) => {
     connectionError: null,
     agentHelpUrl: null,
 
-    onboardingComplete: window.localStorage.getItem(ONBOARDING_KEY) === '1',
+    onboardingComplete: readStorage(ONBOARDING_KEY) === '1',
     onboardingStep: 0,
     consentLocalData: false,
     consentGivesBack: false,
@@ -623,6 +907,14 @@ export const useAppStore = create<AppState>((set, get) => {
     verificationCommands: [],
     verificationProgress: [],
     verificationRunning: false,
+    preview: null,
+    previewBusy: false,
+    timeline: [],
+    routerDecision: null,
+    routerBusy: false,
+    pullProgress: null,
+    pullResult: null,
+    pullBusy: false,
     contextFiles: [],
     contextChars: 0,
     gitStatus: null,
@@ -642,6 +934,13 @@ export const useAppStore = create<AppState>((set, get) => {
     connectorStorage: null,
     connectorBusy: null,
     connectorMessage: null,
+    providers: null,
+    providerMessage: null,
+    mediaAssets: [],
+    mediaLoading: false,
+    mediaError: null,
+    mediaResults: [],
+    providerNotice: null,
 
     leftOpen: true,
     rightOpen: true,
@@ -650,6 +949,7 @@ export const useAppStore = create<AppState>((set, get) => {
     paletteOpen: false,
     settingsOpen: false,
     skillsOpen: false,
+    skillImportOpen: false,
     mcpOpen: false,
     doctorOpen: false,
     memoryOpen: false,
@@ -657,6 +957,17 @@ export const useAppStore = create<AppState>((set, get) => {
     searchResults: [],
     mode: 'execute',
     treeOpen: true,
+    themeMode: readThemeMode(),
+    resolvedTheme: 'dark',
+    viewMode: readViewMode(),
+    qoderMode: readQoderMode(),
+    chatFirst: paneLayout.chatFirst,
+    chatShare: paneLayout.chatShare,
+    sideChatOpen: false,
+    sideChatSessionId: null,
+    sideChatMessages: [],
+    sideChatStreaming: '',
+    sideChatBusy: false,
 
     async bootstrap() {
       await get().connect();
@@ -747,7 +1058,7 @@ export const useAppStore = create<AppState>((set, get) => {
     },
 
     finishOnboarding() {
-      window.localStorage.setItem(ONBOARDING_KEY, '1');
+      writeStorage(ONBOARDING_KEY, '1');
       set({ onboardingComplete: true });
     },
 
@@ -840,6 +1151,7 @@ export const useAppStore = create<AppState>((set, get) => {
           get().refreshGit(),
           get().refreshCheckpoints(),
           get().refreshVerification(),
+          get().refreshPreview(),
         ]);
       } catch (error) {
         set({ logs: [...get().logs, logEntry(String(error), 'error')].slice(-LOG_LIMIT) });
@@ -1003,7 +1315,9 @@ export const useAppStore = create<AppState>((set, get) => {
         set({
           messages: [
             ...get().messages,
-            failureMessage('Ingen anslutning till agenten. Starta om appen så försöker den ansluta igen.'),
+            failureMessage(
+              'Ingen anslutning till agenten. Starta om appen så försöker den ansluta igen.',
+            ),
           ],
         });
         return;
@@ -1036,6 +1350,11 @@ export const useAppStore = create<AppState>((set, get) => {
         phase: 'thinking',
         logs: [...get().logs, logEntry(`Du: ${prompt.slice(0, 200)}`)].slice(-LOG_LIMIT),
       });
+
+      // Saknar den valda modellen verktygsstöd är det ingen idé att köra först och fråga sedan:
+      // routern får svara direkt, och kortet visar vad som bör hämtas.
+      const chosen = get().models.find((model) => model.name === get().selectedModel);
+      if (!chosen || !chosen.supportsTools) void get().checkModelFit(prompt);
 
       try {
         const started = await client.post<{ runId: string }>('/api/chat', {
@@ -1155,6 +1474,8 @@ export const useAppStore = create<AppState>((set, get) => {
       set({ searchResults: matches, centerTab: 'search' });
     },
 
+    setSkillImportOpen: (open) => set({ skillImportOpen: open }),
+
     async refreshSkills() {
       const { client, project } = get();
       if (!client || !project) return;
@@ -1189,6 +1510,25 @@ export const useAppStore = create<AppState>((set, get) => {
         `/api/projects/${project.id}/skills/${encodeURIComponent(name)}/export`,
       );
       return payload.markdown;
+    },
+
+    async scanSkillImport(target) {
+      const { client, project } = get();
+      if (!client || !project) throw new Error('Inget projekt är öppet.');
+      return client.post<SkillImportScan>(`/api/projects/${project.id}/skills/import/scan`, {
+        ...(target && target.trim() !== '' ? { target: target.trim() } : {}),
+      });
+    },
+
+    async applySkillImport(items) {
+      const { client, project } = get();
+      if (!client || !project) throw new Error('Inget projekt är öppet.');
+      const payload = await client.post<SkillImportApplyResult>(
+        `/api/projects/${project.id}/skills/import/apply`,
+        { items },
+      );
+      await get().refreshSkills();
+      return payload;
     },
 
     async importSkills(contents) {
@@ -1311,6 +1651,88 @@ export const useAppStore = create<AppState>((set, get) => {
         });
       } finally {
         set({ connectorBusy: null });
+      }
+    },
+
+    dismissProviderNotice() {
+      set({ providerNotice: null });
+    },
+
+    async refreshProviders() {
+      const { client } = get();
+      if (!client) return;
+      try {
+        set({ providers: await client.get<ProvidersResponse>('/api/providers') });
+      } catch (error) {
+        set({ logs: [...get().logs, logEntry(String(error), 'error')].slice(-LOG_LIMIT) });
+      }
+    },
+
+    async setProviderEnabled(id, enabled) {
+      const { client } = get();
+      if (!client) return;
+      try {
+        set({
+          providers: await client.patch<ProvidersResponse>(`/api/providers/${id}`, { enabled }),
+        });
+      } catch (error) {
+        set({ providerMessage: String(error) });
+      }
+    },
+
+    async saveProviderKey(id, key) {
+      const { client } = get();
+      if (!client) return;
+      try {
+        await client.post<{ hint: string }>(`/api/providers/${id}/key`, { key });
+        await get().refreshProviders();
+        set({ providerMessage: i18n.t('settings.providers.keySaved') });
+      } catch (error) {
+        set({ providerMessage: String(error) });
+      }
+    },
+
+    async clearProviderKey(id) {
+      const { client } = get();
+      if (!client) return;
+      try {
+        await client.del<{ cleared: boolean }>(`/api/providers/${id}/key`);
+        await get().refreshProviders();
+        set({ providerMessage: i18n.t('settings.providers.keyCleared') });
+      } catch (error) {
+        set({ providerMessage: String(error) });
+      }
+    },
+
+    async setProviderMediaPreference(kind, providerId) {
+      const { client } = get();
+      if (!client) return;
+      try {
+        set({
+          providers: await client.patch<ProvidersResponse>('/api/providers/preferences', {
+            kind,
+            providerId,
+          }),
+        });
+      } catch (error) {
+        set({ providerMessage: String(error) });
+      }
+    },
+
+    async loadMedia() {
+      const { client, project } = get();
+      if (!client || !project) {
+        set({ mediaAssets: [], mediaLoading: false, mediaError: null });
+        return;
+      }
+      set({ mediaLoading: true, mediaError: null });
+      try {
+        const library = await client.get<MediaLibraryResponse>(
+          `/api/projects/${encodeURIComponent(project.id)}/media`,
+        );
+        set({ mediaAssets: library.assets, mediaLoading: false });
+      } catch (error) {
+        set({ mediaLoading: false, mediaError: String(error) });
       }
     },
 
@@ -1561,6 +1983,160 @@ export const useAppStore = create<AppState>((set, get) => {
       }
     },
 
+    async refreshPreview() {
+      const { client, project } = get();
+      if (!client || !project) return;
+      try {
+        set({ preview: await client.get<PreviewStatus>(`/api/projects/${project.id}/preview`) });
+      } catch {
+        // Ingen preview är inget fel: projektet kan sakna dev-server.
+      }
+    },
+
+    async startPreview() {
+      const { client, project } = get();
+      if (!client || !project) return;
+      set({ previewBusy: true });
+      try {
+        const payload = await client.post<{ preview: PreviewStatus }>(
+          `/api/projects/${project.id}/preview`,
+        );
+        set({
+          preview: payload.preview,
+          centerTab: 'preview',
+          previewBusy: false,
+          logs: [
+            ...get().logs,
+            logEntry(`Preview startad på ${payload.preview.url ?? 'okänd adress'}.`),
+          ].slice(-LOG_LIMIT),
+        });
+      } catch (error) {
+        set({
+          previewBusy: false,
+          messages: [
+            ...get().messages,
+            failureMessage(`Kunde inte starta preview: ${String(error)}`),
+          ],
+          logs: [...get().logs, logEntry(String(error), 'error')].slice(-LOG_LIMIT),
+        });
+      }
+    },
+
+    async stopPreview() {
+      const { client, project } = get();
+      if (!client || !project) return;
+      try {
+        await client.del(`/api/projects/${project.id}/preview`);
+      } finally {
+        set({
+          preview: null,
+          logs: [...get().logs, logEntry('Preview stoppad.')].slice(-LOG_LIMIT),
+        });
+      }
+    },
+
+    clearTimeline() {
+      set({ timeline: [] });
+    },
+
+    async checkModelFit(prompt) {
+      const { client } = get();
+      if (!client) return;
+      set({ routerBusy: true });
+      try {
+        const decision = await client.get<RouterDecision>(
+          `/api/router?prompt=${encodeURIComponent(prompt)}`,
+        );
+        set({
+          routerDecision: decision,
+          routerBusy: false,
+          pullProgress: null,
+          pullResult: null,
+          logs: [
+            ...get().logs,
+            logEntry(
+              decision.ok
+                ? `Router: ${decision.route?.model ?? 'okänd'} (${decision.route?.reason ?? ''}).`
+                : `Router: ingen modell duger – ${decision.recommendation?.preview.name ?? 'okänd'} rekommenderas.`,
+            ),
+          ].slice(-LOG_LIMIT),
+        });
+      } catch (error) {
+        set({
+          routerBusy: false,
+          logs: [...get().logs, logEntry(`Router: ${String(error)}`, 'error')].slice(-LOG_LIMIT),
+        });
+      }
+    },
+
+    async pullRecommendedModel() {
+      const { client, routerDecision } = get();
+      const recommendation = routerDecision?.recommendation;
+      if (!client || !recommendation) return;
+
+      set({ pullBusy: true, pullProgress: null, pullResult: null });
+      try {
+        await client.streamPost(
+          '/api/models/pull',
+          {
+            model: recommendation.preview.name,
+            // Knappen är det uttryckliga ja som servern kräver.
+            approved: true,
+            ...(recommendation.preview.checksum
+              ? { expectedDigest: recommendation.preview.checksum }
+              : {}),
+          },
+          (name, data) => {
+            if (name === 'progress') {
+              set({ pullProgress: data as PullProgress });
+              return;
+            }
+            if (name === 'done') {
+              const result = data as ModelPullResult;
+              set({
+                pullResult: result,
+                pullBusy: false,
+                timeline: [
+                  ...get().timeline,
+                  timelineEntry(
+                    'pull',
+                    `Modell hämtad: ${result.model} (${result.verification.status})`,
+                  ),
+                ].slice(-TIMELINE_LIMIT),
+              });
+              if (result.ok && result.verification.status !== 'mismatch') {
+                get().selectModel(result.model);
+                set({
+                  logs: [
+                    ...get().logs,
+                    logEntry(`Modellen ${result.model} är klar att använda.`),
+                  ].slice(-LOG_LIMIT),
+                });
+              }
+              return;
+            }
+            if (name === 'error') {
+              const message = (data as { message?: string }).message ?? 'Hämtningen misslyckades.';
+              set({
+                pullBusy: false,
+                logs: [...get().logs, logEntry(message, 'error')].slice(-LOG_LIMIT),
+              });
+            }
+          },
+        );
+        set({ pullBusy: false });
+      } catch (error) {
+        set({
+          pullBusy: false,
+          logs: [...get().logs, logEntry(String(error), 'error')].slice(-LOG_LIMIT),
+        });
+      }
+    },
+
+    dismissRouterRecommendation() {
+      set({ routerDecision: null, pullProgress: null, pullResult: null });
+    },
+
     async commitAll(message) {
       const { client, project } = get();
       if (!client || !project) return;
@@ -1639,6 +2215,149 @@ export const useAppStore = create<AppState>((set, get) => {
 
     clearTerminal() {
       set({ terminal: [] });
+    },
+
+    setThemeMode(mode) {
+      saveThemeMode(mode);
+      set({
+        themeMode: mode,
+        resolvedTheme: mode === 'system' ? (systemPrefersDark() ? 'dark' : 'light') : mode,
+      });
+    },
+
+    setResolvedTheme(theme) {
+      if (get().resolvedTheme !== theme) set({ resolvedTheme: theme });
+    },
+
+    setViewMode(mode) {
+      saveViewMode(mode);
+      set({ viewMode: mode });
+    },
+
+    setQoder(enabled) {
+      saveQoderMode(enabled);
+      set({ qoderMode: enabled });
+    },
+
+    toggleQoder() {
+      get().setQoder(!get().qoderMode);
+    },
+
+    setChatFirst(first) {
+      savePaneLayout({ chatFirst: first, chatShare: get().chatShare });
+      set({ chatFirst: first });
+    },
+
+    setChatShare(share) {
+      const next = clampShare(share);
+      savePaneLayout({ chatFirst: get().chatFirst, chatShare: next });
+      set({ chatShare: next });
+    },
+
+    async ensureSideChatSession() {
+      const { client, project } = get();
+      if (!client || !project) return null;
+      const existing = get().sideChatSessionId;
+      if (existing) return existing;
+      try {
+        const session = await client.post<Session>('/api/sessions', {
+          projectId: project.id,
+          title: 'Side chat',
+          model: get().selectedModel,
+          mode: get().mode,
+        });
+        set({ sideChatSessionId: session.id, sideChatMessages: [] });
+        return session.id;
+      } catch (error) {
+        set({
+          logs: [...get().logs, logEntry(`Sidchatt: ${String(error)}`, 'error')].slice(-LOG_LIMIT),
+        });
+        return null;
+      }
+    },
+
+    async toggleSideChat() {
+      const open = !get().sideChatOpen;
+      set({ sideChatOpen: open });
+      if (open) await get().ensureSideChatSession();
+    },
+
+    closeSideChat() {
+      set({ sideChatOpen: false });
+    },
+
+    async sendSideChat(prompt) {
+      const { client } = get();
+      if (!client || get().sideChatBusy) return;
+      const sessionId = get().sideChatSessionId ?? (await get().ensureSideChatSession());
+      if (!sessionId) return;
+
+      set({
+        sideChatMessages: [...get().sideChatMessages, sideChatMessage('user', prompt)],
+        sideChatStreaming: '',
+        sideChatBusy: true,
+      });
+      try {
+        const started = await client.post<{ runId: string }>('/api/chat', {
+          sessionId,
+          prompt,
+          model: get().selectedModel,
+          mode: get().mode,
+          permissionMode: get().permissionMode,
+          pinnedFiles: get().pinnedFiles,
+        });
+        const unsubscribe = client.subscribe(
+          started.runId,
+          (event) => {
+            if (event.type === 'approval_request') {
+              handleEvent(event);
+              return;
+            }
+            if (event.type === 'assistant_delta') {
+              set({ sideChatStreaming: get().sideChatStreaming + event.text });
+              return;
+            }
+            if (event.type === 'assistant_message') {
+              set({
+                sideChatMessages: [
+                  ...get().sideChatMessages,
+                  {
+                    ...sideChatMessage('assistant', event.text),
+                    id: event.messageId,
+                    model: get().selectedModel,
+                  },
+                ],
+                sideChatStreaming: '',
+              });
+              return;
+            }
+            if (event.type === 'error') {
+              set({
+                sideChatMessages: [
+                  ...get().sideChatMessages,
+                  sideChatMessage('assistant', `${event.code}: ${event.message}`),
+                ],
+                sideChatStreaming: '',
+              });
+              return;
+            }
+            if (event.type === 'run_finished') {
+              unsubscribe();
+              set({ sideChatBusy: false, sideChatStreaming: '' });
+            }
+          },
+          () => set({ sideChatBusy: false }),
+        );
+      } catch (error) {
+        set({
+          sideChatBusy: false,
+          sideChatStreaming: '',
+          sideChatMessages: [
+            ...get().sideChatMessages,
+            sideChatMessage('assistant', String(error)),
+          ],
+        });
+      }
     },
 
     toggleLeft() {

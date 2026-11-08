@@ -1,7 +1,12 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { DEFAULT_AUTO_APPROVE, GIVES_BACK_CAUSES, causeForPrompt } from '@freevobe/protocol';
+import {
+  DEFAULT_AUTO_APPROVE,
+  DEFAULT_PROVIDER_PREFERENCES,
+  GIVES_BACK_CAUSES,
+  causeForPrompt,
+} from '@freevobe/protocol';
 import type { AppSettings } from '@freevobe/protocol';
 import { GivesBackCard } from './GivesBackCard';
 import { useAppStore } from '../../store/appStore';
@@ -17,6 +22,11 @@ function settingsWith(givesBack: Partial<AppSettings['givesBack']> = {}): AppSet
     maxIterations: 12,
     telemetry: false,
     allowCloudServices: false,
+    providers: {
+      ...DEFAULT_PROVIDER_PREFERENCES,
+      enabled: { ...DEFAULT_PROVIDER_PREFERENCES.enabled },
+    },
+    mediaDailyBudgetUsd: 0,
     givesBack: { enabled: true, everyNPrompts: 10, causeIds: [], ...givesBack },
     browserAutomationEnabled: false,
     verifyAfterRun: true,

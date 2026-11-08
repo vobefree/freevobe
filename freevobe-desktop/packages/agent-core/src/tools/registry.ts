@@ -146,4 +146,12 @@ export const BUILTIN_TOOL_NAMES = [
   'ask_user',
   'propose_plan',
   'run_verification',
+  'generate_image',
+  'generate_video',
+  'generate_audio',
+  'analyze_image',
+  'analyze_video',
+  'todo_write',
+  'run_subagent',
+  'preview_check',
 ] as const;

@@ -7,7 +7,9 @@ import { TerminalPane } from './TerminalPane';
 import { ApprovalPane } from './ApprovalPane';
 import { CheckpointsPane } from './CheckpointsPane';
 import { VerificationPane } from './VerificationPane';
+import { MediaPane } from './MediaPane';
 import { GivesBackPane } from '../gives-back/GivesBackPane';
+import { ControlRoomPane } from './ControlRoomPane';
 import { clockTime } from '../../lib/format';
 
 function LogsPane() {
@@ -195,6 +197,7 @@ export function RightPanel() {
   const mcpServers = useAppStore((state) => state.mcpServers);
   const testResult = useAppStore((state) => state.testResult);
   const verification = useAppStore((state) => state.verification);
+  const mediaAssets = useAppStore((state) => state.mediaAssets);
   const openCheckpoints = useAppStore(
     (state) => state.checkpoints.filter((checkpoint) => checkpoint.status === 'open').length,
   );
@@ -219,8 +222,10 @@ export function RightPanel() {
             },
             { id: 'approvals', label: t('rightPanel.tab.approvals'), badge: approvals.length },
             { id: 'checkpoints', label: t('rightPanel.tab.checkpoints'), badge: openCheckpoints },
+            { id: 'control', label: t('rightPanel.tab.control') },
             { id: 'mcp', label: t('rightPanel.tab.mcp'), badge: mcpServers.length },
             { id: 'gives', label: t('rightPanel.tab.gives') },
+            { id: 'media', label: t('rightPanel.tab.media'), badge: mediaAssets.length },
           ]}
           active={rightTab}
           onChange={setRightTab}
@@ -234,8 +239,10 @@ export function RightPanel() {
         {rightTab === 'verify' ? <VerificationPane /> : null}
         {rightTab === 'approvals' ? <ApprovalPane /> : null}
         {rightTab === 'checkpoints' ? <CheckpointsPane /> : null}
+        {rightTab === 'control' ? <ControlRoomPane /> : null}
         {rightTab === 'mcp' ? <McpPane /> : null}
         {rightTab === 'gives' ? <GivesBackPane /> : null}
+        {rightTab === 'media' ? <MediaPane /> : null}
       </div>
     </div>
   );

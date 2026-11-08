@@ -37,12 +37,14 @@ triggers:
 ### Medföljande skills
 
 `react-component`, `nextjs-page`, `api-endpoint`, `python-script`, `bug-fix`, `test-writing`, `code-review`,
-`refactoring`, `documentation`, `database-migration`.
+`refactoring`, `documentation`, `database-migration`, `media-flows`.
 
 ### Importera och exportera
 
 - **Exportera**: öppna Skills-dialogen, välj en skill och tryck _Exportera vald_ – hela Markdown-filen hamnar i urklipp.
 - **Importera**: klistra in Markdown med frontmatter i textfältet och tryck _Importera till projektet_.
+- **Importera från andra agenter**: agenten känner igen skills och regler från Claude, Cursor, AGENTS.md,
+  Copilot m.fl. Se [Importera skills från andra agenter](skills-import.md).
 - Skillfiler är vanliga filer i ditt repo: granska dem i en pull request och versionshantera dem med git.
 
 ## Projektregler

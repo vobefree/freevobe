@@ -17,12 +17,15 @@ import {
   DEFAULT_AUTO_APPROVE,
   DEFAULT_CONTEXT_BUDGET_CHARS,
   DEFAULT_MAX_ITERATIONS,
+  DEFAULT_MEDIA_DAILY_BUDGET_USD,
   DEFAULT_MODEL,
   DEFAULT_OLLAMA_URL,
+  DEFAULT_PROVIDER_PREFERENCES,
   GIVES_BACK_INTERVAL_PROMPTS,
   MAX_CONTRIBUTION_NOTE_CHARS,
   findCause,
   isValidAmountSek,
+  resolveProviderPreferences,
   summarizeContributions,
 } from '@freevobe/protocol';
 import { createId } from '../util/ids.js';
@@ -46,6 +49,11 @@ export const DEFAULT_SETTINGS: AppSettings = {
   },
   browserAutomationEnabled: false,
   verifyAfterRun: true,
+  providers: {
+    ...DEFAULT_PROVIDER_PREFERENCES,
+    enabled: { ...DEFAULT_PROVIDER_PREFERENCES.enabled },
+  },
+  mediaDailyBudgetUsd: DEFAULT_MEDIA_DAILY_BUDGET_USD,
   updatedAt: 0,
 };
 
@@ -394,6 +402,16 @@ export class SettingsRepository {
           : {}),
       },
       telemetry: false,
+      // Preferenserna fylls på med defaults: en äldre installation saknar nyckeln helt, och ett
+      // halvskrivet objekt får aldrig ge odefinierade fält – då slutar routing att fungera.
+      providers: resolveProviderPreferences(stored.providers),
+      // Budgeten får aldrig bli negativ eller NaN: då skulle kontrollen släppa igenom allt.
+      mediaDailyBudgetUsd:
+        typeof stored.mediaDailyBudgetUsd === 'number' &&
+        Number.isFinite(stored.mediaDailyBudgetUsd) &&
+        stored.mediaDailyBudgetUsd > 0
+          ? stored.mediaDailyBudgetUsd
+          : DEFAULT_MEDIA_DAILY_BUDGET_USD,
       updatedAt: typeof stored.updatedAt === 'number' ? stored.updatedAt : 0,
     };
   }

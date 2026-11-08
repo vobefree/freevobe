@@ -6,9 +6,16 @@ import type {
   ApprovalCategory,
   PermissionMode,
   Plan,
+  ProviderCapability,
+  ProviderResolution,
   ToolResult,
 } from '@freevobe/protocol';
-import { DEFAULT_CONTEXT_BUDGET_CHARS, DEFAULT_MAX_ITERATIONS } from '@freevobe/protocol';
+import {
+  DEFAULT_CONTEXT_BUDGET_CHARS,
+  DEFAULT_MAX_ITERATIONS,
+  capabilityForOutputType,
+  providersForOutputType,
+} from '@freevobe/protocol';
 import type { ToolRegistry } from '../tools/registry.js';
 import type { ApprovalPolicy } from '../tools/types.js';
 import { evaluateToolCall, type PolicyContext, type PolicyDecision } from '../security/policy.js';
@@ -16,6 +23,7 @@ import { buildContextBlock, selectContext } from '../context/selector.js';
 import { embed } from '../context/embedding.js';
 import type { IndexedFile, ProjectIndexer } from '../context/indexer.js';
 import { activateSkills, type Skill } from '../skills/loader.js';
+import type { SkillAuditEntry } from '../skills/audit.js';
 import type { RuleBundle } from '../rules/loader.js';
 import {
   ToolCallAccumulator,
@@ -23,15 +31,11 @@ import {
   stripTextualToolCalls,
 } from '../ollama/openai.js';
 import { ContentStreamGuard } from '../ollama/textGuard.js';
-import type {
-  ChatChunk,
-  ChatToolCall,
-  ChatTransport,
-  ChatTurnMessage,
-} from '../ollama/types.js';
+import type { ChatChunk, ChatToolCall, ChatTransport, ChatTurnMessage } from '../ollama/types.js';
 import { describeError } from '../util/errors.js';
 import { createId } from '../util/ids.js';
 import { buildSystemPrompt } from './prompt.js';
+import { classifyTask } from './classifier.js';
 import { PROPOSE_PLAN_TOOL_NAME, createPlan, parsePlanDraft, planScopeViolation } from './plan.js';
 import type { ToolRuntime } from './runtime.js';
 import type { BrowserDriver } from '../tools/browser.js';
@@ -69,6 +73,10 @@ export interface AgentLoopOptions {
    * Ollama faktiskt måste läsa in modellen först.
    */
   firstTokenNoticeMs?: number;
+  /** Routing: vilken provider som kan leverera en capability just nu. */
+  resolveProvider?: (capability: ProviderCapability) => ProviderResolution;
+  /** Anropas när skills aktiveras, så att anropet kan loggas med källa. */
+  onSkillsActivated?: (entries: SkillAuditEntry[]) => void;
 }
 
 const DEFAULT_FIRST_TOKEN_NOTICE_MS = 1_500;
@@ -209,7 +217,9 @@ export function looksLikeBuildRequest(message: string): boolean {
   const text = message.toLowerCase();
   if (!DELIVERABLE_SUBJECTS.some((subject) => containsPhrase(text, subject))) return false;
   if (!DELIVERABLE_VERBS.some((verb) => containsPhrase(text, verb))) return false;
-  return !QUESTION_STARTS.some((start) => new RegExp(`^${start}(?![\\p{L}])`, 'u').test(text.trim()));
+  return !QUESTION_STARTS.some((start) =>
+    new RegExp(`^${start}(?![\\p{L}])`, 'u').test(text.trim()),
+  );
 }
 
 export interface RunInput {
@@ -263,6 +273,28 @@ export class AgentLoop {
     };
 
     try {
+      // Routing: en beställning på bild, video eller ljud ska aldrig skickas till en textmodell.
+      // Kan ingen provider leverera den får körningen ett tydligt svar i stället för tystnad –
+      // UI:t visar då vilka providers som behövs och kan slå på dem med ett klick.
+      const classification = classifyTask(input.userMessage);
+      const neededCapability = capabilityForOutputType(classification.outputType);
+      if (neededCapability !== 'text') {
+        const resolution = this.options.resolveProvider?.(neededCapability);
+        if (!resolution || !resolution.ok) {
+          yield {
+            type: 'provider_required',
+            runId,
+            outputType: classification.outputType,
+            providers: providersForOutputType(classification.outputType).filter(
+              (id) => id !== 'ollama',
+            ),
+            reason: resolution?.code === 'local_only' ? 'local_only' : 'not_configured',
+          };
+          yield { type: 'run_finished', runId, reason: 'final' };
+          return;
+        }
+      }
+
       yield { type: 'status', runId, phase: 'building-context', message: 'Bygger kontext' };
       const { entries, fromIndex } = await this.loadEntries(input);
 
@@ -288,6 +320,21 @@ export class AgentLoop {
       };
 
       const activations = activateSkills(this.options.skills, input.userMessage);
+      if (activations.length > 0) {
+        const at = new Date().toISOString();
+        this.options.onSkillsActivated?.(
+          activations.map(({ skill, reason, trigger }) => ({
+            at,
+            runId,
+            skill: skill.name,
+            source: skill.source,
+            ...(skill.importedFrom ? { importedFrom: skill.importedFrom } : {}),
+            ...(skill.sourceUrl ? { sourceUrl: skill.sourceUrl } : {}),
+            reason,
+            ...(trigger ? { trigger } : {}),
+          })),
+        );
+      }
       const repoMapText = entries
         .slice(0, 500)
         .map(
@@ -672,12 +719,14 @@ export class AgentLoop {
     // En modell som saknar verktygsstöd ska inte få verktyg skickade: då svarar Ollama ofta med
     // tomt innehåll i stället för text. Prompten beskriver i stället hur anropet skrivs som JSON.
     const supportsTools = input.supportsTools ?? true;
-    const stream = this.options.transport.chat({
-      model: input.model,
-      messages,
-      ...(supportsTools ? { tools: this.options.registry.specsForModel() } : {}),
-      signal: input.signal,
-    })[Symbol.asyncIterator]();
+    const stream = this.options.transport
+      .chat({
+        model: input.model,
+        messages,
+        ...(supportsTools ? { tools: this.options.registry.specsForModel() } : {}),
+        signal: input.signal,
+      })
+      [Symbol.asyncIterator]();
 
     const first = await this.awaitFirstChunk(stream);
     let step: IteratorResult<ChatChunk>;

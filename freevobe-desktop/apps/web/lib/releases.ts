@@ -7,7 +7,7 @@
  */
 
 export const RELEASE_REPO = 'vobefree/freevobe';
-export const RELEASE_TAG = 'v0.2.6';
+export const RELEASE_TAG = 'v0.4.0';
 
 /** Mobilappens egen version (`freevobe-mobile/app.json`), inte releasetaggens. */
 export const MOBILE_VERSION = '1.0.0';
@@ -74,12 +74,6 @@ export function assetUrl(file: string): string {
  * publiceras – saknas en summa visas filen utan kontrollrad i stället för med en gissning.
  */
 export const RELEASE_SHA256: Record<string, string> = {
-  'Freevobe_v0.2.6_x64-setup.exe':
-    '78c6b852881884757f69eb27d8529791fcabb5426c22a0aaa6e092738de0a868',
-  'Freevobe_v0.2.6_aarch64.dmg': '1fab2ddbb9e547320fe2045026a7c7fa90b51a9ab9ba76dfcfcbda65f8a66d0b',
-  'Freevobe_v0.2.6_x64.dmg': '3086277cdab2ffb8e1436212e0aad654d3fc71995be767c2164715c014a9850c',
-  'Freevobe_v0.2.6_amd64.AppImage':
-    '115dce5e4a4e52a8da547710cfcaa1c212706ee1ada713f7af8e947a5c5187f8',
-  'Freevobe-Mobile_1.0.0.apk': '8fad999ecf587d6c97d7692d9bc22ab2c914f3a2050264d2d62cc880c48efc21',
-  'freevobe-learn.html': 'bbc3db03bb13d96c2c597090b48752ee6dc1a24db3e7a7a28287b32a52e8d0cb',
+  // Fylls i när releasen är byggd: GitHubs asset-digest för varje uppladdad fil.
+  // Saknas en summa visas filen utan kontrollrad i stället för med en gissning.
 };

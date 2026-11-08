@@ -23,7 +23,13 @@ export type BuiltinToolName =
   | 'browser_fill'
   | 'ask_user'
   | 'propose_plan'
-  | 'run_verification';
+  | 'run_verification'
+  | 'generate_image'
+  | 'generate_video'
+  | 'generate_audio'
+  | 'analyze_image'
+  | 'analyze_video'
+  | 'preview_check';
 
 export type ToolName = BuiltinToolName | (string & {});
 

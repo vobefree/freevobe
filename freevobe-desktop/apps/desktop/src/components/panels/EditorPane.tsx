@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useAppStore } from '../../store/appStore';
 import { Button, EmptyState } from '../ui';
 import { shortPath } from '../../lib/format';
+import { MONACO_DARK_THEME, monacoThemeFor } from '../../lib/theme';
 
 /** True i jsdom (tester) – då används en enkel textruta i stället för Monaco. */
 function prefersPlainTextarea(): boolean {
@@ -24,8 +25,10 @@ export function EditorPane() {
   const editorFile = useAppStore((state) => state.editorFile);
   const updateEditorContent = useAppStore((state) => state.updateEditorContent);
   const saveEditorFile = useAppStore((state) => state.saveEditorFile);
+  // Editorn följer appens tema, även när det växlar medan filen är öppen.
+  const resolvedTheme = useAppStore((state) => state.resolvedTheme);
   const [MonacoEditor, setMonacoEditor] = useState<MonacoEditorComponent | null>(null);
-  const [theme, setTheme] = useState('vs-dark');
+  const [monacoReady, setMonacoReady] = useState(false);
   const [language, setLanguage] = useState('plaintext');
 
   useEffect(() => {
@@ -33,12 +36,14 @@ export function EditorPane() {
     let cancelled = false;
     void (async () => {
       try {
-        const [{ default: Editor }, { setupMonaco, MONACO_THEME, languageForPath }] =
-          await Promise.all([import('@monaco-editor/react'), import('../../lib/monaco')]);
+        const [{ default: Editor }, { setupMonaco, languageForPath }] = await Promise.all([
+          import('@monaco-editor/react'),
+          import('../../lib/monaco'),
+        ]);
         setupMonaco();
         if (!cancelled) {
           setMonacoEditor(() => Editor as unknown as MonacoEditorComponent);
-          setTheme(MONACO_THEME);
+          setMonacoReady(true);
           setLanguage(languageForPath(editorFile?.path ?? 'untitled.txt'));
         }
       } catch {
@@ -93,7 +98,7 @@ export function EditorPane() {
             language={language}
             defaultLanguage={language}
             value={editorFile.content}
-            theme={theme}
+            theme={monacoReady ? monacoThemeFor(resolvedTheme) : MONACO_DARK_THEME}
             onChange={(value) => updateEditorContent(value ?? '')}
             options={{
               fontSize: 13,

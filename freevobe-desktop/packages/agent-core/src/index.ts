@@ -22,6 +22,23 @@ export * from './context/selector.js';
 
 export * from './skills/loader.js';
 export * from './skills/store.js';
+export * from './skills/formats.js';
+export * from './skills/normalize.js';
+export * from './skills/importer.js';
+export * from './skills/security.js';
+export * from './skills/audit.js';
+export * from './security/sensitive.js';
+export * from './models/provenance.js';
+export * from './models/hardware.js';
+export * from './models/router.js';
+export * from './models/pull.js';
+export * from './preview/devServer.js';
+export {
+  buildLaunchConfig,
+  writeLaunchConfig,
+  LAUNCH_CONFIG_RELATIVE_PATH,
+} from './preview/launchConfig.js';
+export * from './harness/harness.js';
 export * from './rules/loader.js';
 export * from './memory/store.js';
 
@@ -31,6 +48,13 @@ export * from './connectors/service.js';
 export * from './connectors/tools.js';
 export * from './connectors/vercel/client.js';
 export * from './connectors/vercel/tools.js';
+
+export * from './providers/keys.js';
+export * from './providers/registry.js';
+
+export * from './media/adapters.js';
+export * from './media/service.js';
+export * from './media/library.js';
 
 export * from './mcp/client.js';
 export * from './mcp/config.js';

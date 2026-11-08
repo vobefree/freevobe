@@ -8,8 +8,9 @@ styra en webbläsare – allt på din egen dator.
 > molnkonto. Det enda som går över nätet är det du själv uttryckligen godkänner.
 
 [English README](README.en.md) · [Arkitektur](docs/architecture.md) · [Säkerhet](docs/safety.md) ·
-[Behörigheter](docs/permissions.md) · [Plan/Act](docs/plan-act.md) · [Skills](docs/skills.md) ·
+[Behörigheter](docs/permissions.md) · [Plan/Act](docs/plan-act.md) · [Skills](docs/skills.md) · [Skill import](docs/skills-import.md) ·
 [MCP](docs/mcp.md) · [Checkpoints](docs/checkpoints.md) · [Verifiering](docs/verification.md) ·
+[Providers](docs/providers.md) ·
 [Release](docs/releasing.md) · [TODO](TODO.md)
 
 ---
@@ -39,6 +40,8 @@ styra en webbläsare – allt på din egen dator.
 | Område           | Funktion                                                                                                                                                                                                                                                                                                                       |
 | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | **Modell**       | Ollama över OpenAI-kompatibelt API (`/v1/chat/completions`), streaming, tool calling och detektering av modeller som saknar verktygsstöd.                                                                                                                                                                                      |
+| **Providers**    | Ollama lokalt plus valfria molnproviders: Claude (text, vision), Gemini (text, vision, bild, video, ljud) och Grok (bild, video). Egna nycklar som sparas krypterat på datorn. Mer i [Providers](docs/providers.md).                                                                                                           |
+| **Media**        | Bild, video och ljud via Gemini eller Grok, plus analys av bild och video. Varje anrop visar priset och kräver ett eget godkännande; filerna sparas i projektets `.freevobe/media/` med metadata. Mer i [Media-flows](docs/media-flows.md).                                                                                    |
 | **Agent-loop**   | Kontextbygge → modellsvar → verktygsanrop → körning → verktygssvar → reflektion → nytt varv eller slutligt svar.                                                                                                                                                                                                               |
 | **Verktyg**      | `list_files`, `read_file`, `search_files`, `create_file`, `write_file`, `edit_file`, `delete_file`, `run_terminal_command`, `run_tests`, `git_status`, `git_diff`, `git_commit`, `git_branch`, `web_fetch`, `browser_open/read/screenshot/click/fill`, `propose_plan`, `run_verification`, `ask_user` – plus alla MCP-verktyg. |
 | **Kontext**      | Repo map, lokala embeddings, import- och symbolanalys, importgrannar, pin:ade filer och en hård kontextbudget. Bara det som behövs skickas till modellen.                                                                                                                                                                      |
@@ -149,9 +152,9 @@ injicerar sedan bas-URL och token i webbvyn. Mer i [Arkitektur](docs/architectur
 
 ## Skills, regler och minne
 
-- **Skills** ligger som Markdown med YAML-frontmatter i `.freevobe/skills/`. Tio färdiga skills följer med
+- **Skills** ligger som Markdown med YAML-frontmatter i `.freevobe/skills/`. Elva färdiga skills följer med
   (React-komponent, Next.js-sida, API-endpoint, Python-skript, buggfix, tester, kodgranskning, refaktorering,
-  dokumentation, databasmigrering). Aktiveras via triggers eller `@skillnamn`.
+  dokumentation, databasmigrering och media-flows – hela kedjan från prompt till färdig bild, video eller ljud). Aktiveras via triggers eller `@skillnamn`.
 - **Regler** läses automatiskt från `AGENTS.md`, `.freevobe/rules.md` och `.freevobe/preferences.json` och injiceras i
   systemprompten.
 - **Minne** ligger i `.freevobe/memory.md` – lokalt, läsbart och versionshanterat tillsammans med koden.
@@ -246,7 +249,7 @@ freevobe-desktop/
 ├─ packages/
 │  ├─ protocol/           Delade typer och kontrakt
 │  ├─ agent-core/         Agent-loop, verktyg, kontext, skills, minne, MCP, subagents, store
-│  │  └─ builtin-skills/  Tio färdiga skills
+│  │  └─ builtin-skills/  Elva färdiga skills
 │  └─ agent-server/       HTTP + SSE på 127.0.0.1
 ├─ e2e/                   Playwright: vertikal skiva över HTTP och i gränssnittet
 ├─ scripts/               Ikoner, sidecar-bygge, TypeScript-hook
@@ -328,3 +331,29 @@ Full lista i [TODO.md](TODO.md).
 ## Licens
 
 MIT.
+
+## Gränssnitt
+
+Ett rent, innehållsförst gränssnitt med ljust/mörkt tema som följer systemet, tre vylägen
+(Verbose, Normal, Summary), sidchatt på `Ctrl/Cmd+;` och ett Qoder-läge för tangentbordsdrivet
+arbete med kolonkommandon. Paneler kan dras och byta plats. Läs [Gränssnitt](docs/interface.md).
+
+## Agent harness
+
+Freevobe är inte en chatt med verktyg på sidan om. Det är en harness med fyra faser som alla delar
+sitter i:
+
+```
+gather  →  act  →  verify  →  deliver
+```
+
+- **gather** – repo map, indexerade filer, regler, minne och matchande skills, med en budget.
+- **act** – modellen anropar verktyg genom policyn och behörighetsläget.
+- **verify** – typkontroll, lint och tester körs automatiskt när filer ändrats.
+- **deliver** – dev-servern startas och resultatet visas i previewpanelen, på `127.0.0.1`.
+
+Ovanpå det: en modellrouter som väljer lokal modell först och annars visar ett
+rekommendationskort med namn, storlek, källa och checksumma, hämtning med checksummekontroll,
+live-preview, checkpoints med ångra, verifieringsrapporter, en samlad Control Room med tidslinje
+och verktygen `todo_write` och `run_subagent`. Läs [Agent harness](docs/harness.md) och
+[Skarp slutkontroll](docs/harness-checklist.md).

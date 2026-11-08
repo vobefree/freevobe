@@ -1,3 +1,4 @@
+import { useRef, type PointerEvent as ReactPointerEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAppStore } from '../store/appStore';
 import { Button, Chip } from './ui';
@@ -7,6 +8,8 @@ import { CenterPanel } from './panels/CenterPanel';
 import { RightPanel } from './panels/RightPanel';
 import { ChatView } from './chat/ChatView';
 import { UpdateBanner } from './UpdateBanner';
+import { ThemeButton, ViewModeSwitch } from './AppearanceControls';
+import { SideChatPane } from './SideChatPane';
 import { PERMISSION_LABELS, PHASE_LABELS, formatNumber, shortPath } from '../lib/format';
 import { formatSek, type AgentPhase } from '@freevobe/protocol';
 
@@ -45,6 +48,7 @@ function TopBar() {
   const setMemoryOpen = useAppStore((state) => state.setMemoryOpen);
   const setPalette = useAppStore((state) => state.setPalette);
   const runDoctor = useAppStore((state) => state.runDoctor);
+  const qoderMode = useAppStore((state) => state.qoderMode);
 
   const activeModel = models.find((model) => model.name === selectedModel);
   const currentPlan = plans.find(
@@ -119,28 +123,34 @@ function TopBar() {
             {t('topbar.abort')}
           </Button>
         ) : null}
-        <LanguageSelect />
+        {qoderMode ? null : <LanguageSelect />}
         <Button onClick={() => setPalette(true)} title={t('topbar.palette')}>
           ⌘K
         </Button>
-        <Button onClick={() => setSkillsOpen(true)} title={t('topbar.skills')}>
-          Skills
-        </Button>
-        <Button onClick={() => setMcpOpen(true)} title={t('topbar.mcp')}>
-          MCP
-        </Button>
-        <Button onClick={() => setMemoryOpen(true)} title={t('topbar.memory')}>
-          {t('topbar.memory')}
-        </Button>
-        <Button
-          onClick={() => {
-            setDoctorOpen(true);
-            void runDoctor();
-          }}
-          title={t('topbar.doctorTitle')}
-        >
-          Doctor
-        </Button>
+        <ViewModeSwitch compact />
+        <ThemeButton />
+        {qoderMode ? null : (
+          <>
+            <Button onClick={() => setSkillsOpen(true)} title={t('topbar.skills')}>
+              Skills
+            </Button>
+            <Button onClick={() => setMcpOpen(true)} title={t('topbar.mcp')}>
+              MCP
+            </Button>
+            <Button onClick={() => setMemoryOpen(true)} title={t('topbar.memory')}>
+              {t('topbar.memory')}
+            </Button>
+            <Button
+              onClick={() => {
+                setDoctorOpen(true);
+                void runDoctor();
+              }}
+              title={t('topbar.doctorTitle')}
+            >
+              Doctor
+            </Button>
+          </>
+        )}
         <Button onClick={() => setSettingsOpen(true)} title={t('topbar.settings')}>
           ⚙
         </Button>
@@ -229,6 +239,37 @@ function StatusBar() {
   );
 }
 
+function PaneStrip({
+  label,
+  hint,
+  onDropSwap,
+}: {
+  label: string;
+  hint: string;
+  onDropSwap: () => void;
+}) {
+  return (
+    <div
+      draggable
+      data-testid="pane-strip"
+      onDragStart={(event) => {
+        event.dataTransfer?.setData('text/plain', 'pane');
+      }}
+      onDragOver={(event) => event.preventDefault()}
+      onDrop={(event) => {
+        event.preventDefault();
+        onDropSwap();
+      }}
+      title={hint}
+      className="flex h-4 shrink-0 cursor-grab items-center gap-2 border-b border-steel/60 px-2 text-[9px] tracking-wide text-slate-600 uppercase select-none"
+    >
+      <span aria-hidden="true">⋮⋮</span>
+      <span>{label}</span>
+      <span className="ml-auto truncate normal-case">{hint}</span>
+    </div>
+  );
+}
+
 export function AppShell() {
   const { t } = useTranslation();
   const leftOpen = useAppStore((state) => state.leftOpen);
@@ -237,9 +278,60 @@ export function AppShell() {
   const connectionError = useAppStore((state) => state.connectionError);
   const agentHelpUrl = useAppStore((state) => state.agentHelpUrl);
   const connect = useAppStore((state) => state.connect);
+  const qoderMode = useAppStore((state) => state.qoderMode);
+  const chatFirst = useAppStore((state) => state.chatFirst);
+  const chatShare = useAppStore((state) => state.chatShare);
+  const setChatShare = useAppStore((state) => state.setChatShare);
+  const setChatFirst = useAppStore((state) => state.setChatFirst);
+  const sideChatOpen = useAppStore((state) => state.sideChatOpen);
+  const splitRef = useRef<HTMLElement>(null);
+
+  const startResize = (event: ReactPointerEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    const rect = splitRef.current?.getBoundingClientRect();
+    if (!rect || rect.height === 0) return;
+    const move = (moveEvent: PointerEvent) => {
+      const ratio = (moveEvent.clientY - rect.top) / rect.height;
+      setChatShare(chatFirst ? ratio : 1 - ratio);
+    };
+    const stop = () => {
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', stop);
+    };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', stop);
+  };
+
+  const swapPanes = () => setChatFirst(!chatFirst);
+
+  const editorPane = (
+    <section
+      className="flex min-h-0 flex-col"
+      style={{ flexBasis: `${(1 - chatShare) * 100}%` }}
+      data-testid="pane-editor"
+    >
+      <PaneStrip label={t('pane.editor')} hint={t('layout.dragHint')} onDropSwap={swapPanes} />
+      <div className="min-h-0 flex-1">
+        <CenterPanel />
+      </div>
+    </section>
+  );
+
+  const chatPane = (
+    <section
+      className="flex min-h-0 flex-col"
+      style={{ flexBasis: `${chatShare * 100}%` }}
+      data-testid="pane-chat"
+    >
+      <PaneStrip label={t('pane.chat')} hint={t('layout.dragHint')} onDropSwap={swapPanes} />
+      <div className="min-h-0 flex-1">
+        <ChatView />
+      </div>
+    </section>
+  );
 
   return (
-    <div className="flex h-full flex-col bg-anvil text-slate-200">
+    <div className="relative flex h-full flex-col bg-anvil text-slate-200">
       <TopBar />
 
       {connectionStatus === 'error' ? (
@@ -261,13 +353,17 @@ export function AppShell() {
           </aside>
         ) : null}
 
-        <main className="flex min-w-0 flex-1 flex-col">
-          <div className="min-h-0 flex-1 border-b border-steel">
-            <CenterPanel />
-          </div>
-          <div className="min-h-0 flex-[1.1]">
-            <ChatView />
-          </div>
+        <main ref={splitRef} className="flex min-w-0 flex-1 flex-col">
+          {chatFirst ? chatPane : editorPane}
+          <div
+            role="separator"
+            aria-orientation="horizontal"
+            aria-label={t('layout.dragHint')}
+            onPointerDown={startResize}
+            data-testid="pane-splitter"
+            className="h-1 shrink-0 cursor-row-resize bg-steel/70 hover:bg-ember/60"
+          />
+          {chatFirst ? editorPane : chatPane}
         </main>
 
         {rightOpen ? (
@@ -277,8 +373,9 @@ export function AppShell() {
         ) : null}
       </div>
 
-      <StatusBar />
+      {qoderMode ? null : <StatusBar />}
       <UpdateBanner />
+      {sideChatOpen ? <SideChatPane /> : null}
     </div>
   );
 }

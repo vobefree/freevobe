@@ -1,13 +1,34 @@
 # TODO och öppna punkter
 
 Det här är den ärliga listan över vad som är klart, vad som är halvfärdigt och vad som medvetet är avstängt.
-Statusen gäller version 0.2.0 (2026-10-29).
+Statusen gäller version 0.4.0 (2026-11-07).
 
 ## Klart och verifierat
 
 - [x] Monorepo med strikt TypeScript, ESLint, Prettier och delade typer i `@freevobe/protocol`.
 - [x] Ollama-klient mot det OpenAI-kompatibla API:et med streaming, tool calling, modellupptäckt och tydliga fel.
 - [x] Agent-loop med kontextbygge, verktygsanrop, reflektion, varvgräns och avbrott.
+- [x] Harness med fyra faser (gather, act, verify, deliver): verifiering och preview körs i samma
+      kedja som loopen. Se [Agent harness](docs/harness.md).
+- [x] Modellrouter: lokal modell först, molnprovider bara om projektet tillåter det, annars en
+      rekommendation om hämtning. Hårdvaruprofil för RAM jämförs med modellens storlek.
+- [x] Modellhämtning med `approved`-krav, strömmade framsteg och checksummekontroll efteråt.
+- [x] Live-preview: dev-servern eller statiska filer serveras på `127.0.0.1` och visas i panelen.
+- [x] Control Room: en samlad tidslinje över modellval, verktyg, godkännanden, diffar, verifiering,
+      preview, checkpoints och hämtningar.
+- [x] Rekommendationskort i chatten med namn, storlek, källa, checksumma och "Ladda ner & använd";
+      hämtningen visar framsteg och checksummans utfall.
+- [x] Verktygen `todo_write` och `run_subagent`: uppgiftslista och delegering inifrån loopen.
+- [x] Checklista för skarp verifiering mot riktig Ollama och ett riktigt projekt.
+- [x] `.freevobe/launch.json` skrivs vid varje preview-start med kommando, port och adress.
+- [x] Tauri-CSP tillåter iframe mot loopback; tidigare blockerades previewn av `default-src 'self'`.
+- [x] `preview_check`: agenten kan se previewn (text, skärmbild, konsolfel) och rätta visuella fel.
+- [x] Claude-lik design med ljust/mörkt/systemtema, tre vylägen och sidchatt.
+- [x] Kodeditorn följer temat: Monaco har både ett mörkt och ett ljust tema och byter direkt vid växling.
+- [x] Qoder-läge: terminal-likt gränssnitt, kommandopalett med `:w`, `:q`, `:run`, `:test` m.fl.
+- [x] Dragbara paneler: byt plats på chatt och editor och dra i avdelaren för höjdfördelning.
+- [x] Panelayouten (ordning och höjdfördelning) sparas mellan omstarter.
+- [x] Landningssidan visar tema, vylägen och Qoder-läget.
 - [x] Alla inbyggda verktyg (filer, terminal, tester, git, web, webbläsare, `ask_user`).
 - [x] Godkännandepolicy med fyra behörighetslägen och hårda blockeringar.
 - [x] Auto-godkännande per kategori (filer, kommandon, tester, git, nätverk, MCP) med bibehållna hårda block.
@@ -16,7 +37,7 @@ Statusen gäller version 0.2.0 (2026-10-29).
       filändringar i Execute-läget. Se [Plan/Act](docs/plan-act.md).
 - [x] Diff för varje filändring, i godkännandet och som historik.
 - [x] Kontextmotor: repo map, lokala embeddings, import- och symbolanalys, pin:ade filer, budget.
-- [x] Skills (tio färdiga), projektregler, projektminne och hooks.
+- [x] Skills (elva färdiga), projektregler, projektminne och hooks.
 - [x] MCP-klient för stdio, HTTP och SSE med per-projekt-aktivering och varningar.
 - [x] Subagents: explorer, implementer, tester, reviewer, documenter.
 - [x] SQLite-lagret (sessioner, meddelanden, projekt, index, minne, uppgifter, godkännandelogg, checkpoints).
@@ -33,6 +54,15 @@ Statusen gäller version 0.2.0 (2026-10-29).
 - [x] Connectors med token i ett krypterat lokalt valv, per projekt. Vercel-connectorn har verktyg för projekt,
       preview-deploy, loggar, env-variabler och domäner – produktion kräver alltid ett extra godkännande.
       Se [Connectors](docs/connectors.md).
+- [x] Providers vid sidan av Ollama: Anthropic (Claude), Google (Gemini) och xAI (Grok) med katalog över
+      förmågor, modeller och priser, nycklar i det krypterade valvet och capability-badges i gränssnittet.
+      Se [Providers](docs/providers.md).
+- [x] Multimodal agent: klassificering av `output_type` (`text|code|image|video|audio`), lokal-only-läge som
+      stoppar molnanrop med ett tydligt besked och en banner, samt verktygen `generate_image`, `generate_video`,
+      `generate_audio`, `analyze_image` och `analyze_video`.
+- [x] Media i gränssnittet: resultat i chatten, Media-flik i workspace, kostnadsöversikt med daglig budget och
+      hårda säkerhetsregler för medieprompter. Se [Media-flows](docs/media-flows.md).
+- [x] Inbyggd skill `media-flows` med tre exempel på hela kedjan från prompt till färdig fil.
 - [x] Gränssnittet på tolv språk (`i18n`), med språkvalsmeny i inställningarna och `npm run i18n:check` i CI.
 - [x] Doctor-läge både i appen och som CLI (`npm run doctor`).
 - [x] Publik webbplats (Next.js, statisk export) med Gives Back-sektion och utan annonskod.
@@ -73,7 +103,7 @@ Statusen gäller version 0.2.0 (2026-10-29).
 ### Nästa stora steg (Freevobe MAX)
 
 - [ ] **Smart Context Engine** – inkrementell komprimering av samtalet med bevarade beslut.
-- [ ] **Git worktrees**, sessionspersistens utöver SQLite, LSP, Review Mode, Hooks 2.0, modellrouting,
+- [ ] **Git worktrees**, sessionspersistens utöver SQLite, LSP, Review Mode, Hooks 2.0,
       projekttemplates och mobil-API.
 - [ ] **Fler connectors**: Supabase, GitHub, Netlify, Railway, Stripe, Resend, Cloudflare och Neon ligger som
       "kommer snart" – Vercel (steg 2) är klart, övriga följer samma mönster.
@@ -92,11 +122,24 @@ Statusen gäller version 0.2.0 (2026-10-29).
 
 ### Kända begränsningar
 
+- Preview startar dev-servern med projektets eget `npm run dev`; ett projekt utan dev-skript och
+  utan `index.html` kan inte visas. VRAM läses inte (det går inte portabelt), så bara RAM jämförs.
+- Control Room, rekommendationskortet, previewpanelen och de nya utseendelägena är
+  typkontrollerade och testade i sin logik, men inte visuellt granskade i en riktig app än.
+- GitHub Releases är inte publicerad härifrån. Version 0.4.0 är förberedd – version i alla tre
+  filerna, changelog och tagg – men själva publiceringen sker när taggen `v0.4.0` pushas, eftersom
+  release-workflowen bygger och laddar upp filerna från GitHub Actions.
+- Agenten kan granska previewn med `preview_check`, men det finns ingen automatisk
+  skärmbildsrunda som startar om loopen vid visuella fel – granskningen sker när modellen väljer
+  att anropa verktyget.
+- Kedjan är inte körd mot en riktig Ollama och ett riktigt Vite-projekt i den här miljön. Checklistan
+  i `docs/harness-checklist.md` beskriver hur du verifierar den på din dator.
+
 - Plan/Act-kontraktet gäller filvägar, inte innehåll, och grindar bara filändringar – kommando som rör andra filer
   fångas av behörighetsläget. En plan måste läggas fram av modellen.
-- Verktygsanrop som modellen skriver som text i stället för i `tool_calls` tolkas (naken JSON, ```json-staket och
-  `<tool_call>`), även när modellen uppger verktygsstöd. Anropet hålls tillbaka medan det strömmar och tas bort ur
-  chatten innan det körs. Staketets första rad (```json) kan synas, och ett anrop över 4 000 tecken hinner visa sin
+- Verktygsanrop som modellen skriver som text i stället för i `tool_calls` tolkas (naken JSON, ``json-staket och
+`<tool_call>`), även när modellen uppger verktygsstöd. Anropet hålls tillbaka medan det strömmar och tas bort ur
+chatten innan det körs. Staketets första rad (``json) kan synas, och ett anrop över 4 000 tecken hinner visa sin
   början innan gränsen slår till – då tömmer `assistant_reset` bubblan när anropet körs.
 - Kontextmotorn skickar filhuvuden och symboler för stora filer; mycket stora filer kapas och märks som trunkerade.
 - Webbläsarautomation kräver att Playwrights webbläsare är nedladdade (`npx playwright install chromium`).

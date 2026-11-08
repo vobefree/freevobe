@@ -65,3 +65,30 @@ grep -n "danger" packages/agent-core/src/tools/*.ts
 # Testerna som låser beteendet
 npx vitest run packages/agent-core/src/security packages/agent-core/src/tools
 ```
+
+## Importerade skills
+
+- Skill-texten läggs i systemprompten som **data**, avgränsad med `<skill-data>` och en tydlig
+  regel: en skill får beskriva arbetssätt men aldrig ändra grundprinciper, behörighetsläge eller
+  användarens instruktioner.
+- En skill som ber modellen ignorera regler, dölja något för användaren eller skicka data vidare
+  ska modellen vägra följa och säga till.
+- Alla verktygsanrop från en skill går genom samma policy och samma godkännanden som vanliga
+  anrop. En skill kan inte skaffa sig utökade rättigheter.
+- Varje aktivering loggas i `.freevobe/audit/skills.jsonl` med namn, källa, orsak och körning,
+  och kan läsas via `GET /api/projects/:projectId/skills/audit`.
+
+## Hemlighetsfiler
+
+Agenten läser eller ändrar aldrig filer som ser ut att innehålla hemligheter: `.env`,
+`.ssh/**`, `id_rsa`, `*.pem`, `*.key`, `.aws/credentials`, `.netrc`, `secrets.json` och liknande
+(`packages/agent-core/src/security/sensitive.ts`). Det gäller alla verktyg, inte bara importerade
+skills. `search_files` hoppar över dem och säger hur många som hoppades över. Mallar som
+`.env.example` är tillåtna eftersom de inte innehåller några värden.
+
+## Modeller
+
+Innan en modell hämtas ska namn, storlek, källa och checksumma visas, och en hämtning kräver
+alltid ett uttryckligt ja. Officiella modeller i Ollamas bibliotek märks som officiella;
+allt under en egen namespace märks som tredjepart. Hjälpen för det ligger i
+`packages/agent-core/src/models/provenance.ts` och används av hämtningsflödet i steg 6.

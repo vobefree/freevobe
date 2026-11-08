@@ -1,6 +1,6 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import type { SkillSummary } from '@freevobe/protocol';
+import type { SkillFormatSource, SkillSummary } from '@freevobe/protocol';
 import {
   loadBuiltinSkills,
   loadProjectSkills,
@@ -15,6 +15,20 @@ export interface SkillDraft {
   tools?: string[];
   triggers?: string[];
   body?: string;
+  /** Filglobs (från t.ex. Cursor) som sparade skills kan bära med sig. */
+  globs?: string[];
+  /** Sant för regeldokument som alltid ska gälla. */
+  alwaysApply?: boolean;
+  /** Ursprungsagent, skrivs som `source:` i frontmattern. */
+  importedFrom?: SkillFormatSource;
+  sourcePath?: string;
+  sourceRepo?: string;
+  /** Författare från frontmattern. */
+  author?: string;
+  /** Klickbar källa till skillen. */
+  sourceUrl?: string;
+  /** ISO-datum för importen. */
+  importedAt?: string;
 }
 
 export interface SkillStoreOptions {
@@ -35,6 +49,7 @@ function slugify(value: string): string {
 export function renderSkillMarkdown(draft: SkillDraft): string {
   const tools = draft.tools ?? [];
   const triggers = draft.triggers ?? [];
+  const globs = draft.globs ?? [];
   const lines = [
     '---',
     `name: ${draft.name}`,
@@ -43,6 +58,14 @@ export function renderSkillMarkdown(draft: SkillDraft): string {
     ...(tools.length > 0 ? tools.map((tool) => `  - ${tool}`) : ['  - read_file']),
     'triggers:',
     ...(triggers.length > 0 ? triggers.map((trigger) => `  - ${trigger}`) : ['  - ']),
+    ...(globs.length > 0 ? ['globs:', ...globs.map((glob) => `  - ${glob}`)] : []),
+    ...(draft.alwaysApply ? ['alwaysApply: true'] : []),
+    ...(draft.importedFrom ? [`source: ${draft.importedFrom}`] : []),
+    ...(draft.sourcePath ? [`source_path: ${draft.sourcePath}`] : []),
+    ...(draft.sourceRepo ? [`source_repo: ${draft.sourceRepo}`] : []),
+    ...(draft.author ? [`author: ${draft.author}`] : []),
+    ...(draft.sourceUrl ? [`source_url: ${draft.sourceUrl}`] : []),
+    ...(draft.importedAt ? [`imported_at: ${draft.importedAt}`] : []),
     '---',
     '',
     `# ${draft.name}`,
@@ -78,6 +101,13 @@ export class SkillStore {
         source: skill.source,
         chars: skill.chars,
         ...(skill.path ? { path: skill.path } : {}),
+        ...(skill.globs && skill.globs.length > 0 ? { globs: skill.globs } : {}),
+        ...(skill.alwaysApply ? { alwaysApply: true } : {}),
+        ...(skill.importedFrom ? { importedFrom: skill.importedFrom } : {}),
+        ...(skill.sourceRepo ? { sourceRepo: skill.sourceRepo } : {}),
+        ...(skill.author ? { author: skill.author } : {}),
+        ...(skill.sourceUrl ? { sourceUrl: skill.sourceUrl } : {}),
+        ...(skill.importedAt ? { importedAt: skill.importedAt } : {}),
       });
     }
     return summaries;
@@ -107,7 +137,10 @@ export class SkillStore {
     }
     await fs.mkdir(this.projectDir, { recursive: true });
     const file = path.join(this.projectDir, `${slugify(draft.name) || 'skill'}.md`);
-    const rendered = renderSkillMarkdown(draft);
+    const rendered = renderSkillMarkdown({
+      ...draft,
+      ...(draft.importedFrom && !draft.importedAt ? { importedAt: new Date().toISOString() } : {}),
+    });
     const parsed = parseSkill(rendered, { source: 'project', path: file });
     if (!parsed) throw new Error('Kunde inte skapa skillen – kontrollera namn och beskrivning.');
     await fs.writeFile(file, rendered, 'utf8');

@@ -24,9 +24,18 @@ const strict = process.argv.includes('--strict');
 const errors = [];
 const warnings = [];
 
+// Nycklar som medvetet står på engelska i alla språk: produktnamn och egennamn.
+const BRAND_KEYS = new Set(['ob.gives.title']);
+// Nycklar där översättningen råkar vara identisk med engelskan i ett visst språk
+// (franska "messages" är samma ord) – inte ett tecken på att texten glömts.
+const IDENTICAL_IS_CORRECT = { 'left.messages': ['fr'] };
+
 const locales = readdirSync(localeDir)
   .filter((file) => file.endsWith('.json'))
-  .map((file) => ({ locale: file.replace(/\.json$/, ''), data: JSON.parse(readFileSync(join(localeDir, file), 'utf8')) }));
+  .map((file) => ({
+    locale: file.replace(/\.json$/, ''),
+    data: JSON.parse(readFileSync(join(localeDir, file), 'utf8')),
+  }));
 
 const base = locales.find((entry) => entry.locale === 'en');
 if (!base) {
@@ -40,8 +49,14 @@ for (const { locale, data } of locales) {
   const keys = new Set(Object.keys(data));
   const missing = baseKeys.filter((key) => !keys.has(key));
   const extra = [...keys].filter((key) => !baseSet.has(key));
-  if (missing.length) errors.push(`[${locale}] saknar ${missing.length} nycklar: ${missing.slice(0, 8).join(', ')}${missing.length > 8 ? '…' : ''}`);
-  if (extra.length) errors.push(`[${locale}] har ${extra.length} nycklar som inte finns i en: ${extra.slice(0, 8).join(', ')}${extra.length > 8 ? '…' : ''}`);
+  if (missing.length)
+    errors.push(
+      `[${locale}] saknar ${missing.length} nycklar: ${missing.slice(0, 8).join(', ')}${missing.length > 8 ? '…' : ''}`,
+    );
+  if (extra.length)
+    errors.push(
+      `[${locale}] har ${extra.length} nycklar som inte finns i en: ${extra.slice(0, 8).join(', ')}${extra.length > 8 ? '…' : ''}`,
+    );
 
   for (const key of baseKeys) {
     const value = data[key];
@@ -49,11 +64,19 @@ for (const { locale, data } of locales) {
     const expected = placeholders(base.data[key]);
     const actual = placeholders(value);
     if (expected.join(',') !== actual.join(',')) {
-      errors.push(`[${locale}] "${key}" har platzhållarna ${actual.join(', ') || '–'} men engelska har ${expected.join(', ') || '–'}`);
+      errors.push(
+        `[${locale}] "${key}" har platzhållarna ${actual.join(', ') || '–'} men engelska har ${expected.join(', ') || '–'}`,
+      );
     }
     // Korta etiketter ("Skills", "Plan", "Editor", "MCP") är varumärken eller tekniska termer som
     // medvetet inte översätts. Längre texter som är identiska är däremot troligen oöversatta.
-    if (locale !== 'en' && value === base.data[key] && value.trim().split(/\s+/).length >= 3) {
+    if (
+      locale !== 'en' &&
+      value === base.data[key] &&
+      value.trim().split(/\s+/).length >= 3 &&
+      !BRAND_KEYS.has(key) &&
+      !(IDENTICAL_IS_CORRECT[key] ?? []).includes(locale)
+    ) {
       warnings.push(`[${locale}] "${key}" är identisk med engelska – kanske oöversatt`);
     }
   }
@@ -88,17 +111,42 @@ for (const key of used) {
 }
 
 // Dynamiska nycklar (t.ex. `phase.${phase}`) kan inte läsas statiskt – de vitlistas per prefix.
-const dynamicPrefixes = ['phase.', 'permission.', 'permission.desc.', 'autoApprove.', 'autoApprove.desc.', 'risk.', 'error.', 'time.'];
+const dynamicPrefixes = [
+  'phase.',
+  'permission.',
+  'permission.desc.',
+  'autoApprove.',
+  'autoApprove.desc.',
+  'risk.',
+  'error.',
+  'time.',
+  // Providerkatalogen slår upp namn och förmågor med `providers.name.${id}` och
+  'skills.security.group.',
+  'pull.reason.',
+  // Temat och vyläget slås upp med `theme.${mode}` och `view.${mode}`.
+  'theme.',
+  'view.',
+  // `providers.capability.${capability}` – nycklarna går inte att läsa statiskt.
+  'providers.name.',
+  'providers.capability.',
+  // Medietypen slås upp med `media.kind.${kind}`.
+  'media.kind.',
+];
 const unused = baseKeys.filter(
   (key) =>
     !referenced.has(key) &&
     !referenced.has(key.replace(/_(one|other)$/, '')) &&
     !dynamicPrefixes.some((prefix) => key.startsWith(prefix)),
 );
-if (unused.length) warnings.push(`${unused.length} nycklar i en.json används inte i koden: ${unused.slice(0, 10).join(', ')}${unused.length > 10 ? '…' : ''}`);
+if (unused.length)
+  warnings.push(
+    `${unused.length} nycklar i en.json används inte i koden: ${unused.slice(0, 10).join(', ')}${unused.length > 10 ? '…' : ''}`,
+  );
 
 function placeholders(value) {
-  return [...String(value).matchAll(/\{\{\s*([a-zA-Z0-9_]+)\s*\}\}/g)].map((match) => match[1]).sort();
+  return [...String(value).matchAll(/\{\{\s*([a-zA-Z0-9_]+)\s*\}\}/g)]
+    .map((match) => match[1])
+    .sort();
 }
 
 function* walk(dir) {

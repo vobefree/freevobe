@@ -1,6 +1,8 @@
 import type { Checkpoint } from './checkpoints.js';
 import type { Plan } from './plans.js';
 import type { ContextFile, FileDiff, ToolCall, ToolResult } from './tools.js';
+import type { HarnessEvent } from './harness.js';
+import type { MediaKind, OutputType, ProviderId } from './providers.js';
 import type {
   VerificationCheckResult,
   VerificationCommand,
@@ -31,7 +33,8 @@ export type ApprovalKind =
   | 'network'
   | 'mcp'
   | 'git_commit'
-  | 'user_question';
+  | 'user_question'
+  | 'media';
 
 export type RiskLevel = 'low' | 'medium' | 'high';
 
@@ -62,6 +65,10 @@ export interface ApprovalRequest {
   diff?: FileDiff;
   /** Frågor från `ask_user`-verktyget. */
   questions?: ApprovalQuestion[];
+  /** Uppskattad kostnad i USD för anropet, när katalogen har ett pris för modellen. */
+  costUsd?: number;
+  /** Media som anropet gäller: sort, prompt och vald provider. */
+  media?: { kind: MediaKind; prompt: string; provider?: string; model?: string };
   createdAt: number;
 }
 
@@ -179,13 +186,26 @@ export type AgentEvent =
       files: GitFileStatus[];
     }
   | { type: 'usage'; runId: string; promptTokens: number; completionTokens: number }
+  /**
+   * Beställningen kräver en provider som inte är påslagen. UI:t förklarar varför och erbjuder att
+   * slå på en provider – servern slår aldrig på något åt användaren.
+   */
+  | {
+      type: 'provider_required';
+      runId: string;
+      outputType: OutputType;
+      providers: ProviderId[];
+      reason: 'local_only' | 'not_configured';
+    }
   | { type: 'error'; runId: string; code: AgentErrorCode; message: string; detail?: string }
   | {
       type: 'run_finished';
       runId: string;
       reason: 'final' | 'aborted' | 'error' | 'loop_limit' | 'rejected' | 'plan-ready';
       summary?: string;
-    };
+    }
+  /** Harness-motorns faser, routerns beslut och live-preview. */
+  | HarnessEvent;
 
 export type AgentErrorCode =
   | 'ollama_unavailable'

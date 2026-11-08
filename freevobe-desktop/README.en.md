@@ -8,8 +8,9 @@ browser — all on your own machine.
 > cloud account. The only traffic that leaves your machine is what you explicitly approve.
 
 [README på svenska](README.md) · [Architecture](docs/architecture.md) · [Safety](docs/safety.md) ·
-[Permissions](docs/permissions.md) · [Plan/Act](docs/plan-act.md) · [Skills](docs/skills.md) ·
-[MCP](docs/mcp.md) · [Verification](docs/verification.md) · [Releasing](docs/releasing.md) ·
+[Permissions](docs/permissions.md) · [Plan/Act](docs/plan-act.md) · [Skills](docs/skills.md) · [Skill import](docs/skills-import.md) ·
+[MCP](docs/mcp.md) · [Verification](docs/verification.md) ·
+[Providers](docs/providers.md) · [Releasing](docs/releasing.md) ·
 [TODO](TODO.md)
 
 ---
@@ -19,6 +20,8 @@ browser — all on your own machine.
 | Area             | Capability                                                                                                                                                                                                                                                                                                                              |
 | ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Model**        | Ollama over the OpenAI-compatible API (`/v1/chat/completions`) with streaming, tool calling and detection of models without tool support.                                                                                                                                                                                               |
+| **Providers**    | Ollama locally plus optional cloud providers: Claude (text, vision), Gemini (text, vision, images, video, audio) and Grok (images, video). Your own keys, stored encrypted on your machine. See [Providers](docs/providers.md).                                                                                                    |
+| **Media**        | Images, video and audio through Gemini or Grok, plus analysis of images and video. Every call shows its price and needs its own approval; files land in the project's `.freevobe/media/` with metadata. More in [Media flows](docs/media-flows.md). |
 | **Agent loop**   | Context build → model reply → tool calls → execution → tool results → reflection → next turn or final answer.                                                                                                                                                                                                                           |
 | **Tools**        | `list_files`, `read_file`, `search_files`, `create_file`, `write_file`, `edit_file`, `delete_file`, `run_terminal_command`, `run_tests`, `git_status`, `git_diff`, `git_commit`, `git_branch`, `web_fetch`, `browser_open/read/screenshot/click/fill`, `propose_plan`, `run_verification`, `ask_user` — plus every MCP tool you enable. |
 | **Context**      | Repo map, local embeddings, import and symbol analysis, import neighbours, pinned files and a hard context budget. Only what is needed is sent to the model.                                                                                                                                                                            |
@@ -121,7 +124,7 @@ and then injects the base URL and token into the webview. More in [Architecture]
 
 ## Skills, rules and memory
 
-- **Skills** are Markdown files with YAML front matter in `.freevobe/skills/`. Ten are included (React component,
+- **Skills** are Markdown files with YAML front matter in `.freevobe/skills/`. Eleven are included (React component,
   Next.js page, API endpoint, Python script, bug fix, test writing, code review, refactoring, documentation, database
   migration). They activate on triggers or via `@skillname`.
 - **Rules** are read automatically from `AGENTS.md`, `.freevobe/rules.md` and `.freevobe/preferences.json` and

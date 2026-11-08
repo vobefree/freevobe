@@ -79,8 +79,8 @@ betalningsväg någonstans i kedjan – se [gives-back.md](gives-back.md).
 
 Monaco byggs in i paketet (`monaco-editor` + egna workers för TypeScript, JSON, CSS och HTML) och `@monaco-editor/react`
 pekar om sin loader till den instansen i `apps/desktop/src/lib/monaco.ts`. Utan den ompekningen hämtar
-`@monaco-editor/react` Monaco från jsDelivr som standard – då slutar editorn fungera offline och temat `freevobe-dark`
-appliceras inte. E2E-testet `e2e/offline-editor.ui.spec.ts` misslyckas om webbläsaren gör en enda förfrågan utanför
+`@monaco-editor/react` Monaco från jsDelivr som standard – då slutar editorn fungera offline och appens teman
+`freevobe-dark` och `freevobe-light` appliceras inte. E2E-testet `e2e/offline-editor.ui.spec.ts` misslyckas om webbläsaren gör en enda förfrågan utanför
 datorn medan en fil är öppen, så regressen kan inte smyga tillbaka.
 
 ## Att lägga till en ny modelltransport

@@ -327,3 +327,22 @@ annars paketets `dist`), vilket är vad som används i utvecklingsläge.
 - `version` finns i `package.json` (rot), `apps/desktop/package.json` och
   `apps/desktop/src-tauri/tauri.conf.json`. De ska vara samma.
 - Skriv en rad i `apps/web/lib/content.ts` (`CHANGELOG`) vid varje release.
+
+## Publicera 0.4.0
+
+Version 0.4.0 är förberedd: `0.4.0` står i de tre versionsfilerna, `RELEASE_TAG` i
+`apps/web/lib/releases.ts` pekar på `v0.4.0`, och changelog-posten är skriven. Kvar är själva
+publiceringen, som kräver push-rättighet till `vobefree/freevobe`:
+
+```bash
+git add -A
+git commit -m "Freevobe 0.4.0: tema, vylägen och Qoder-läge"
+git tag v0.4.0
+git push origin HEAD
+git push origin v0.4.0
+```
+
+Taggen startar `.github/workflows/release.yml`, som bygger Windows-, macOS- och Linux-filerna och
+lägger dem i releasen för taggen. `version` i `tauri.conf.json` måste vara `0.4.0` när taggen
+pushas, annars avbryter workflowen. När releasen är publicerad fylls `RELEASE_SHA256` i
+`apps/web/lib/releases.ts` med GitHubs asset-digest, så att nedladdningssidan visar kontrollsummorna.

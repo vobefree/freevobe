@@ -27,6 +27,7 @@ const EXPECTED_SKILLS = [
   'code-review',
   'database-migration',
   'documentation',
+  'media-flows',
   'nextjs-page',
   'python-script',
   'react-component',
@@ -35,7 +36,7 @@ const EXPECTED_SKILLS = [
 ];
 
 describe('inbyggda skills', () => {
-  it('innehåller de tio skills som specen kräver och de är kompletta', async () => {
+  it('innehåller de elva skills som specen kräver och de är kompletta', async () => {
     const skills = await loadBuiltinSkills();
     expect(skills.map((skill) => skill.name).sort()).toEqual(EXPECTED_SKILLS);
 
@@ -156,7 +157,7 @@ describe('SkillStore', () => {
     try {
       const store = new SkillStore({ root: target });
       const created = await store.copyBuiltinToProject();
-      expect(created).toHaveLength(10);
+      expect(created).toHaveLength(11);
       expect(await store.copyBuiltinToProject()).toEqual([]);
     } finally {
       await fs.rm(target, { recursive: true, force: true });

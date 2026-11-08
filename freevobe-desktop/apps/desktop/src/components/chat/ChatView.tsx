@@ -5,17 +5,34 @@ import { useAppStore } from '../../store/appStore';
 import { Button, Chip, EmptyState } from '../ui';
 import { GivesBackCard } from '../gives-back/GivesBackCard';
 import { PlanCard } from './PlanCard';
+import { ProviderNotice } from './ProviderNotice';
+import { ModelPullCard } from './ModelPullCard';
+import { MediaStrip } from './MediaStrip';
 import { PHASE_LABELS, clockTime, formatNumber } from '../../lib/format';
+import {
+  shouldShowReasoning,
+  showsToolDetails,
+  visibleMessages,
+  type ViewMode,
+} from '../../lib/viewMode';
+import { ViewModeSwitch } from '../AppearanceControls';
 
-function MessageBubble({ message }: { message: ChatMessage }) {
+function MessageBubble({ message, viewMode }: { message: ChatMessage; viewMode: ViewMode }) {
   const { t } = useTranslation();
-  const [showReasoning, setShowReasoning] = useState(false);
+  const [showReasoning, setShowReasoning] = useState(() => showsToolDetails(viewMode));
+
+  useEffect(() => {
+    setShowReasoning(showsToolDetails(viewMode));
+  }, [viewMode]);
   const isUser = message.role === 'user';
   const isTool = message.role === 'tool';
 
   if (isTool) {
     return (
-      <details className="rounded border border-steel/60 bg-forge/40 px-3 py-1.5 text-xs text-slate-500">
+      <details
+        open={showsToolDetails(viewMode)}
+        className="rounded border border-steel/60 bg-forge/40 px-3 py-1.5 text-xs text-slate-500"
+      >
         <summary className="cursor-pointer select-none">
           {t('chat.toolResponse')} · {message.content.slice(0, 80)}…
         </summary>
@@ -39,7 +56,7 @@ function MessageBubble({ message }: { message: ChatMessage }) {
         </span>
         <span className="text-[10px] text-slate-600">{clockTime(message.createdAt)}</span>
         {message.model && !isUser ? <Chip>{message.model}</Chip> : null}
-        {message.reasoning ? (
+        {shouldShowReasoning(viewMode) && message.reasoning ? (
           <button
             type="button"
             className="cursor-pointer text-[10px] text-slate-500 underline decoration-dotted"
@@ -52,7 +69,7 @@ function MessageBubble({ message }: { message: ChatMessage }) {
       <div className="text-sm leading-relaxed whitespace-pre-wrap text-slate-200">
         {message.content}
       </div>
-      {showReasoning && message.reasoning ? (
+      {showReasoning && message.reasoning && shouldShowReasoning(viewMode) ? (
         <pre className="mt-2 max-h-48 overflow-auto rounded border border-steel/60 bg-anvil/60 p-2 font-mono text-[11px] whitespace-pre-wrap text-slate-500">
           {message.reasoning}
         </pre>
@@ -72,7 +89,10 @@ export function ChatView() {
   const givesBack = useAppStore((state) => state.settings?.givesBack ?? null);
   const sessionId = useAppStore((state) => state.sessionId);
   const plans = useAppStore((state) => state.plans);
+  const mediaResults = useAppStore((state) => state.mediaResults);
   const draft = useState(() => ({ value: '' }))[0];
+  const viewMode = useAppStore((state) => state.viewMode);
+  const toggleSideChat = useAppStore((state) => state.toggleSideChat);
 
   // Den senaste planen är den som gäller: antingen väntar den på beslut eller så är den
   // kontraktet som styr körningen.
@@ -83,6 +103,8 @@ export function ChatView() {
   const [prompt, setPrompt] = useState('');
   const bottomRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const shownMessages = useMemo(() => visibleMessages(messages, viewMode), [messages, viewMode]);
 
   const promptCount = useMemo(
     () => messages.filter((message) => message.role === 'user').length,
@@ -118,7 +140,21 @@ export function ChatView() {
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <div className="min-h-0 flex-1 space-y-3 overflow-y-auto p-4">
+      <div className="flex items-center gap-2 border-b border-steel/60 px-4 py-1">
+        <span className="text-[9px] tracking-wide text-slate-600 uppercase">
+          {t('topbar.viewMode')}
+        </span>
+        <ViewModeSwitch compact />
+        <button
+          type="button"
+          onClick={() => void toggleSideChat()}
+          title="⌘;"
+          className="vf-button ml-auto cursor-pointer"
+        >
+          {t('topbar.sideChat')}
+        </button>
+      </div>
+      <div className="mx-auto min-h-0 w-full max-w-3xl flex-1 space-y-3 overflow-y-auto p-4">
         {messages.length === 0 && !streamingText ? (
           <div className="mx-auto mt-8 max-w-xl space-y-3 text-center">
             <h2 className="text-lg font-semibold text-slate-200">{t('chat.emptyTitle')}</h2>
@@ -138,20 +174,54 @@ export function ChatView() {
                 </button>
               ))}
             </div>
+
+            {/* Medieexempel: hela kedjan från prompt till färdig fil, inte bara ett verktygsnamn. */}
+            <div className="space-y-1.5 pt-2" data-testid="media-examples">
+              <p className="text-[10px] tracking-wide text-slate-600 uppercase">
+                {t('chat.mediaExamples')}
+              </p>
+              <div className="flex flex-wrap justify-center gap-2">
+                {[t('chat.mediaExample1'), t('chat.mediaExample2'), t('chat.mediaExample3')].map(
+                  (example) => (
+                    <button
+                      key={example}
+                      type="button"
+                      data-testid="media-example"
+                      className="vf-button cursor-pointer text-left"
+                      onClick={() => {
+                        setPrompt(example);
+                        if (textareaRef.current) textareaRef.current.value = example;
+                      }}
+                    >
+                      {example}
+                    </button>
+                  ),
+                )}
+              </div>
+            </div>
           </div>
         ) : null}
 
-        {messages.map((message, index) => {
-          const usersSoFar = messages
+        <ModelPullCard />
+
+        <ProviderNotice />
+
+        {shownMessages.map((message, index) => {
+          const usersSoFar = shownMessages
             .slice(0, index + 1)
             .filter((entry) => entry.role === 'user').length;
           return (
             <div key={message.id}>
-              <MessageBubble message={message} />
+              <MessageBubble message={message} viewMode={viewMode} />
               {message.role === 'assistant' ? <GivesBackCard promptIndex={usersSoFar} /> : null}
             </div>
           );
         })}
+
+        {/* Media som en körning just skapade ligger i flödet där den skapades. */}
+        {mediaResults.map((result) => (
+          <MediaStrip key={result.id} files={result.files} />
+        ))}
 
         {/* Planen ligger sist i flödet: då syns den när den läggs fram, utan att scrolla upp. */}
         {currentPlan ? <PlanCard plan={currentPlan} /> : null}
@@ -213,7 +283,7 @@ export function ChatView() {
         <div ref={bottomRef} />
       </div>
 
-      <footer className="border-t border-steel p-3">
+      <footer className="mx-auto w-full max-w-3xl border-t border-steel p-3">
         <div className="flex items-end gap-2">
           <textarea
             ref={textareaRef}
