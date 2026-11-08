@@ -55,6 +55,13 @@ export const RELEASE_ASSETS: ReleaseAsset[] = [
     requirement: 'WebKitGTK 4.1 och FUSE.',
   },
   {
+    id: 'linux-deb',
+    platform: 'Linux',
+    architecture: 'Debian/Ubuntu',
+    file: `Freevobe_${RELEASE_TAG}_amd64.deb`,
+    requirement: 'Debian 12, Ubuntu 22.04 eller senare. Installeras med dpkg eller GDebi.',
+  },
+  {
     id: 'android',
     platform: 'Android',
     architecture: 'APK',

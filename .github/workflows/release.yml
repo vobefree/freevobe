@@ -574,7 +574,7 @@ jobs:
           if-no-files-found: error
 
   linux:
-    name: Linux (.AppImage)
+    name: Linux (.AppImage/.deb)
     needs: verify
     runs-on: ubuntu-22.04
     env:
@@ -628,7 +628,7 @@ jobs:
       - name: Bygg installeraren
         working-directory: freevobe-desktop
         run: >-
-          npm run tauri --workspace @freevobe/desktop -- build --bundles appimage
+          npm run tauri --workspace @freevobe/desktop -- build --bundles appimage,deb
           --config "$FREEVOBE_TAURI_UPDATER_CONFIG"
       - name: Döp artefakten till nedladdningssidans filnamn
         shell: bash
@@ -638,6 +638,11 @@ jobs:
           mkdir -p dist-release
           cp apps/desktop/src-tauri/target/release/bundle/appimage/*.AppImage \
             "dist-release/Freevobe_${GITHUB_REF_NAME}_amd64.AppImage"
+          # .deb-paketet för Debian/Ubuntu: samma version och arkitektur som AppImage-filen.
+          shopt -s nullglob
+          debs=(apps/desktop/src-tauri/target/release/bundle/deb/*.deb)
+          [ "${#debs[@]}" -eq 1 ] || { echo "::error::Hittade ${#debs[@]} .deb-filer i bundle/deb, väntade exakt en."; exit 1; }
+          cp "${debs[0]}" "dist-release/Freevobe_${GITHUB_REF_NAME}_amd64.deb"
           # Linux-uppdateringen hämtar AppImage-filen själv; signaturen ska heta som den.
           if compgen -G 'apps/desktop/src-tauri/target/release/bundle/appimage/*.AppImage.sig' >/dev/null; then
             cp apps/desktop/src-tauri/target/release/bundle/appimage/*.AppImage.sig \
