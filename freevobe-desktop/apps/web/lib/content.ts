@@ -14,6 +14,18 @@ export interface BlogPost {
 
 export const BLOG_POSTS: BlogPost[] = [
   {
+    slug: 'fran-prompt-till-klart',
+    title: 'Från prompt till klart – utan mellansteg',
+    date: '2026-11-08',
+    summary:
+      'Du skriver vad du vill ha. Freevobe skapar projektet, väljer modell, bygger, verifierar och öppnar resultatet.',
+    body: [
+      'De flesta agentverktyg ber dig godkänna varje steg: skapa filen, kör kommandot, öppna previewn. Det är tryggt men långsamt, och för en enkel beställning som "gör en hemsida till en frisör" blir klickandet mer arbete än att skriva koden själv.',
+      'Freevobe kör därför prompt → klart som standard. En beställning skapar projektet i ~/Freevobe, väljer en modell med verktygsstöd, skriver filerna, kör kommandon och tester, verifierar och öppnar förhandsvisningen. Chatten visar "Bygger…" och sedan "Klart" – inga mellansteg.',
+      'Säkerheten är inte bortkopplad, bara flyttad dit den hör hemma. Farliga kommandon, skrivningar utanför projektet, portexponering, media, webbläsarautomation, connector-ändringar och okända MCP-servrar kräver fortfarande ett personligt ja. Vill du hellre godkänna varje steg stänger du av läget i Inställningar → Agent och säkerhet.',
+    ],
+  },
+  {
     slug: 'varfor-lokal-first',
     title: 'Varför Freevobe är lokal-first',
     date: '2026-10-20',
@@ -56,6 +68,16 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '0.5.0',
+    date: '2026-11-08',
+    highlights: [
+      'Prompt → klart: en beställning skapar projektet, väljer en verktygsduglig modell, skriver koden, kör kommandon och tester, verifierar och öppnar förhandsvisningen – utan mellansteg eller godkännandekort. Farliga kommandon, media, webbläsarautomation, connector-ändringar och okända MCP-servrar kräver fortfarande ett personligt ja.',
+      'Mörk, varumärkt installationsprofil: sidopanel och rubrikbild på Windows-installeraren och en egen bakgrund till macOS-diskbilden. Bilderna genereras i kod så att de kan återskapas.',
+      'Signeringsverktyg för Windows: scripts/windows-sign.ps1 och scripts/new-windows-cert.ps1, plus dokumentation om SmartScreen och vad ett eget certifikat inte löser.',
+      'Allt finns på tolv språk (829 nycklar), och releaseanteckningarna för 0.5.0 ligger i docs/releases/0.5.0.md.',
+    ],
+  },
   {
     version: '0.4.0',
     date: '2026-11-07',

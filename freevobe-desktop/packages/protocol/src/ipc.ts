@@ -148,6 +148,11 @@ export interface AppSettings {
   ollamaBaseUrl: string;
   defaultModel: string;
   permissionMode: PermissionMode;
+  /**
+   * "Prompt → klart": appen skapar projektet, väljer modell, kör utan mellansteg och öppnar
+   * förhandsvisningen själv. Hårda säkerhetsspärrar gäller fortfarande.
+   */
+  instantMode: boolean;
   /** Auto-godkännande per kategori. Frånkopplade kategorier följer behörighetsläget. */
   autoApprove: Record<ApprovalCategory, boolean>;
   theme: 'dark' | 'light';

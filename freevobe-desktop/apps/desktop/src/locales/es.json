@@ -820,5 +820,12 @@
   "palette.swapPanes": "Intercambiar el chat y el editor",
   "palette.commandHint": ":w guardar · :q cerrar · :run vista previa · :test pruebas",
   "pane.editor": "Editor",
-  "pane.chat": "Chat"
+  "pane.chat": "Chat",
+  "instant.working": "Construyendo…",
+  "instant.done": "Listo",
+  "instant.openPreview": "Abrir vista previa",
+  "settings.agent.instantLabel": "Prompt → listo (sin pasos intermedios)",
+  "settings.agent.instantHint": "Crea el proyecto, elige un modelo, ejecuta y abre la vista previa automáticamente. Los comandos peligrosos, los medios y los cambios en servicios externos siguen requiriendo tu aprobación.",
+  "settings.agent.instantOn": "Prompt → listo activado.",
+  "settings.agent.instantOff": "Prompt → listo desactivado: vuelves a aprobar cada paso."
 }

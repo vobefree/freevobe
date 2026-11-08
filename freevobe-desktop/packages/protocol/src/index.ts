@@ -2,7 +2,7 @@ export * from './json-schema.js';
 export * from './tools.js';
 export * from './events.js';
 
-import type { ApprovalCategory } from './events.js';
+import type { ApprovalCategory, PermissionMode } from './events.js';
 export * from './ipc.js';
 export * from './checkpoints.js';
 export * from './plans.js';
@@ -20,6 +20,15 @@ export const FREEVOBE_PROTOCOL_VERSION = 1 as const;
 
 /** Namn på de fyra behörighetslägena, används av UI och dokumentation. */
 export const PERMISSION_MODES = ['ask', 'auto-edit', 'auto-run', 'full-auto'] as const;
+
+/**
+ * Behörighetsläget som "prompt → klart" kör med. Filskrivningar, kommandon, tester och git sker
+ * utan mellansteg, medan hårda spärrar (farliga kommandon, media, okända MCP-servrar) fortfarande
+ * kräver ett personligt ja. Har användaren valt Full auto behålls det.
+ */
+export function instantPermissionMode(mode: PermissionMode): PermissionMode {
+  return mode === 'full-auto' ? 'full-auto' : 'auto-run';
+}
 
 /**
  * Kategorier som går att auto-godkänna. `browser` och `other` är medvetet utanför: de kräver

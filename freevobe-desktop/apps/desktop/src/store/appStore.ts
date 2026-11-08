@@ -67,6 +67,8 @@ import {
 } from '../lib/agentClient';
 import i18n from '../i18n';
 import { AUTO_APPROVE_LABELS } from '../lib/format';
+import { pickInstantModel, projectNameFromPrompt } from '../lib/instantMode';
+import { instantPermissionMode } from '@freevobe/protocol';
 
 export type RightTab =
   | 'diff'
@@ -161,6 +163,8 @@ export interface AppState {
   phase: string;
   runId: string | null;
   isRunning: boolean;
+  /** "Bygger…" och "Klart" i prompt → klart-läget. */
+  instantStatus: 'idle' | 'working' | 'done';
 
   // verktyg och sidoeffekter
   diffs: FileDiff[];
@@ -310,6 +314,10 @@ export interface AppState {
     options?: { run?: boolean },
   ): Promise<void>;
 
+  /** Skapar ett projekt åt en beställning när inget projekt är öppet. */
+  openInstantProject(prompt: string): Promise<void>;
+  /** Avslutar prompt → klart: uppdaterar trädet och öppnar förhandsvisningen. */
+  finishInstantRun(): Promise<void>;
   sendPrompt(prompt: string): Promise<void>;
   abort(): Promise<void>;
   resolveApproval(
@@ -529,8 +537,14 @@ function timelineFor(event: AgentEvent): TimelineEntry | null {
 }
 
 export const useAppStore = create<AppState>((set, get) => {
+  // Sant när den pågående körningen ändrat filer. En fråga som bara besvaras i chatten ska inte
+  // starta en dev-server, men en leverans ska öppna resultatet själv.
+  let runChangedFiles = false;
+
   /** Hanterar varje AgentEvent från körningen och lägger det på rätt plats i UI:t. */
   function handleEvent(event: AgentEvent): void {
+    if (event.type === 'run_started') runChangedFiles = false;
+    if (event.type === 'file_changed' || event.type === 'diff') runChangedFiles = true;
     set((state) => {
       const partial = ((): Partial<AppState> => {
         switch (event.type) {
@@ -540,6 +554,7 @@ export const useAppStore = create<AppState>((set, get) => {
               streamingText: '',
               reasoningText: '',
               phase: 'thinking',
+              instantStatus: 'working',
               providerNotice: null,
               logs: [
                 ...state.logs,
@@ -841,6 +856,7 @@ export const useAppStore = create<AppState>((set, get) => {
               isRunning: false,
               streamingText: '',
               phase: event.reason === 'final' ? 'done' : 'idle',
+              instantStatus: event.reason === 'final' ? 'done' : 'idle',
               logs: [...state.logs, logEntry(`Körning avslutad (${event.reason}).`)].slice(
                 -LOG_LIMIT,
               ),
@@ -854,6 +870,10 @@ export const useAppStore = create<AppState>((set, get) => {
         ? { ...partial, timeline: [...state.timeline, entry].slice(-TIMELINE_LIMIT) }
         : partial;
     });
+    // "Prompt → klart": resultatet ska öppnas utan att användaren klickar vidare.
+    if (event.type === 'run_finished' && event.reason === 'final') {
+      void get().finishInstantRun();
+    }
   }
 
   const ONBOARDING_KEY = 'freevobe.onboardingComplete';
@@ -888,6 +908,7 @@ export const useAppStore = create<AppState>((set, get) => {
     phase: 'idle',
     runId: null,
     isRunning: false,
+    instantStatus: 'idle',
 
     diffs: [],
     activeDiffId: null,
@@ -1322,6 +1343,9 @@ export const useAppStore = create<AppState>((set, get) => {
         });
         return;
       }
+      // Utan projekt skapas ett åt beställningen: annars stannar flödet på "öppna en mapp"
+      // innan agenten ens har fått en chans att leverera.
+      if (!get().project) await get().openInstantProject(prompt);
       if (!get().sessionId) await get().ensureWorkspace();
       const { client, sessionId } = get();
       if (!client || !sessionId) {
@@ -1335,6 +1359,17 @@ export const useAppStore = create<AppState>((set, get) => {
         });
         return;
       }
+
+      // Modellen väljs åt användaren: den valda behålls om den kan använda verktyg, annars tas en
+      // installerad kodmodell med verktygsstöd. Behörighetsläget höjs till auto-run.
+      const instant = get().settings?.instantMode === true;
+      const chosenModel = instant
+        ? pickInstantModel(get().models, get().selectedModel)
+        : get().selectedModel;
+      if (chosenModel !== get().selectedModel) set({ selectedModel: chosenModel });
+      const runPermissionMode = instant
+        ? instantPermissionMode(get().permissionMode)
+        : get().permissionMode;
 
       const userMessage: ChatMessage = {
         id: `local_${Date.now()}`,
@@ -1360,9 +1395,9 @@ export const useAppStore = create<AppState>((set, get) => {
         const started = await client.post<{ runId: string }>('/api/chat', {
           sessionId,
           prompt,
-          model: get().selectedModel,
+          model: chosenModel,
           mode: get().mode,
-          permissionMode: get().permissionMode,
+          permissionMode: runPermissionMode,
           pinnedFiles: get().pinnedFiles,
         });
         set({ runId: started.runId });
@@ -1383,6 +1418,54 @@ export const useAppStore = create<AppState>((set, get) => {
           // Utan det här blev ett misslyckat anrop helt tyst i chatten.
           messages: [...get().messages, failureMessage(message)],
           logs: [...get().logs, logEntry(message, 'error')].slice(-LOG_LIMIT),
+        });
+      }
+    },
+
+    /**
+     * Skapar projektet som en beställning behöver när inget är öppet. Servern lägger det i
+     * hemkatalogen, så användaren slipper välja mapp innan första prompten.
+     */
+    async openInstantProject(prompt) {
+      const { client } = get();
+      if (!client) return;
+      const name = projectNameFromPrompt(prompt);
+      const result = await client.post<{ project?: Project }>('/api/projects', {
+        name,
+        // Indexeringen får ske i bakgrunden: första svaret ska inte vänta på hela trädet.
+        index: false,
+      });
+      const created = result?.project;
+      // Ett svar utan projekt (t.ex. i ett test eller från en äldre server) får inte krascha
+      // flödet: då fortsätter sendPrompt och visar sitt vanliga fel i stället.
+      if (!created) return;
+      set({
+        project: created,
+        permissionMode: created.permissionMode,
+        projects: [created, ...get().projects.filter((entry) => entry.id !== created.id)],
+        logs: [...get().logs, logEntry(`Skapade projektet ${created.name} åt beställningen.`)].slice(
+          -LOG_LIMIT,
+        ),
+      });
+      await Promise.all([get().loadTree(), get().loadSessions(), get().refreshPreview()]);
+    },
+
+    /**
+     * Avslutet på prompt → klart: trädet uppdateras och förhandsvisningen öppnas automatiskt.
+     * Hårda spärrar har redan prövats av agenten, så inget godkännande behövs här.
+     */
+    async finishInstantRun() {
+      if (get().settings?.instantMode !== true) return;
+      try {
+        await get().loadTree();
+        if (!runChangedFiles && !get().preview) return;
+        await get().startPreview();
+      } catch (error) {
+        set({
+          logs: [
+            ...get().logs,
+            logEntry(`Kunde inte öppna förhandsvisningen: ${String(error)}`, 'warn'),
+          ].slice(-LOG_LIMIT),
         });
       }
     },

@@ -820,5 +820,12 @@
   "palette.swapPanes": "交换聊天和编辑器",
   "palette.commandHint": ":w 保存 · :q 关闭 · :run 预览 · :test 测试",
   "pane.editor": "编辑器",
-  "pane.chat": "聊天"
+  "pane.chat": "聊天",
+  "instant.working": "正在构建…",
+  "instant.done": "完成",
+  "instant.openPreview": "打开预览",
+  "settings.agent.instantLabel": "提示词 → 完成（无中间步骤）",
+  "settings.agent.instantHint": "自动创建项目、选择模型、执行并打开预览。危险命令、媒体生成和外部服务更改仍需要你的确认。",
+  "settings.agent.instantOn": "提示词 → 已完成模式已开启。",
+  "settings.agent.instantOff": "提示词 → 已完成模式已关闭，每个步骤又需要你确认。"
 }

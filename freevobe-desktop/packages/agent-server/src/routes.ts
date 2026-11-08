@@ -1,4 +1,5 @@
-import { readFile } from 'node:fs/promises';
+import { mkdir, readFile } from 'node:fs/promises';
+import os from 'node:os';
 import path from 'node:path';
 import type {
   ApprovalAnswer,
@@ -12,6 +13,19 @@ import type {
 import { FREEVOBE_PROTOCOL_VERSION } from '@freevobe/protocol';
 import { MEDIA_DIR, defaultMcpExamples, listMedia, resolveMediaFile } from '@freevobe/agent-core';
 import type { AgentSessionHub } from './sessionHub.js';
+
+/**
+ * Projektmapp för en beställning utan vald mapp: ~/Freevobe/<namn>. Namnet städas till en
+ * mappvänlig slug, och tidsstämpeln gör att två beställningar med samma namn inte krockar.
+ */
+function defaultProjectPath(name: string): string {
+  const slug = name
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}]+/gu, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 48);
+  return path.join(os.homedir(), 'Freevobe', slug || `projekt-${Date.now()}`);
+}
 
 export interface RouteContext {
   hub: AgentSessionHub;
@@ -174,8 +188,15 @@ export function createRoutes(serverInfo: { port: number; devMode: boolean }): Ro
     route('GET', '/api/projects', ({ hub }) => hub.listProjects()),
     route('POST', '/api/projects', async ({ hub, body }) => {
       const payload = (await body()) as { path?: string; name?: string; index?: boolean };
-      const projectPath = await requireString(payload, 'path');
-      const workspace = await hub.openProject(projectPath, payload.name);
+      const name = typeof payload.name === 'string' ? payload.name.trim() : '';
+      // "Prompt → klart": en beställning utan öppet projekt ska skapa ett eget projekt i
+      // hemkatalogen i stället för att kräva att användaren väljer mapp först.
+      const projectPath =
+        typeof payload.path === 'string' && payload.path.trim() !== ''
+          ? payload.path
+          : defaultProjectPath(name);
+      await mkdir(projectPath, { recursive: true });
+      const workspace = await hub.openProject(projectPath, name || undefined);
       if (payload.index !== false) await workspace.index();
       return {
         project: workspace.project,

@@ -820,5 +820,12 @@
   "palette.swapPanes": "Vaihda chatin ja editorin paikkaa",
   "palette.commandHint": ":w tallenna · :q sulje · :run esikatselu · :test testit",
   "pane.editor": "Editori",
-  "pane.chat": "Chatti"
+  "pane.chat": "Chatti",
+  "instant.working": "Rakennetaan…",
+  "instant.done": "Valmis",
+  "instant.openPreview": "Avaa esikatselu",
+  "settings.agent.instantLabel": "Prompt → valmis (ei välivaiheita)",
+  "settings.agent.instantHint": "Luo projektin, valitsee mallin, suorittaa ja avaa esikatselun automaattisesti. Vaaralliset komennot, media ja muutokset ulkoisiin palveluihin vaativat yhä hyväksyntäsi.",
+  "settings.agent.instantOn": "Prompt → valmis käytössä.",
+  "settings.agent.instantOff": "Prompt → valmis pois käytöstä – hyväksyt taas jokaisen vaiheen."
 }

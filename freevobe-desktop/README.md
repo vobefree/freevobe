@@ -116,13 +116,23 @@ du: "Läs package.json och skapa src/hello.ts"
 Stegen syns i gränssnittet: kontext i mittenpanelen, diff och godkännanden till höger, allt i loggen och varje
 terminalutdata i terminalpanelen.
 
+### Prompt → klart (standard)
+
+Du behöver inte klicka igenom stegen. Skriv vad du vill ha, till exempel "Gör en hemsida till en frisör", och appen
+skapar projektet i `~/Freevobe/<namn>` om inget är öppet, väljer en verktygsduglig modell, skriver koden, kör
+kommandon och tester, verifierar och öppnar förhandsvisningen. Chatten visar "Bygger…" och sedan "Klart".
+
+Säkerheten är oförändrad: farliga kommandon, skrivningar utanför projektet, portexponering, media,
+webbläsarautomation, connector-ändringar och icke-godkända MCP-servrar kräver fortfarande ditt ja. Läget kan stängas
+av i Inställningar → Agent och säkerhet; se [Prompt → klart](docs/instant-mode.md).
+
 ## Säkerhetsmodell
 
 Fyra behörighetslägen:
 
 | Läge                        | Filändringar                               | Kommandon          |
 | --------------------------- | ------------------------------------------ | ------------------ |
-| **Fråga alltid** (standard) | Kräver godkännande                         | Kräver godkännande |
+| **Fråga alltid**            | Kräver godkännande                         | Kräver godkännande |
 | **Auto-redigera**           | Skrivs efter att diffen visats och loggats | Kräver godkännande |
 | **Auto-kör**                | Skrivs direkt                              | Körs direkt        |
 | **Full auto**               | Skrivs direkt                              | Körs direkt        |
@@ -136,6 +146,10 @@ Fyra behörighetslägen:
 Dessutom: varje filändring producerar en diff, varje kommando syns i terminalen, approve/reject loggas i sessionen,
 webbläsarautomation kräver eget godkännande och MCP-servrar är avstängda tills du aktiverar dem per projekt. Se
 [Säkerhet](docs/safety.md) för detaljerna.
+
+**Prompt → klart** är på som standard och höjer behörighetsläget till **Auto-kör** (eller behåller **Full auto**),
+så att filändringar, kommandon, tester och git sker utan mellansteg. Det är en genväg förbi de mjuka frågorna – inte
+förbi de hårda spärrarna ovan, som alltid kräver ett personligt ja.
 
 ## Arkitektur
 
@@ -302,6 +316,11 @@ FREEVOBE_E2E_AGENT_PORT=4339 FREEVOBE_E2E_OLLAMA_PORT=4398 FREEVOBE_E2E_WEB_PORT
 npm run icons        # appikoner
 npm run tauri build  # bygger installeraren för din plattform
 ```
+
+Installerarens mörka profil (Windows-sidopanel, rubrikbild och macOS-bakgrund) ligger i
+`apps/desktop/src-tauri/installer/` och genereras om med `python3 scripts/generate-installer-art.py`.
+Windows-signering beskrivs i [windows-signing.md](docs/windows-signing.md) – inklusive varför en osignerad
+installerare visar SmartScreen och vad ett eget certifikat inte löser.
 
 Appen uppdaterar sig själv: den frågar `latest.json` i den senaste releasen, verifierar signaturen och startar om i
 den nya versionen. Det börjar gälla från 0.2.6 – 0.2.5 och äldre saknar kontrollen och måste installeras om en

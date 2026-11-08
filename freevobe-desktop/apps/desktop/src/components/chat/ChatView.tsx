@@ -7,6 +7,7 @@ import { GivesBackCard } from '../gives-back/GivesBackCard';
 import { PlanCard } from './PlanCard';
 import { ProviderNotice } from './ProviderNotice';
 import { ModelPullCard } from './ModelPullCard';
+import { InstantStatus } from './InstantStatus';
 import { MediaStrip } from './MediaStrip';
 import { PHASE_LABELS, clockTime, formatNumber } from '../../lib/format';
 import {
@@ -203,6 +204,9 @@ export function ChatView() {
         ) : null}
 
         <ModelPullCard />
+
+        {/* Hela återkopplingen i prompt → klart: bygger, sedan klart med väg till resultatet. */}
+        <InstantStatus />
 
         <ProviderNotice />
 

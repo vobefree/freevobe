@@ -820,5 +820,12 @@
   "palette.swapPanes": "Bytt plass på chatten og editoren",
   "palette.commandHint": ":w lagre · :q lukk · :run forhåndsvisning · :test tester",
   "pane.editor": "Editor",
-  "pane.chat": "Chat"
+  "pane.chat": "Chat",
+  "instant.working": "Bygger…",
+  "instant.done": "Ferdig",
+  "instant.openPreview": "Åpne forhåndsvisning",
+  "settings.agent.instantLabel": "Prompt → ferdig (ingen mellomtrinn)",
+  "settings.agent.instantHint": "Oppretter prosjektet, velger modell, kjører og åpner forhåndsvisningen automatisk. Farlige kommandoer, media og endringer i eksterne tjenester krever fortsatt din godkjenning.",
+  "settings.agent.instantOn": "Prompt → ferdig slått på.",
+  "settings.agent.instantOff": "Prompt → ferdig slått av – du godkjenner hvert trinn igjen."
 }

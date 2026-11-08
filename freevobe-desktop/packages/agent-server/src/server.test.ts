@@ -307,6 +307,8 @@ describe('chatten över HTTP', () => {
 
   it('väntar på användarens godkännande och skriver först efter ja', async () => {
     const { sessionId } = await openProject();
+    // Testet prövar godkännandeflödet: stäng av prompt → klart så att filändringen frågar igen.
+    await api('/api/settings', { method: 'PATCH', body: { instantMode: false } });
 
     const started = await api<{ runId: string }>('/api/chat', {
       method: 'POST',
@@ -383,6 +385,8 @@ describe('chatten över HTTP', () => {
 
   it('skriver inte filen när användaren avvisar', async () => {
     const { sessionId } = await openProject();
+    // Testet prövar godkännandeflödet: stäng av prompt → klart så att filändringen frågar igen.
+    await api('/api/settings', { method: 'PATCH', body: { instantMode: false } });
 
     const started = await api<{ runId: string }>('/api/chat', {
       method: 'POST',

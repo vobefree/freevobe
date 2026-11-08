@@ -820,5 +820,12 @@
   "palette.swapPanes": "Zamień czat i edytor",
   "palette.commandHint": ":w zapisz · :q zamknij · :run podgląd · :test testy",
   "pane.editor": "Edytor",
-  "pane.chat": "Czat"
+  "pane.chat": "Czat",
+  "instant.working": "Budowanie…",
+  "instant.done": "Gotowe",
+  "instant.openPreview": "Otwórz podgląd",
+  "settings.agent.instantLabel": "Prompt → gotowe (bez kroków pośrednich)",
+  "settings.agent.instantHint": "Tworzy projekt, wybiera model, uruchamia i automatycznie otwiera podgląd. Niebezpieczne polecenia, multimedia i zmiany w usługach zewnętrznych nadal wymagają Twojej zgody.",
+  "settings.agent.instantOn": "Prompt → gotowe włączone.",
+  "settings.agent.instantOff": "Prompt → gotowe wyłączone – znów zatwierdzasz każdy krok."
 }

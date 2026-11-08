@@ -820,5 +820,12 @@
   "palette.swapPanes": "Byt plads på chatten og editoren",
   "palette.commandHint": ":w gem · :q luk · :run preview · :test tests",
   "pane.editor": "Editor",
-  "pane.chat": "Chat"
+  "pane.chat": "Chat",
+  "instant.working": "Bygger…",
+  "instant.done": "Færdig",
+  "instant.openPreview": "Åbn forhåndsvisning",
+  "settings.agent.instantLabel": "Prompt → færdig (ingen mellemtrin)",
+  "settings.agent.instantHint": "Opretter projektet, vælger model, kører og åbner forhåndsvisningen automatisk. Farlige kommandoer, medier og ændringer i eksterne tjenester kræver stadig din godkendelse.",
+  "settings.agent.instantOn": "Prompt → færdig slået til.",
+  "settings.agent.instantOff": "Prompt → færdig slået fra – du godkender hvert trin igen."
 }

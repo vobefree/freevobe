@@ -820,5 +820,12 @@
   "palette.swapPanes": "Byt plats på chatten och editorn",
   "palette.commandHint": ":w spara · :q stäng · :run preview · :test tester",
   "pane.editor": "Editor",
-  "pane.chat": "Chatt"
+  "pane.chat": "Chatt",
+  "instant.working": "Bygger…",
+  "instant.done": "Klart",
+  "instant.openPreview": "Öppna förhandsvisning",
+  "settings.agent.instantLabel": "Prompt → klart (inga mellansteg)",
+  "settings.agent.instantHint": "Skapar projekt, väljer modell, kör och öppnar förhandsvisningen automatiskt. Farliga kommandon, media och ändringar i externa tjänster kräver fortfarande ditt ja.",
+  "settings.agent.instantOn": "Prompt → klart påslaget.",
+  "settings.agent.instantOff": "Prompt → klart avstängt – du godkänner varje steg igen."
 }

@@ -36,6 +36,8 @@ export const DEFAULT_SETTINGS: AppSettings = {
   ollamaBaseUrl: DEFAULT_OLLAMA_URL,
   defaultModel: DEFAULT_MODEL,
   permissionMode: 'ask',
+  // Standard: en prompt ska bli ett resultat utan mellansteg. Hårda spärrar gäller ändå.
+  instantMode: true,
   autoApprove: { ...DEFAULT_AUTO_APPROVE },
   theme: 'dark',
   contextBudgetChars: DEFAULT_CONTEXT_BUDGET_CHARS,

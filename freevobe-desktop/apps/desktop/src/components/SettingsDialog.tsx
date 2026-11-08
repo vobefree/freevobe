@@ -152,6 +152,19 @@ export function SettingsDialog() {
           <h3 className="text-xs font-semibold tracking-wide text-slate-400 uppercase">
             {t('settings.agent.section')}
           </h3>
+          <Toggle
+            checked={settings.instantMode}
+            onChange={(value) =>
+              void save(
+                { instantMode: value },
+                value ? t('settings.agent.instantOn') : t('settings.agent.instantOff'),
+              )
+            }
+            label={t('settings.agent.instantLabel')}
+          />
+          <p className="-mt-1 text-[10.5px] leading-snug text-slate-500">
+            {t('settings.agent.instantHint')}
+          </p>
           <Field
             label={t('settings.agent.permissionMode')}
             hint={PERMISSION_DESCRIPTIONS[settings.permissionMode]}

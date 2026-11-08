@@ -32,7 +32,7 @@ import type {
   PreviewStatus,
   RouterDecision,
 } from '@freevobe/protocol';
-import { AUTO_VERIFICATION_KINDS } from '@freevobe/protocol';
+import { AUTO_VERIFICATION_KINDS, instantPermissionMode } from '@freevobe/protocol';
 import {
   AgentLoop,
   ApprovalManager,
@@ -641,10 +641,15 @@ export class AgentSessionHub {
     const mode = input.mode ?? session?.mode ?? 'execute';
     // Behörighetsläget läses från databasen varje körning: användaren kan ha ändrat det medan
     // projektet var öppet, och den cachade projektposten ska inte få bli gammal.
-    const permissionMode =
+    const configuredPermissionMode =
       input.permissionMode ??
       this.repositories.projects.findById(run.projectId)?.permissionMode ??
       settings.permissionMode;
+    // "Prompt → klart": en beställning ska bli ett resultat utan mellansteg. Läget höjs därför
+    // till auto-run (eller behåller full-auto), men hårda spärrar i policyn gäller oförändrat.
+    const permissionMode = settings.instantMode
+      ? instantPermissionMode(configuredPermissionMode)
+      : configuredPermissionMode;
 
     const approvalManager = new ApprovalManager({
       onRequest: (request) => {

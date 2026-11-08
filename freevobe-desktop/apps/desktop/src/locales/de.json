@@ -820,5 +820,12 @@
   "palette.swapPanes": "Chat und Editor tauschen",
   "palette.commandHint": ":w speichern · :q schließen · :run Vorschau · :test Tests",
   "pane.editor": "Editor",
-  "pane.chat": "Chat"
+  "pane.chat": "Chat",
+  "instant.working": "Wird gebaut…",
+  "instant.done": "Fertig",
+  "instant.openPreview": "Vorschau öffnen",
+  "settings.agent.instantLabel": "Prompt → fertig (keine Zwischenschritte)",
+  "settings.agent.instantHint": "Erstellt das Projekt, wählt ein Modell, führt aus und öffnet die Vorschau automatisch. Gefährliche Befehle, Medien und Änderungen an externen Diensten benötigen weiterhin deine Zustimmung.",
+  "settings.agent.instantOn": "Prompt → fertig aktiviert.",
+  "settings.agent.instantOff": "Prompt → fertig deaktiviert – du bestätigst wieder jeden Schritt."
 }

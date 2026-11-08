@@ -820,5 +820,12 @@
   "palette.swapPanes": "Swap the chat and editor panes",
   "palette.commandHint": ":w save · :q close · :run preview · :test tests",
   "pane.editor": "Editor",
-  "pane.chat": "Chat"
+  "pane.chat": "Chat",
+  "instant.working": "Building…",
+  "instant.done": "Done",
+  "instant.openPreview": "Open preview",
+  "settings.agent.instantLabel": "Prompt → done (no steps in between)",
+  "settings.agent.instantHint": "Creates the project, picks a model, runs and opens the preview automatically. Dangerous commands, media and changes to external services still require your approval.",
+  "settings.agent.instantOn": "Prompt → done enabled.",
+  "settings.agent.instantOff": "Prompt → done disabled – you approve every step again."
 }

@@ -326,6 +326,16 @@ export function evaluateToolCall(
     };
   }
 
+  // 2c. Granskning av den egna previewn läser bara loopback och ändrar ingenting. Den är en del
+  //     av "prompt → klart": agenten tittar på resultatet och rättar det utan att fråga först.
+  //     Verktyget vägrar dessutom allt som inte är 127.0.0.1 eller localhost.
+  if (spec.name === 'preview_check') {
+    return {
+      effect: 'allow',
+      reason: 'Granskning av den lokala previewn kräver inget godkännande.',
+    };
+  }
+
   // 3. Webbläsarautomation kräver alltid användarens ja.
   if (BROWSER_TOOLS.has(spec.name)) {
     if (!context.browserAutomationEnabled) {

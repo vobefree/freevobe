@@ -156,6 +156,10 @@ verktyg (t.ex. Azure Trusted Signing) eller en signeringstjänst.
 Get-AuthenticodeSignature .\Freevobe_v0.2.1_x64-setup.exe | Format-List Status, SignerCertificate
 ```
 
+Lokala signeringsskript (`scripts/windows-sign.ps1`, `scripts/new-windows-cert.ps1`) och en ärlig
+beskrivning av SmartScreen och egen-signerade certifikat finns i
+[windows-signing.md](windows-signing.md).
+
 ### macOS (Developer ID och notarisering)
 
 1. Apple Developer-konto, ett _Developer ID Application_-certifikat och antingen en app-specifik

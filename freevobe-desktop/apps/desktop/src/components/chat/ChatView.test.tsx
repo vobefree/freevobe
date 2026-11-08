@@ -15,6 +15,7 @@ function settingsWith(givesBack: GivesBack): AppSettings {
     ollamaBaseUrl: 'http://localhost:11434',
     defaultModel: 'qwen2.5-coder:7b',
     permissionMode: 'ask',
+    instantMode: true,
     autoApprove: { ...DEFAULT_AUTO_APPROVE },
     theme: 'dark',
     contextBudgetChars: 24_000,
